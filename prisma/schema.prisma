@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Caregiver {
+  id            String  @id @default(cuid())
+  name          String
+  licenseNumber String?
+  kakaoId       String? @unique
+  visits        Visit[]
+}
+
+model Client {
+  id                     String   @id @default(cuid())
+  name                   String
+  age                    Int?
+  gender                 String?
+  allergies              String?
+  medicalHistory         String?
+  medicationNotes        String?
+  personalNotes          String?
+  guardianName           String
+  guardianRelation       String   @default("기타")
+  careRegistrationNumber String?
+  phone                  String?
+  scheduleLabel          String?
+  isActive               Boolean  @default(true)
+  purgeAt                DateTime?
+  visits                 Visit[]
+}
+
+model Visit {
+  id          String      @id @default(cuid())
+  caregiverId String
+  caregiver   Caregiver   @relation(fields: [caregiverId], references: [id])
+  clientId    String
+  client      Client      @relation(fields: [clientId], references: [id])
+  startedAt   DateTime?
+  endedAt     DateTime?
+  status      VisitStatus @default(NOT_STARTED)
+  transcript  String?
+  report      Report?
+  createdAt   DateTime    @default(now())
+}
+
+enum VisitStatus {
+  NOT_STARTED
+  RECORDING
+  RECORDED
+  SUMMARIZING
+  DRAFT_READY
+  SENT
+}
+
+model Report {
+  id         String    @id @default(cuid())
+  visitId    String    @unique
+  visit      Visit     @relation(fields: [visitId], references: [id])
+  meals      String
+  medication String
+  notes      String
+  medicationMorning Boolean @default(false)
+  medicationLunch   Boolean @default(false)
+  medicationEvening Boolean @default(false)
+  medicationBedtime Boolean @default(false)
+  medicationNone    Boolean @default(false)
+  aiRawJson  String?
+  wasEdited  Boolean   @default(false)
+  shareToken String    @unique @default(cuid())
+  sentAt     DateTime?
+  viewedAt   DateTime?
+  viewCount  Int       @default(0)
+}

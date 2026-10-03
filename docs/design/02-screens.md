@@ -1,0 +1,54 @@
+# 02. 화면 목록
+
+앱의 모든 화면과 코드 경로, Figma 프레임을 한곳에 연결한다. `Figma 프레임` 칸은 [04-figma-workflow.md](04-figma-workflow.md)의 순서대로 연결하면서 채운다.
+
+## 요양보호사 화면
+
+| # | 화면 | 경로 | 코드 | 관련 요구사항 | Figma 프레임 |
+| --- | --- | --- | --- | --- | --- |
+| C-01 | 로그인 (카카오 + 체험하기) | `/login` | `app/login/page.tsx` | SEC-4, OPS-1 | |
+| C-21 | **동의** (신규, 처음 한 번) | `/onboarding` 안 | 신규 | LAW-3 | |
+| C-22 | **수급자 이력** (신규) | `/client/[id]/history` (안) | 신규 | DIF-9 | |
+| C-02 | 온보딩 (이름·자격번호) | `/onboarding` | `app/onboarding/page.tsx` | | |
+| C-03 | 홈: 오늘의 돌봄 | `/` | `app/page.tsx`, `HomeSchedule`, `ClientCard` | DIF-1, DIF-5(새 메시지 표시) | |
+| C-04 | 일정 캘린더 (모달) | `/` 위 모달 | `ScheduleCalendarModal` | | |
+| C-05 | 수급자 프로필 카드 (모달) | `/` 위 모달 | `ClientProfileModal` | | |
+| C-06 | 요양보호사 프로필 (모달) | `/` 위 모달 | `CaregiverProfileModal` | | |
+| C-07 | 수급자 등록 | `/client/new` | `app/client/new/page.tsx` | SEC-2 | |
+| C-08 | 수급자 수정 | `/client/[id]/edit` | `app/client/[id]/edit/page.tsx` | | |
+| C-09 | 수급자 관리 (목록·복원) | `/clients/manage` | `app/clients/manage/page.tsx`, `ClientManageRow` | | |
+| C-10 | 수급자 삭제 확인 | `/client/[id]/delete-confirm` | `app/client/[id]/delete-confirm/page.tsx` | | |
+| C-11 | 수급자 영구 삭제 확인 | `/client/[id]/permanent-delete-confirm` | `app/client/[id]/permanent-delete-confirm/page.tsx` | | |
+| C-12 | 기록 (음성·텍스트·파일) | `/visit/[id]/record` | `RecordScreen.tsx` | STB-3, STB-4, DIF-6 | |
+| C-13 | AI 처리중 | `/visit/[id]/processing` | `ProcessingScreen.tsx` | STB-2 | |
+| C-14 | 요양노트 검토 | `/visit/[id]/review` | `ReviewForm.tsx`, `ReportSection` | STB-1, DIF-2, DIF-3 | |
+| C-15 | 전송 확인 | `/visit/[id]/confirm` | `app/visit/[id]/confirm/page.tsx` | STB-1 | |
+| C-16 | 공유하기 (링크·카카오톡) | `/visit/[id]/sent` | `SentActions`, `CopyLinkButton`, `ShareLinkButton` | DIF-5 | |
+| C-17 | **기관 서류 초안** (신규) | `/visit/[id]/review` 안 탭 | 신규 | DIF-3, LAW-4, LAW-9 | |
+| C-18 | **수급자 대화방** (신규) | `/client/[id]/chat` (안) | 신규 | DIF-5 | |
+| C-19 | **제출용 보고서: 기간 선택** (신규) | `/client/[id]/report` (안) | 신규 | DIF-4 | |
+| C-20 | **제출용 보고서: A4 인쇄 화면** (신규) | `/client/[id]/report/print` (안) | 신규 | DIF-4, LAW-10 | |
+
+## 보호자 화면
+
+| # | 화면 | 경로 | 코드 | 관련 요구사항 | Figma 프레임 |
+| --- | --- | --- | --- | --- | --- |
+| G-01 | 방문 보고서 | `/g/[token]` | `app/g/[token]/page.tsx` | STB-5, DIF-2 | |
+| G-02 | **수급자 대화방** (신규) | `/c/[token]` (안) | 신규 | DIF-5, LAW-11 | |
+| G-03 | **제출용 보고서 저장·인쇄** (신규) | C-20과 같은 화면, 대화방에서 열기 | 신규 | DIF-4 | |
+
+## 화면 흐름
+
+```
+처음:   C-01 로그인/체험하기 → C-02 온보딩 → C-21 동의 → C-03 홈
+
+① 방문 기록:  C-03 → C-12 기록 → C-13 AI 처리중 → C-14 검토 (+C-17 서류 탭, P1) → C-15 전송 확인 → C-16 공유
+                                                                                              │
+② 대화:       C-03 (안 읽은 메시지) → C-18 대화방 ⇄ G-02 보호자 대화방 ←── 보고서 카드 ────────┘
+                                                      └→ G-01 보고서 상세
+
+③ 제출용 보고서: C-03 → C-05 수급자 → C-19 기간 선택 → C-20 A4 보고서 → PDF 저장·인쇄
+                                                          └→ 대화방에 공유 → G-03 보호자 저장·인쇄
+
+관리:   C-03 → C-07 등록 / C-08 수정 → C-09 관리 → C-10 삭제 → C-11 영구 삭제
+```

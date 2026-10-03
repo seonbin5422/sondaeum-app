@@ -15,7 +15,9 @@ docs/
 │   ├── 03-legal.md              요양보호·개인정보 법령 검토
 │   ├── 04-prd.md                제품 요구사항 (기능·사용자 스토리·데모 시나리오)
 │   ├── 05-roadmap.md            주차별 일정
-│   └── decisions.md             결정사항 기록 (무엇을, 왜 정했나)
+│   ├── 06-roles.md              역할 분담·11/20까지 할 일 (공유 문서 사본)
+│   ├── decisions.md             결정사항 기록 (무엇을, 왜 정했나)
+│   └── archive/                 지난 계획 보관 (10/2 고도화 계획)
 ├── design/                      디자인: 어떻게 보이고 동작하는가
 │   ├── 01-design-system.md      색·글꼴·컴포넌트·고령 사용자 접근성 기준
 │   ├── 02-screens.md            화면 목록 ↔ 코드 경로 ↔ Figma 프레임
@@ -33,7 +35,7 @@ docs/
 | 하려는 일 | 먼저 볼 문서 |
 | --- | --- |
 | 팀 합류, 서비스 이해 | `prd/01-context.md` → `prd/04-prd.md` |
-| 이번 주 내 작업 확인 | `prd/02-requirements.md`의 역할별 표 → `prd/05-roadmap.md` |
+| 이번 주 내 작업 확인 | `prd/06-roles.md` (상태는 공유 문서) → `prd/05-roadmap.md` |
 | 화면 고치기 | `design/03-ux-persona-review.md` → `design/02-screens.md` → `design/01-design-system.md` |
 | API·DB 고치기 | `spec/03-api.md`, `spec/02-data-model.md` |
 | "이거 왜 이렇게 했지?" | `prd/decisions.md` |

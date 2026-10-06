@@ -35,7 +35,7 @@ Claude + Figma MCP로 할 수 있는 일은 디자인 트랙이 맡는다 ([../p
 | 디자인 시스템 | — | "`globals.css` 토큰으로 Figma 변수와 컴포넌트를 만들어줘", Code Connect 연결 |
 | 페르소나 평가 렌더링 | DIF-1 | "C-12 프레임을 렌더링해서 `/ux-persona-review C-12` 실행해줘" |
 | 사용성 테스트 프로토타입 | OPS-9 | "C-03 → C-12 → C-14 흐름을 Figma 프로토타입으로 연결해줘" |
-| 발표 자료 | OPS-10 (10/23 멘토링 포함) | "이 스토리로 Figma Slides 발표 자료를 만들어줘" |
+| 발표 자료 | OPS-10 | "이 스토리로 Figma Slides 발표 자료를 만들어줘" |
 | 흐름도·구조도 | OPS-8, OPS-10 | "02-screens.md의 화면 흐름을 FigJam 다이어그램으로 그려줘" |
 | 시연 QR 안내물 | OPS-6 | "체험 주소 QR과 사용 안내가 들어간 카드를 Figma에 만들어줘" |
 

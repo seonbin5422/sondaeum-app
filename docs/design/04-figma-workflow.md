@@ -25,6 +25,20 @@ Claude Code에 Figma MCP를 연결해서 **화면 ID ↔ Figma 프레임 ↔ 코
 - 새 컴포넌트는 Figma에서 먼저 만들고, `app/components/ui/`에 같은 이름으로 만든다.
 - 디자인을 코드에 반영할 때 색 코드를 직접 쓰지 않고 토큰을 쓴다.
 
+## 디자인 담당이 Figma MCP로 맡는 일
+
+Claude + Figma MCP로 할 수 있는 일은 디자인 트랙이 맡는다 ([../prd/decisions.md](../prd/decisions.md) D-22).
+
+| 일 | 요구사항 | Claude Code에 이렇게 요청 |
+| --- | --- | --- |
+| 화면 설계·구현 | DIF-1~9, LAW-3·7~10·12, OPS-1 | "C-19 프레임대로 화면을 만들어줘" (아래 "화면 구현") |
+| 디자인 시스템 | — | "`globals.css` 토큰으로 Figma 변수와 컴포넌트를 만들어줘", Code Connect 연결 |
+| 페르소나 평가 렌더링 | DIF-1 | "C-12 프레임을 렌더링해서 `/ux-persona-review C-12` 실행해줘" |
+| 사용성 테스트 프로토타입 | OPS-9 | "C-03 → C-12 → C-14 흐름을 Figma 프로토타입으로 연결해줘" |
+| 발표 자료 | OPS-10 (10/23 멘토링 포함) | "이 스토리로 Figma Slides 발표 자료를 만들어줘" |
+| 흐름도·구조도 | OPS-8, OPS-10 | "02-screens.md의 화면 흐름을 FigJam 다이어그램으로 그려줘" |
+| 시연 QR 안내물 | OPS-6 | "체험 주소 QR과 사용 안내가 들어간 카드를 Figma에 만들어줘" |
+
 ## 화면 구현 (디자인 담당)
 
 디자인 담당이 화면 컴포넌트를 만들고, 개발이 데이터를 연결한다.

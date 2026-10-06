@@ -97,4 +97,4 @@ npx next dev --experimental-https \
 전체 흐름(기록 → AI 요약 → 검토 → 전송 → 열람 확인)이 실제 배포 환경에서 동작을
 확인했습니다. 개인정보 암호화와 AI 필터링도 적용 및 검증 완료 상태입니다.
 
-기획·디자인·개발 문서는 [`docs/`](docs/README.md)에 있습니다. 요구사항과 역할 분배는 `docs/prd/02-requirements.md`, 일정은 `docs/prd/05-roadmap.md`를 보세요.
+기획·디자인·개발 문서는 [`docs/`](docs/README.md)에 있습니다. 요구사항은 `docs/prd/02-requirements.md`, 역할과 할 일은 `docs/prd/06-roles.md`, 일정은 `docs/prd/05-roadmap.md`를 보세요.

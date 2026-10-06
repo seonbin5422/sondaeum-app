@@ -55,8 +55,8 @@ API는 모두 `app/api/` 아래 Route Handler다. **지금은 요양보호사 AP
 
 ## SEC-1 이후 규칙
 
-- 모든 API 첫 줄에서 `lib/authz.ts`의 권한 함수(예: `requireCaregiver()`, `requireOwnedClient(id)`)를 부른다. 함수 이름은 10/5에 정하고 보안 담당이 구현한다.
-- 새 API는 만들기 전에 경로·요청·응답을 이 문서에 먼저 적는다. 화면 담당은 그 모양의 임시 데이터로 먼저 개발한다.
+- 모든 API 첫 줄에서 `lib/authz.ts`의 권한 함수(예: `requireCaregiver()`, `requireOwnedClient(id)`)를 부른다. 함수 이름은 10/5에 정하고 개발 2가 구현한다.
+- 새 API는 만들기 전에 경로·요청·응답을 이 문서에 먼저 적는다. 디자인은 그 모양의 임시 데이터로 화면을 먼저 만든다.
 - `[id]`가 있는 API는 그 수급자·방문·보고서가 `caregiverId` 소유인지 확인하고, 아니면 `404`를 돌려준다(존재 여부를 숨김).
 - AI API는 요양보호사별 호출 횟수를 제한한다.
 - API를 추가·변경하면 이 문서를 같은 PR에서 고친다.

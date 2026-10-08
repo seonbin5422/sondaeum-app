@@ -33,7 +33,7 @@
 
 | # | 화면 | 경로 | 코드 | 관련 요구사항 | Figma 프레임 |
 | --- | --- | --- | --- | --- | --- |
-| G-01 | 방문 보고서 | `/g/[token]` | `app/g/[token]/page.tsx` | STB-5, DIF-2 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-692) |
+| G-01 | 방문 보고서 | `/g/[token]` | `app/g/[token]/page.tsx` | STB-5, DIF-2 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-692) · [개선안: 특이사항·비교 위로](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-822) |
 | G-02 | **수급자 대화방** (신규, 날짜별 보고서 모아보기 포함) | `/c/[token]` (안) | 신규 | DIF-5, LAW-11 | |
 | G-03 | **제출용 보고서 만들기·저장·인쇄** (신규) | C-19·C-20과 같은 화면, 대화방에서 열기 (보호자도 기간 선택, D-26) | 신규 | DIF-4 | |
 

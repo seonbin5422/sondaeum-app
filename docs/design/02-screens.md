@@ -6,11 +6,11 @@
 
 | # | 화면 | 경로 | 코드 | 관련 요구사항 | Figma 프레임 |
 | --- | --- | --- | --- | --- | --- |
-| C-01 | 로그인 (카카오 + 체험하기) | `/login` | `app/login/page.tsx` | SEC-4, OPS-1 | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=9-4) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=3-4) |
+| C-01 | 로그인 (카카오 + 체험하기) | `/login` | `app/login/page.tsx` | SEC-4, OPS-1 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-368) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-13) |
 | C-21 | **동의** (신규, 처음 한 번) | `/onboarding` 안 | 신규 | LAW-3 | |
 | C-22 | **수급자 이력** (신규) | `/client/[id]/history` (안) | 신규 | DIF-9 | |
 | C-02 | 온보딩 (이름·자격번호) | `/onboarding` | `app/onboarding/page.tsx` | | |
-| C-03 | 홈: 오늘의 돌봄 | `/` | `app/page.tsx`, `HomeSchedule`, `ClientCard` | DIF-1, DIF-5(새 메시지 표시) | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=9-33) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=3-26) |
+| C-03 | 홈: 오늘의 돌봄 | `/` | `app/page.tsx`, `HomeSchedule`, `ClientCard` | DIF-1, DIF-5(새 메시지 표시) | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-397) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-35) |
 | C-04 | 일정 캘린더 (모달) | `/` 위 모달 | `ScheduleCalendarModal` | | |
 | C-05 | 수급자 프로필 카드 (모달) | `/` 위 모달 | `ClientProfileModal` | | |
 | C-06 | 요양보호사 프로필 (모달) | `/` 위 모달 | `CaregiverProfileModal` | | |
@@ -19,11 +19,11 @@
 | C-09 | 수급자 관리 (목록·복원) | `/clients/manage` | `app/clients/manage/page.tsx`, `ClientManageRow` | | |
 | C-10 | 수급자 삭제 확인 | `/client/[id]/delete-confirm` | `app/client/[id]/delete-confirm/page.tsx` | | |
 | C-11 | 수급자 영구 삭제 확인 | `/client/[id]/permanent-delete-confirm` | `app/client/[id]/permanent-delete-confirm/page.tsx` | | |
-| C-12 | 기록 (음성·텍스트·파일) | `/visit/[id]/record` | `RecordScreen.tsx` | STB-3, STB-4, DIF-6 | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=9-101) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=4-2) |
+| C-12 | 기록 (음성·텍스트·파일) | `/visit/[id]/record` | `RecordScreen.tsx` | STB-3, STB-4, DIF-6 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-465) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-86) |
 | C-13 | AI 처리중 | `/visit/[id]/processing` | `ProcessingScreen.tsx` | STB-2 | |
-| C-14 | 요양노트 검토 | `/visit/[id]/review` | `ReviewForm.tsx`, `ReportSection` | STB-1, DIF-2, DIF-3 | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=9-129) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=4-32) |
-| C-15 | 전송 확인 | `/visit/[id]/confirm` | `app/visit/[id]/confirm/page.tsx` | STB-1 | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=9-183) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=5-2) |
-| C-16 | 공유하기 (링크·카카오톡) | `/visit/[id]/sent` | `SentActions`, `CopyLinkButton`, `ShareLinkButton` | DIF-5 | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=9-206) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=5-25) |
+| C-14 | 요양노트 검토 | `/visit/[id]/review` | `ReviewForm.tsx`, `ReportSection` | STB-1, DIF-2, DIF-3 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-508) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-171) |
+| C-15 | 전송 확인 | `/visit/[id]/confirm` | `app/visit/[id]/confirm/page.tsx` | STB-1 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-637) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-308) |
+| C-16 | 공유하기 (링크·카카오톡) | `/visit/[id]/sent` | `SentActions`, `CopyLinkButton`, `ShareLinkButton` | DIF-5 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-662) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-334) |
 | C-17 | **기관 서류 초안** (신규) | `/visit/[id]/review` 안 탭 | 신규 | DIF-3, LAW-4, LAW-9 | |
 | C-18 | **수급자 대화방** (신규, 날짜별 보고서 모아보기 포함) | `/client/[id]/chat` (안) | 신규 | DIF-5 | |
 | C-19 | **제출용 보고서: 기간 선택** (신규) | `/client/[id]/report` (안) | 신규 | DIF-4 | |
@@ -33,7 +33,7 @@
 
 | # | 화면 | 경로 | 코드 | 관련 요구사항 | Figma 프레임 |
 | --- | --- | --- | --- | --- | --- |
-| G-01 | 방문 보고서 | `/g/[token]` | `app/g/[token]/page.tsx` | STB-5, DIF-2 | [시안](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=16-67) · [와이어](https://www.figma.com/design/5awdfD3nrF5n4R1jXgGegM/?node-id=16-8) |
+| G-01 | 방문 보고서 | `/g/[token]` | `app/g/[token]/page.tsx` | STB-5, DIF-2 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-751) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-692) |
 | G-02 | **수급자 대화방** (신규, 날짜별 보고서 모아보기 포함) | `/c/[token]` (안) | 신규 | DIF-5, LAW-11 | |
 | G-03 | **제출용 보고서 만들기·저장·인쇄** (신규) | C-19·C-20과 같은 화면, 대화방에서 열기 (보호자도 기간 선택, D-26) | 신규 | DIF-4 | |
 

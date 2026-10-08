@@ -36,7 +36,7 @@ PRD를 쓰기 전에 **무엇을 고치고 무엇을 새로 만들지**를 이 �
 | --- | --- | --- | --- | --- | --- |
 | STB-1 | 전송한 보고서는 수정·재전송 불가 (상태 확인) | `PATCH /api/reports/[id]`, `send`가 상태를 안 봄 | P0 | 개발 2 | |
 | STB-2 | AI 요약 중복 호출 방지 (`SUMMARIZING`이면 거절) | `summarize`에 잠금 없음 | P0 | 개발 2 | |
-| STB-3 | 녹음·입력 중 앱이 꺼져도 내용 유지 (임시저장) | `RecordScreen.tsx`가 메모리에만 보관 | P0 | 개발 1 | |
+| STB-3 | 녹음·입력 중 앱이 꺼져도 내용 유지 (임시저장, 끊기기 직전까지 저장하고 홈에서 이어서 기록: D-27) | `RecordScreen.tsx`가 메모리에만 보관 | P0 | 개발 1 | |
 | STB-4 | 2분 넘는 음성 업로드 (분할 또는 스토리지 직접 업로드) | `MAX_AUDIO_UPLOAD_BYTES` 4MB | P1 | 개발 1 | |
 | STB-5 | 보호자 링크 만료 기한, 카카오톡 미리보기 봇의 열람을 "열람함"에서 제외 | `app/g/[token]/page.tsx`가 모든 요청을 열람으로 기록 | P1 | 개발 2 | |
 | STB-6 | 만료 수급자 삭제를 페이지 요청이 아닌 Vercel Cron으로 | `app/page.tsx`가 매번 `purgeExpiredClients()` 호출 | P1 | 개발 1 | |

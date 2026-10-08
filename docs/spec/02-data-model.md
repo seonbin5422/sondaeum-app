@@ -71,47 +71,51 @@ Caregiver 1 ── N Visit N ── 1 Client
 
 `null` = 아직 모름(말하지 않았고 직접 입력도 안 함) → C-14·C-15에서 "확인 필요". `false`·`0` = 안 했음.
 
+순서와 구조는 서식 원문을 따른다: 서비스 시간 → 신체활동지원 → 인지·정서 지원 → 가사·일상생활지원 → 변화상태 → 배변 변화 → 특이사항.
+
 ```ts
 type Change = "improved" | "same" | "worse"; // 호전 / 유지 / 악화
 
 type CareRecord = {
-  // 2. 신체활동지원 (체크)
+  // 2. 신체활동지원: 항목 체크 + 합계 제공시간
   physical: {
-    personalHygiene: boolean | null; // 개인위생
-    bathing: boolean | null;         // 몸씻기
-    mealAssist: boolean | null;      // 식사도움 (식사량은 physicalNote에)
+    personalHygiene: boolean | null; // 개인위생 (옷 갈아입기·세면·구강청결·몸단장)
+    bathing: boolean | null;         // 몸 씻기 도움
+    mealAssist: boolean | null;      // 식사 도움 (식사량은 physicalNote에)
     repositioning: boolean | null;   // 체위변경
-    mobility: boolean | null;        // 이동도움
-    toileting: boolean | null;       // 화장실이용
+    mobility: boolean | null;        // 이동 도움
+    toileting: boolean | null;       // 화장실 이용하기
+    minutes: number | null;          // 제공시간 (분)
   };
   physicalNote: string | null;       // 한 일을 한두 문장으로 (G-01 신체활동 카드 아래 문장)
 
-  // 3. 인지·정서 지원 (분)
+  // 3. 인지·정서 지원: 항목별 분
   cognitive: {
-    stimulation: number | null;      // 인지자극활동
-    dailyLiving: number | null;      // 일상생활 함께하기
-    management: number | null;       // 인지관리지원
-    emotional: number | null;        // 정서지원 (말벗·격려)
+    stimulation: number | null;      // 인지활동지원 > 인지자극활동
+    dailyLiving: number | null;      // 인지활동지원 > 일상생활 함께하기
+    behaviorManagement: number | null; // 인지관리지원 > 인지행동변화 관리 등
+    emotional: number | null;        // 정서지원 > 의사소통 도움·말벗·격려
   };
 
-  // 4. 가사·일상생활지원 (분)
+  // 4. 가사 및 일상생활지원: 항목 체크 + 합계 제공시간
   household: {
-    mealPrepCleaningLaundry: number | null; // 식사준비·청소·세탁
-    outingEscort: number | null;            // 외출동행
+    mealPrepCleaningLaundry: boolean | null; // 식사준비, 청소 및 주변정리 정돈, 세탁 등
+    personalActivity: boolean | null;        // 개인활동지원 (외출 시 동행 등)
+    minutes: number | null;                  // 제공시간 (분)
   };
 
-  // 5. 배설 (횟수)
-  excretion: {
-    stoolAccidents: number | null;   // 대변 실수
-    urineAccidents: number | null;   // 소변 실수
-    diaperChanges: number | null;    // 기저귀 교환 (기저귀를 쓰는 분만)
-  };
-
-  // 6. 변화상태: 요양보호사가 직접 고름, AI는 채우지 않음
+  // 5. 변화상태: 요양보호사가 직접 고름, AI는 채우지 않음
   change: {
     physical: Change | null;         // 신체기능
     meal: Change | null;             // 식사기능
     cognitive: Change | null;        // 인지기능
+  };
+
+  // 6. 변화상태 > 배변변화 (횟수)
+  bowel: {
+    stoolAccidents: number | null;   // 대변 실수
+    urineAccidents: number | null;   // 소변 실수
+    diaperChanges: number | null;    // 기저귀 교환 (기저귀를 쓰는 분만)
   };
 
   // 7. 특이사항: 혈압·복약도 여기에
@@ -138,15 +142,15 @@ type GuardianReportProps = {
 
 | 화면 | 값 | 보여 주는 규칙 |
 | --- | --- | --- |
-| 신체활동 도움 | `physical`, `physicalNote` | `true`인 항목만 "✓ 개인위생"처럼. 하나도 없으면 카드 숨김 |
-| 인지·정서 지원 | `cognitive` | 네 항목을 항상 보여 줌. `0`은 "0분"(회색), 그 외는 "인지자극활동 20분". 정서지원은 "말벗·격려"로 표시 |
-| 가사·일상생활 지원 | `household` | 두 항목을 항상 보여 줌. `0`은 "0분"(회색) |
-| 배설 | `excretion` | `0`은 "없음", 1 이상은 "1번". `null`인 줄은 숨김 |
+| 신체활동 도움 | `physical`, `physicalNote` | `true`인 항목만 "✓ 개인위생"처럼, 아래에 "제공시간 60분"(0분도 표시) |
+| 인지·정서 지원 | `cognitive` | 네 항목을 항상 "인지자극활동 20분"처럼. `0`은 "0분"(회색). 인지관리는 "인지행동변화 관리", 정서지원은 "의사소통·말벗·격려" |
+| 가사·일상생활 지원 | `household` | `true`인 항목만 "✓ 식사준비·청소·세탁"처럼, 아래에 "제공시간 40분"(0분도 표시) |
 | 지난 방문과 비교 | `change` | `improved`·`same`·`worse` → "좋아졌어요"·"비슷해요"·"나빠졌어요". `null`인 줄은 숨김 |
+| 배변 변화 | `bowel` | `0`은 "없음", 1 이상은 "1번". `null`인 줄은 숨김 |
 | 특이사항 | `notes` | 그대로. 비어 있으면 카드 숨김 |
 
 - "지난 방문과 비교"는 변화상태(6번) 값을 보여 주는 것이라, 지난 방문 기록을 따로 불러오지 않는다.
-- 체크 항목(신체활동)은 한 것만 보여 주고, 분 단위 항목(인지·정서, 가사·일상)은 0분도 보여 준다 (D-24 261009.ver). 급여 시간을 항목별로 확인할 수 있어야 하기 때문이다.
+- 체크 항목은 한 것만 보여 주고, 시간(분)은 0분도 보여 준다 (D-24 261009.ver). 구조는 서식 원문(별지 제12호, 2025.12.12 개정)과 같다: 신체활동·가사는 체크 + 합계 제공시간, 인지·정서는 항목별 분, 배변 변화는 변화상태 안.
 - 보내기 전에 C-15에서 빠진 항목을 확인하므로, G-01에서 `null`은 "요양보호사가 비워 두고 보냄"이다. 그 줄은 표시하지 않는다.
 
 ### 정할 것

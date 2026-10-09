@@ -22,7 +22,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | --- | --- | --- |
 | `id` | String (cuid) | |
 | `name` | String | |
-| `licenseNumber` | String? | 요양보호사 자격번호 |
+| `licenseNumber` | String? | 요양보호사 자격번호. 처음 설정(C-02)에서 필수로 받는다 (D-31) |
 | `kakaoId` | String? unique | 카카오 사용자 ID |
 
 ### Client (수급자)
@@ -34,7 +34,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `allergies`, `medicalHistory`, `medicationNotes` | String? | 알레르기, 병력, 복용약 | 아니오 (SEC-5) |
 | `personalNotes` | String? | 요양보호사의 지속 메모(특이사항) | 아니오 |
 | `guardianName`, `guardianRelation` | String | 보호자 이름, 관계(아들·딸·배우자·직접 입력) | 아니오 |
-| `careRegistrationNumber` | String? | 장기요양인정번호 | 아니오 (SEC-5) |
+| `careRegistrationNumber` | String? | 장기요양인정번호. 등록·수정(C-07·C-08)에서 필수 (D-31) | 아니오 (SEC-5) |
 | `phone` | String? | | 아니오 (SEC-5) |
 | `scheduleLabel` | String? | 돌봄 계약시간, 예: `수,금,토 17:00-23:00` (`lib/schedule.ts`가 해석) | 아니오 |
 | `isActive` | Boolean | `false` = 삭제됨(복원 가능) | |
@@ -239,6 +239,6 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29 검토 중) |
 | STB-5 | `Report.shareExpiresAt` |
-| LAW-4 | `Client`에 장기요양등급 |
+| LAW-4 | `Client.careGrade` 장기요양등급 (`"1등급"`~`"5등급"`, `"인지지원등급"`, D-31) |
 | OPS-1 | `Caregiver.isDemo`, `Caregiver.demoExpiresAt` (체험 계정 24시간 뒤 관련 데이터와 함께 삭제) |
 | LAW-3 | 동의 기록 (항목별 동의 여부·시각) |

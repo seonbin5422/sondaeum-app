@@ -26,8 +26,8 @@
 | C-16 | 공유하기 (링크·카카오톡) | `/visit/[id]/sent` | `SentActions`, `CopyLinkButton`, `ShareLinkButton` | DIF-5 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-334) |
 | C-17 | **기관 서류 초안** (신규) | `/visit/[id]/review` 안 탭 | 신규 | DIF-3, LAW-4, LAW-9 | |
 | C-18 | **수급자 대화방** (신규, 날짜별 보고서 모아보기 포함) | `/client/[id]/chat` (안) | 신규 | DIF-5 | |
-| C-19 | **제출용 보고서: 기간 선택** (신규) | `/client/[id]/report` (안) | 신규 | DIF-4 |[Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=305-3) (D-29 초안) |
-| C-20 | **제출용 보고서: A4 인쇄 화면** (신규) | `/client/[id]/report/print` (안) | 신규 | DIF-4, LAW-10 |[Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=305-38) (D-29 초안) |
+| C-19 | **서류 만들기: 서류 종류·기간 선택** (신규, D-29 초안) | `/client/[id]/report` (안) | 신규 | DIF-4 |[Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=305-3) (D-29 초안) |
+| C-20 | **서류: 진료 참고용 요약 A4 화면** (신규, D-29 초안) | `/client/[id]/report/print` (안) | 신규 | DIF-4, LAW-10 |[Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=305-38) (D-29 초안) |
 
 ## 보호자 화면
 
@@ -48,7 +48,7 @@
                                                       ├→ G-01 보고서 상세 (PDF로 저장 버튼)
                                                       └→ 보고서 모아보기 (날짜별)
 
-③ 제출용 보고서: C-03 → C-05 수급자 → C-19 기간 선택 → C-20 A4 보고서 → PDF 저장·인쇄
+③ 제출용 보고서: C-03 → C-05 수급자 → C-19 서류 만들기(서류 종류·기간) → C-20 A4 보고서 → PDF 저장·인쇄
    보호자:      G-02 대화방 → G-03 기간 선택 → A4 보고서 → PDF 저장·인쇄
                                                           └→ 대화방에 공유 → G-03 보호자 저장·인쇄
 

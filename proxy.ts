@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyPayload } from "@/lib/jwt";
 
-const PUBLIC_PATH_PREFIXES = ["/login", "/g/", "/api/"];
+// TEMP(v1120): 1120.ver 미리보기를 로그인 없이 보기 위한 예외. main에 머지하지 않는다.
+const PUBLIC_PATH_PREFIXES = ["/login", "/g/", "/api/", "/v1120"];
 
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;

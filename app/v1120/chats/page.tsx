@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { chatByClient, clients, unreadByClient } from "../_mock";
+import { chatByClient, clients } from "../_mock";
+import { UnreadBadge } from "../_components/Unread";
 import { Avatar, Screen } from "../_components/ui";
 
 // 대화 탭: 수급자별 대화방 목록 (DIF-5)
@@ -13,7 +14,6 @@ export default function ChatsPage() {
         {rooms.map((c) => {
           const msgs = chatByClient[c.id] ?? [];
           const last = msgs.at(-1);
-          const unread = unreadByClient[c.id] ?? 0;
           return (
             <li key={c.id}>
               <Link href={`/v1120/chats/${c.id}`} className="flex min-h-20 items-center gap-3 px-4 py-3">
@@ -26,7 +26,7 @@ export default function ChatsPage() {
                     {last ? (last.report ? `📄 ${last.report.title}` : last.text) : "아직 대화가 없어요"}
                   </span>
                 </span>
-                {unread > 0 && <span className="rounded-full bg-(--danger) px-2 text-base font-bold text-white">{unread}</span>}
+                <UnreadBadge clientId={c.id} />
               </Link>
             </li>
           );

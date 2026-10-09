@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { markRead } from "../_unread";
 import Link from "next/link";
 import type { ChatMessage } from "../_types";
 
@@ -18,12 +19,14 @@ function day(iso: string) {
 }
 
 export function ChatRoom({
+  clientId,
   me,
   initial,
   otherName,
   reportsHref,
   documentsHref,
 }: {
+  clientId: string;
   me: "caregiver" | "guardian";
   initial: ChatMessage[];
   otherName: string;
@@ -32,6 +35,11 @@ export function ChatRoom({
 }) {
   const [messages, setMessages] = useState(initial);
   const [text, setText] = useState("");
+
+  // 요양보호사가 대화방을 열면 보호자 메시지를 읽음으로 (메뉴바·홈·목록의 숫자가 사라짐)
+  useEffect(() => {
+    if (me === "caregiver") markRead(clientId);
+  }, [clientId, me]);
 
   function send() {
     if (!text.trim()) return;

@@ -12,6 +12,7 @@ export default async function ChatRoomPage({ params }: PageProps<"/v1120/chats/[
     <Screen>
       <TopBar backHref="/v1120/chats" title={`${c.name} 수급자 · ${c.guardianName} 보호자`} />
       <ChatRoom
+        clientId={clientId}
         me="caregiver"
         initial={chatByClient[clientId] ?? []}
         otherName={`${c.guardianName} 보호자`}

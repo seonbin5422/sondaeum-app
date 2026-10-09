@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { clients, unreadByClient } from "../_mock";
+import { clients } from "../_mock";
+import { ChatLabel } from "../_components/Unread";
 import { Avatar, Card, Chip, LinkButton, Screen } from "../_components/ui";
 
 // 수급자 탭: 담당 수급자 목록 (기존 C-09 관리 화면을 합침). 삭제한 수급자은 아래에서 되살린다.
@@ -30,11 +31,13 @@ export default function ClientsPage() {
                 </span>
               </Link>
               <div className="grid grid-cols-3 gap-2">
-                {[
-                  ["방문 기록", `/v1120/client/${c.id}/history`],
-                  ["서류 만들기", `/v1120/client/${c.id}/documents`],
-                  [`대화${unreadByClient[c.id] ? ` ${unreadByClient[c.id]}` : ""}`, `/v1120/chats/${c.id}`],
-                ].map(([label, href]) => (
+                {(
+                  [
+                    ["방문 기록", `/v1120/client/${c.id}/history`],
+                    ["서류 만들기", `/v1120/client/${c.id}/documents`],
+                    [<ChatLabel key="chat" clientId={c.id} />, `/v1120/chats/${c.id}`],
+                  ] as const
+                ).map(([label, href]) => (
                   <Link
                     key={href}
                     href={href}

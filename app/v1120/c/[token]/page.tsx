@@ -15,6 +15,7 @@ export default async function GuardianChatPage({ params }: PageProps<"/v1120/c/[
         <p className="text-base text-muted">{caregiverName} 요양보호사와 이야기해요</p>
       </header>
       <ChatRoom
+        clientId={c.id}
         me="guardian"
         initial={chatByClient[c.id] ?? []}
         otherName={`${caregiverName} 요양보호사`}

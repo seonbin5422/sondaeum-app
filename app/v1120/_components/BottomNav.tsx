@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { unreadByClient } from "../_mock";
+import { useTotalUnread } from "../_unread";
 
 // 하단 메뉴바 (1120.ver 제안안, 와이어 없음). 아이콘만 두지 않고 항상 글자를 붙인다.
 const TABS = [
@@ -14,7 +14,7 @@ const TABS = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const unread = Object.values(unreadByClient).reduce((a, b) => a + b, 0);
+  const unread = useTotalUnread();
   return (
     <nav aria-label="메뉴" className="border-t border-(--line) bg-white">
       <ul className="mx-auto grid max-w-md grid-cols-4">

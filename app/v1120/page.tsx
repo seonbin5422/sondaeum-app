@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
-import { caregiverName, todayVisits, unreadByClient } from "./_mock";
+import { caregiverName, todayVisits } from "./_mock";
+import { UnreadMessageLink } from "./_components/Unread";
 import { ScheduleSheet } from "./_components/ScheduleSheet";
 import type { TodayVisit } from "./_types";
 import { Avatar, Card, Chip, LinkButton, Screen, StatusBadge } from "./_components/ui";
@@ -45,15 +45,7 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
         </div>
       </div>
 
-      {(unreadByClient[visit.clientId] ?? 0) > 0 && (
-        <Link
-          href={`/v1120/chats/${visit.clientId}`}
-          className="flex min-h-12 items-center justify-between rounded-xl border border-(--line) px-4 text-base font-bold"
-        >
-          <span>✉ 보호자님 새 메시지 {unreadByClient[visit.clientId]}개</span>
-          <span className="text-muted">대화 보기 ›</span>
-        </Link>
-      )}
+      <UnreadMessageLink clientId={visit.clientId} />
 
       {visit.interrupted && (
         <>

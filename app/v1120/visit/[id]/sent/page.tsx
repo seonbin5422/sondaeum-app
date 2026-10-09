@@ -28,8 +28,13 @@ export default function SentPage() {
   async function shareKakao() {
     const text = `${visit?.clientName ?? ""} 어르신 ${visitTime.date} 방문 보고서예요.`;
     try {
-      if (navigator.share) await navigator.share({ title: "손다음 방문 보고서", text, url: link });
-      else await navigator.clipboard.writeText(link);
+      if (navigator.share) {
+        await navigator.share({ title: "손다음 방문 보고서", text, url: link });
+      } else {
+        // 공유 창이 없는 브라우저(PC, 카카오톡 안 브라우저 등): 보냈다고 하지 않고 복사했다고 알린다
+        await navigator.clipboard.writeText(`${text}\n${link}`);
+        setCopied(true);
+      }
       setSharedAt(new Date());
     } catch {
       // 공유 창을 닫으면 보낸 것으로 보지 않는다
@@ -65,7 +70,7 @@ export default function SentPage() {
             {guardianName} 보호자님께 {copied ? "보낼 링크를 복사했어요" : "보냈어요"}
           </p>
           <p className="text-base">{formatSent(sharedAt)}</p>
-          {copied && <p className="text-base text-muted">카카오톡이나 문자에 붙여 넣어 보내 주세요.</p>}
+          {copied && <p className="text-base text-muted">이 브라우저에서는 카카오톡을 바로 열 수 없어요. 카카오톡을 열어 보호자님께 붙여 넣어 주세요.</p>}
           <a href={`/v1120/g/${id}`} className="mt-2 text-base font-bold underline underline-offset-4">
             보호자님이 보는 화면 열어 보기
           </a>

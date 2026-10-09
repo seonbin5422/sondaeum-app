@@ -21,7 +21,8 @@ export function InviteScreen({
   doneHref: string;
 }) {
   const [link, setLink] = useState(chatPath);
-  const [sent, setSent] = useState<null | "kakao" | "sms" | "copy">(null);
+  // noshare: 공유 창이 없는 브라우저(PC, 카카오톡 안 브라우저 등)라 복사만 했음
+  const [sent, setSent] = useState<null | "kakao" | "sms" | "copy" | "noshare">(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- build the absolute link once window is available
@@ -33,9 +34,13 @@ export function InviteScreen({
 
   async function kakao() {
     try {
-      if (navigator.share) await navigator.share({ title: "손다음 대화방 초대", text: message, url: link });
-      else await navigator.clipboard.writeText(`${message}\n${link}`);
-      setSent("kakao");
+      if (navigator.share) {
+        await navigator.share({ title: "손다음 대화방 초대", text: message, url: link });
+        setSent("kakao");
+      } else {
+        await navigator.clipboard.writeText(`${message}\n${link}`);
+        setSent("noshare");
+      }
     } catch {
       // 공유 창을 닫으면 보낸 것으로 보지 않는다
     }
@@ -80,8 +85,14 @@ export function InviteScreen({
       </section>
 
       {sent ? (
-        <p className="rounded-xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--success)">
-          ✓ {guardianName} 보호자님께 {sent === "copy" ? "보낼 글과 링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 주세요." : "초대를 보냈어요"}
+        <p
+          className={`rounded-xl px-4 py-3 text-lg font-bold ${
+            sent === "noshare" ? "bg-accent-soft text-accent-soft-foreground" : "bg-(--success-soft) text-(--success)"
+          }`}
+        >
+          {sent === "noshare"
+            ? "이 브라우저에서는 카카오톡을 바로 열 수 없어요. 보낼 글과 링크를 복사했으니 카카오톡을 열어 보호자님께 붙여 넣어 주세요."
+            : `✓ ${guardianName} 보호자님께 ${sent === "copy" ? "보낼 글과 링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 주세요." : sent === "sms" ? "보낼 문자를 열었어요. 문자 앱에서 보내기를 눌러 주세요." : "초대를 보냈어요"}`}
         </p>
       ) : (
         <div className="flex flex-col gap-3">

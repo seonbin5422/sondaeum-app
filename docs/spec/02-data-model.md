@@ -159,6 +159,54 @@ type GuardianReportProps = {
 - `Report.careRecord` 한 칸에 통째로 암호화할지, 항목별로 나눌지 (개발 2)
 - C-14의 "내가 한 말" 근거를 `aiRawJson`에 항목별로 둘지 (개발 1, C-14 설계 때)
 
+## 진료용 기간 요약 (DIF-4, 제안 · D-29 검토 중)
+
+> 팀 확인 전 초안이다. D-29가 확정되면 [../prd/02-requirements.md](../prd/02-requirements.md) DIF-4 상세와 [../prd/04-prd.md](../prd/04-prd.md) 7절의 "내용"을 이 절에 맞춰 고친다.
+
+보험금 청구는 공단 등급 서류·의사 진단서 같은 공적 서류로 하므로, 앱 보고서는 그 근거가 될 수 없다. 대신 병원 진료 때 보호자가 의료진에게 보여 줄 **한 장짜리 기간 요약**으로 만든다. 미국 요양시설의 INTERACT "Stop and Watch"(돌봄 인력이 평소와 달라진 점만 체크해 간호사·의사에게 넘기는 도구)와 같은 역할이다. 양식은 저작권이 있어 구조만 참고한다.
+
+새로 입력하는 값은 없다. 기간 안의 `CareRecord`를 모아 보여 준다. Stop and Watch의 "달라진 점"은 급여제공기록지의 변화상태(신체·식사·인지 호전/유지/악화)와 배변 변화가 이미 맡고 있고, 변화상태는 요양보호사가 직접 골라 "관찰이지 진단이 아니다"라는 원칙과도 맞는다.
+
+### 화면(C-20·G-03)이 받는 값
+
+```ts
+type PeriodSummaryProps = {
+  clientName: string;
+  age: number | null;
+  gender: string | null;
+  medicationNotes: string | null; // Client.medicationNotes, "복용 중인 약"
+  caregiverName: string;
+  from: string;                   // ISO 날짜, 기간 시작
+  to: string;                     // ISO 날짜, 기간 끝
+  createdAt: string;              // 작성일
+  createdBy: "caregiver" | "guardian"; // D-26: 보호자도 직접 만듦
+  visits: {                       // 기간 안의 보낸(SENT) 보고서, 오래된 순
+    startedAt: string;
+    endedAt: string;
+    record: CareRecord;
+  }[];
+  periodSummary: string | null;   // 기간 변화 요약 (개발 1 AI). 실패하면 null → 숨김
+};
+```
+
+| 순서 | 화면 | 값 | 보여 주는 규칙 |
+| --- | --- | --- | --- |
+| 1 | 기간 중 달라진 점 | `visits[].record.change` | `worse`인 날·항목만 "10월 6일 식사기능 나빠졌어요"처럼. 없으면 "기간 중 나빠진 기록이 없어요" |
+| 2 | 변화상태 추이 | `change` | 줄 = 신체기능·식사기능·인지기능, 칸 = 방문 날짜. `null`은 "-" |
+| 3 | 배변 변화 | `bowel` | 날짜별 대변·소변 실수 횟수 (0회도 표시). 기저귀 교환은 쓰는 분만 |
+| 4 | 특이사항 모음 | `notes` | 날짜 + 문장. 혈압·복약도 여기서 보임. `null`인 날은 뺌 |
+| 5 | 기간 요약 | `periodSummary` | AI 문단. 아래에 작성자·작성일과 "요양보호사 관찰 기록이며 의료적 진단이 아닙니다" (LAW-10) |
+
+신체활동·인지정서·가사 체크와 제공시간은 "무엇을 해 드렸나"라서 진료에는 덜 쓰인다. 넣을지는 아래에서 정한다.
+
+### 정할 것
+
+- DIF-4 목적을 "의료기관·보험사 제출용"에서 "진료용 기간 요약"으로 좁히고 이름을 바꿀지 (기획, D-29)
+- 혈압·복약은 `notes` 문장에만 있어 추이를 표로 그리기 어렵다. AI가 문장에서 뽑을지, `CareRecord`에 숫자 칸을 둘지 (기획·개발 1)
+- Stop and Watch에 있는 수면·통증·낙상·피부(욕창) 칸이 없다. 특이사항으로 둘지, 칸을 더할지 (기획)
+- 제공한 돌봄(체크·제공시간) 요약을 맨 뒤에 넣을지 뺄지 (기획)
+- 기간 안에 `careRecord`가 없는 옛 보고서가 섞이면 특이사항만 보여 줄지 (개발 1)
+
 ## 방문 상태 전이
 
 ```
@@ -184,7 +232,7 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-2 | `Report.careRecord` (String, 암호화된 `CareRecord` JSON, 위 "급여제공기록지 기록" 절) |
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
-| DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`) |
+| DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29 검토 중) |
 | STB-5 | `Report.shareExpiresAt` |
 | LAW-4 | `Client`에 장기요양등급 |
 | OPS-1 | `Caregiver.isDemo`, `Caregiver.demoExpiresAt` (체험 계정 24시간 뒤 관련 데이터와 함께 삭제) |

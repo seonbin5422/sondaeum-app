@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { ReportSections } from "../../_components/ReportView";
 import { loadDraft } from "../../_store";
-import { findVisit, historyByClient, sampleGuardianReport, visitInfo } from "../../_mock";
+import { chatTokenToClient, findVisit, historyByClient, sampleGuardianReport, visitInfo } from "../../_mock";
+import { BackButton } from "../../_components/BackButton";
 import type { CareRecord } from "../../_types";
 
 // G-01 보호자 보고서 (와이어 263:692). ?order=improved 를 붙이면 개선안(263:822, PR #9 머지 보류) 순서로 본다.
@@ -43,8 +44,13 @@ export function GuardianReport({ token, order }: { token: string; order: "base" 
       ? { ...report, clientName: visit.clientName, startedAt: visitInfo(token).startedAt, endedAt: visitInfo(token).endedAt }
       : report;
 
+  // 돌아갈 곳이 없을 때(카카오톡 링크로 바로 들어옴) 보낼 보호자 대화방
+  const clientId = past ? Object.keys(historyByClient).find((k) => historyByClient[k].includes(past)) : visit?.clientId;
+  const chatToken = Object.keys(chatTokenToClient).find((t) => chatTokenToClient[t] === clientId);
+
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
+      <BackButton fallback={chatToken ? `/v1120/c/${chatToken}` : "/v1120"} />
       <header className="flex flex-col gap-1">
         <p className="text-base text-muted">안녕하세요, {report.guardianName} 보호자님</p>
         <h1 className="text-2xl font-bold">{head.clientName} 어르신 방문 보고서</h1>

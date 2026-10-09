@@ -14,6 +14,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
   const [name, setName] = useState(initial?.name ?? "");
   const [guardian, setGuardian] = useState(initial?.guardianName ?? "");
   const [relation, setRelation] = useState(initial?.guardianRelation ?? "");
+  const [guardianPhone, setGuardianPhone] = useState(initial?.guardianPhone ?? "");
   const [days, setDays] = useState<number[]>(initial?.scheduleDays ?? []);
   const [grade, setGrade] = useState<string | null>(initial?.careGrade ?? null);
   const [careNo, setCareNo] = useState(initial?.careRegistrationNumber ?? "");
@@ -33,7 +34,12 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       className="flex flex-col gap-5"
       onSubmit={(e) => {
         e.preventDefault();
-        router.push(initial ? `/v1120/client/${initial.id}` : "/v1120/clients");
+        if (initial) router.push(`/v1120/client/${initial.id}`);
+        // 새로 등록하면 바로 보호자 대화방 초대 화면으로
+        else
+          router.push(
+            `/v1120/client/new/invite?name=${encodeURIComponent(name)}&guardian=${encodeURIComponent(guardian)}&phone=${encodeURIComponent(guardianPhone)}`,
+          );
       }}
     >
       <Field label="수급자 이름 (필수)" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
@@ -106,10 +112,19 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         </div>
       </fieldset>
 
+      <Field
+        label="보호자 전화번호"
+        inputMode="tel"
+        value={guardianPhone}
+        onChange={(e) => setGuardianPhone(e.target.value)}
+        placeholder="예: 010-0000-0000"
+        hint="등록하면 이 번호로 보호자님을 대화방에 초대할 수 있어요."
+      />
+
       <Field label="알레르기" defaultValue={initial?.allergies ?? ""} placeholder="없으면 비워 두세요" />
       <Field label="병력" defaultValue={initial?.medicalHistory ?? ""} placeholder="예: 고혈압" />
       <Field label="복용 중인 약" defaultValue={initial?.medicationNotes ?? ""} placeholder="예: 혈압약(아침)" />
-      <Field label="연락처" inputMode="tel" defaultValue={initial?.phone ?? ""} />
+      <Field label="수급자 전화번호" inputMode="tel" defaultValue={initial?.phone ?? ""} placeholder="예: 010-0000-0000" />
 
       <p className="text-base text-muted">1120.ver 미리보기에서는 저장되지 않아요.</p>
       <Button type="submit" disabled={!!missing} disabledReason={missing ?? undefined}>

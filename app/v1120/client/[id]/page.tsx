@@ -14,9 +14,10 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
     ["알레르기", c.allergies],
     ["병력", c.medicalHistory],
     ["복용 중인 약", c.medicationNotes],
-    ["보호자", `${c.guardianName} (${c.guardianRelation})`],
     ["장기요양인정번호", c.careRegistrationNumber],
-    ["연락처", c.phone],
+    ["수급자 전화번호", c.phone],
+    ["보호자", `${c.guardianName} (${c.guardianRelation})`],
+    ["보호자 전화번호", c.guardianPhone],
   ];
 
   return (
@@ -37,6 +38,15 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
         <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
           <p className="text-base font-bold">꼭 기억할 것</p>
           <p className="text-lg">{c.personalNotes}</p>
+        </div>
+      )}
+
+      {!c.guardianJoined && (
+        <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
+          <p className="text-lg font-bold">{c.guardianName} 보호자님이 아직 대화방에 들어오지 않았어요</p>
+          <LinkButton href={`/v1120/client/${c.id}/invite`} className="!h-14">
+            보호자 대화방 초대하기
+          </LinkButton>
         </div>
       )}
 

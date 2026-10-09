@@ -71,9 +71,11 @@ export type ClientProfile = {
   personalNotes: string | null;
   guardianName: string;
   guardianRelation: string;
+  guardianPhone: string | null; // 보호자 전화번호 (대화방 초대 문자에 씀)
+  guardianJoined: boolean; // 보호자가 대화방에 들어왔는지
   careRegistrationNumber: string | null;
   careGrade: CareGrade | null; // 장기요양등급 (LAW-4)
-  phone: string | null;
+  phone: string | null; // 수급자 전화번호
   scheduleLabel: string;
   scheduleDays: number[]; // 0=일 … 6=토
   isActive: boolean;

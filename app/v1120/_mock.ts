@@ -75,22 +75,22 @@ export const clients: ClientProfile[] = [
   {
     id: "c-hong", name: "홍길순", age: 82, gender: "여", allergies: "없음", medicalHistory: "고혈압, 무릎 관절염",
     medicationNotes: "혈압약(아침), 당뇨약(아침·저녁)", personalNotes: "오른쪽 무릎이 자주 아프심. 계단 이동 때 부축",
-    guardianName: "김○○", guardianRelation: "딸", careRegistrationNumber: "L1234567890", careGrade: "3등급", phone: "010-0000-0000",
+    guardianName: "김○○", guardianRelation: "딸", guardianPhone: "010-1111-2222", guardianJoined: true, careRegistrationNumber: "L1234567890", careGrade: "3등급", phone: "010-0000-0000",
     scheduleLabel: "월·수·금 09:00–11:00", scheduleDays: [1, 3, 5], isActive: true,
   },
   {
     id: "c-kim", name: "김영자", age: 79, gender: "여", allergies: "페니실린", medicalHistory: "경도 치매",
-    medicationNotes: "치매약(저녁)", personalNotes: null, guardianName: "박○○", guardianRelation: "아들",
+    medicationNotes: "치매약(저녁)", personalNotes: null, guardianName: "박○○", guardianRelation: "아들", guardianPhone: "010-3333-4444", guardianJoined: false,
     careRegistrationNumber: "L2345678901", careGrade: "5등급", phone: null, scheduleLabel: "화·목 13:00–15:00", scheduleDays: [2, 4], isActive: true,
   },
   {
     id: "c-lee", name: "이복순", age: 88, gender: "여", allergies: null, medicalHistory: "당뇨",
-    medicationNotes: "당뇨약(아침)", personalNotes: "저녁 식사량 확인", guardianName: "이○○", guardianRelation: "아들",
+    medicationNotes: "당뇨약(아침)", personalNotes: "저녁 식사량 확인", guardianName: "이○○", guardianRelation: "아들", guardianPhone: "010-5555-6666", guardianJoined: true,
     careRegistrationNumber: "L3456789012", careGrade: "2등급", phone: null, scheduleLabel: "매일 16:00–17:00", scheduleDays: [0, 1, 2, 3, 4, 5, 6], isActive: true,
   },
   {
     id: "c-choi", name: "최말순", age: 91, gender: "여", allergies: null, medicalHistory: null, medicationNotes: null,
-    personalNotes: null, guardianName: "최○○", guardianRelation: "딸", careRegistrationNumber: "L4567890123", careGrade: "1등급", phone: null,
+    personalNotes: null, guardianName: "최○○", guardianRelation: "딸", guardianPhone: null, guardianJoined: false, careRegistrationNumber: "L4567890123", careGrade: "1등급", phone: null,
     scheduleLabel: "월 10:00–12:00", scheduleDays: [1], isActive: false,
   },
 ];
@@ -147,4 +147,8 @@ export const chatByClient: Record<string, ChatMessage[]> = {
   ],
 };
 
-export const chatTokenToClient: Record<string, string> = { "hong-demo": "c-hong", "lee-demo": "c-lee" };
+export const chatTokenToClient: Record<string, string> = { "hong-demo": "c-hong", "lee-demo": "c-lee", "kim-demo": "c-kim" };
+
+export function chatTokenOf(clientId: string) {
+  return Object.keys(chatTokenToClient).find((t) => chatTokenToClient[t] === clientId) ?? null;
+}

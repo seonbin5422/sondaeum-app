@@ -75,11 +75,11 @@ export const clients: ClientProfile[] = [
   {
     id: "c-lee", name: "이복순", age: 88, gender: "여", allergies: null, medicalHistory: "당뇨",
     medicationNotes: "당뇨약(아침)", personalNotes: "저녁 식사량 확인", guardianName: "이○○", guardianRelation: "아들",
-    careRegistrationNumber: null, careGrade: "2등급", phone: null, scheduleLabel: "매일 16:00–17:00", scheduleDays: [0, 1, 2, 3, 4, 5, 6], isActive: true,
+    careRegistrationNumber: "L3456789012", careGrade: "2등급", phone: null, scheduleLabel: "매일 16:00–17:00", scheduleDays: [0, 1, 2, 3, 4, 5, 6], isActive: true,
   },
   {
     id: "c-choi", name: "최말순", age: 91, gender: "여", allergies: null, medicalHistory: null, medicationNotes: null,
-    personalNotes: null, guardianName: "최○○", guardianRelation: "딸", careRegistrationNumber: null, careGrade: null, phone: null,
+    personalNotes: null, guardianName: "최○○", guardianRelation: "딸", careRegistrationNumber: "L4567890123", careGrade: "1등급", phone: null,
     scheduleLabel: "월 10:00–12:00", scheduleDays: [1], isActive: false,
   },
 ];

@@ -16,8 +16,17 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
   const [relation, setRelation] = useState(initial?.guardianRelation ?? "");
   const [days, setDays] = useState<number[]>(initial?.scheduleDays ?? []);
   const [grade, setGrade] = useState<string | null>(initial?.careGrade ?? null);
+  const [careNo, setCareNo] = useState(initial?.careRegistrationNumber ?? "");
 
-  const missing = !name ? "수급자 이름을 적어 주세요" : !guardian ? "보호자 성함을 적어 주세요" : days.length === 0 ? "방문 요일을 골라 주세요" : null;
+  const missing = !name
+    ? "수급자 이름을 적어 주세요"
+    : !careNo.trim()
+      ? "장기요양인정번호를 적어 주세요"
+      : !guardian
+        ? "보호자 성함을 적어 주세요"
+        : days.length === 0
+          ? "방문 요일을 골라 주세요"
+          : null;
 
   return (
     <form
@@ -27,7 +36,14 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         router.push(initial ? `/v1120/client/${initial.id}` : "/v1120/clients");
       }}
     >
-      <Field label="수급자 이름" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
+      <Field label="수급자 이름 (필수)" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
+      <Field
+        label="장기요양인정번호 (필수)"
+        value={careNo}
+        onChange={(e) => setCareNo(e.target.value)}
+        placeholder="예: L1234567890"
+        hint="장기요양인정서에 적힌 번호예요."
+      />
       <div className="grid grid-cols-2 gap-3">
         <Field label="나이" inputMode="numeric" defaultValue={initial?.age ?? ""} placeholder="예: 82" />
         <Field label="성별" defaultValue={initial?.gender ?? ""} placeholder="여 / 남" />
@@ -52,7 +68,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-lg font-bold">방문 요일</legend>
+        <legend className="mb-2 text-lg font-bold">방문 요일 (필수)</legend>
         <div className="flex gap-1.5">
           {DAYS.map((d, i) => (
             <button
@@ -72,7 +88,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         <Field label="끝 시간" type="time" defaultValue={initial?.scheduleLabel.match(/–(\d\d:\d\d)/)?.[1] ?? "11:00"} />
       </div>
 
-      <Field label="보호자 성함" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
+      <Field label="보호자 성함 (필수)" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-lg font-bold">보호자와 수급자의 관계</legend>
         <div className="flex flex-wrap gap-2">
@@ -93,7 +109,6 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       <Field label="알레르기" defaultValue={initial?.allergies ?? ""} placeholder="없으면 비워 두세요" />
       <Field label="병력" defaultValue={initial?.medicalHistory ?? ""} placeholder="예: 고혈압" />
       <Field label="복용 중인 약" defaultValue={initial?.medicationNotes ?? ""} placeholder="예: 혈압약(아침)" />
-      <Field label="장기요양인정번호" defaultValue={initial?.careRegistrationNumber ?? ""} hint="몰라도 괜찮아요. 나중에 적어도 돼요." />
       <Field label="연락처" inputMode="tel" defaultValue={initial?.phone ?? ""} />
 
       <p className="text-base text-muted">1120.ver 미리보기에서는 저장되지 않아요.</p>

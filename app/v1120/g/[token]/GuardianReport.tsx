@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ReportSections } from "../../_components/ReportView";
 import { loadDraft } from "../../_store";
-import { historyByClient, sampleGuardianReport } from "../../_mock";
+import { findVisit, historyByClient, sampleGuardianReport, visitInfo } from "../../_mock";
 import type { CareRecord } from "../../_types";
 
 // G-01 보호자 보고서 (와이어 263:692). ?order=improved 를 붙이면 개선안(263:822, PR #9 머지 보류) 순서로 본다.
@@ -25,19 +25,30 @@ export function GuardianReport({ token, order }: { token: string; order: "base" 
     ? { ...sampleGuardianReport, startedAt: `${past.date}T${past.start}:00+09:00`, endedAt: `${past.date}T${past.end}:00+09:00`, record: past.record }
     : sampleGuardianReport;
   const [record, setRecord] = useState<CareRecord>(report.record);
+  const [justSent, setJustSent] = useState(false);
 
   useEffect(() => {
     const draft = loadDraft(token);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- use the just-sent draft from this browser if there is one
-    if (draft.sentAt) setRecord(draft.record);
+    if (draft.sentAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- use the just-sent draft from this browser if there is one
+      setRecord(draft.record);
+      setJustSent(true);
+    }
   }, [token]);
+
+  // 방금 보낸 기록이면 그 방문의 수급자 이름과 서비스 시간을 쓴다
+  const visit = findVisit(token);
+  const head =
+    justSent && visit
+      ? { ...report, clientName: visit.clientName, startedAt: visitInfo(token).startedAt, endedAt: visitInfo(token).endedAt }
+      : report;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
       <header className="flex flex-col gap-1">
         <p className="text-base text-muted">안녕하세요, {report.guardianName} 보호자님</p>
-        <h1 className="text-2xl font-bold">{report.clientName} 어르신 방문 보고서</h1>
-        <p className="text-lg text-muted">{formatVisit(report.startedAt, report.endedAt)}</p>
+        <h1 className="text-2xl font-bold">{head.clientName} 어르신 방문 보고서</h1>
+        <p className="text-lg text-muted">{formatVisit(head.startedAt, head.endedAt)}</p>
       </header>
 
       <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">

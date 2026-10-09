@@ -4,7 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { LinkButton, Screen, TopBar } from "../../../_components/ui";
 import { loadDraft, saveDraft } from "../../../_store";
-import { caregiverName, findVisit, saidQuotes, visitTime } from "../../../_mock";
+import { caregiverName, findVisit, visitInfo } from "../../../_mock";
+import type { SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
 import type { CareRecord, Change } from "../../../_types";
 
@@ -103,11 +104,14 @@ export default function ReviewPage() {
   const [r, setR] = useState<CareRecord | null>(null);
   const [tab, setTab] = useState<"check" | "sheet">("check");
   const [flagged, setFlagged] = useState(false);
+  const [said, setSaid] = useState<SaidQuotes | null>(null);
+  const visitTime = visitInfo(id);
 
   useEffect(() => {
     const draft = loadDraft(id);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load the draft from sessionStorage on mount
     setR(draft.record);
+    setSaid(draft.quotes);
     // LAW-7: 학대가 의심되는 말은 보고서에 자동으로 싣지 않고 요양보호사에게 신고 안내
     setFlagged(/때리|때렸|맞았|멍이|욕을|가두|굶겨/.test(draft.transcript));
   }, [id]);
@@ -189,10 +193,10 @@ export default function ReviewPage() {
         <p className="text-xl font-bold">
           {visitTime.start} ~ {visitTime.end} · 총 {visitTime.minutes}분
         </p>
-        <p className="text-base text-muted">출근·퇴근 버튼을 누른 시간이에요.</p>
+        <p className="text-base text-muted">{visitTime.date} · 수급자 일정의 시작·끝 시간이에요.</p>
       </Section>
 
-      <Section title="신체활동지원" hint="한 것을 눌러 주세요." said={saidQuotes.physical} missing={r.physical.minutes === null}>
+      <Section title="신체활동지원" hint="한 것을 눌러 주세요." said={said?.physical ?? undefined} missing={r.physical.minutes === null}>
         <div className="grid grid-cols-3 gap-2">
           {(
             [
@@ -210,7 +214,7 @@ export default function ReviewPage() {
         <NumberRow label="제공시간" unit="분" value={r.physical.minutes} onChange={(v) => set("physical", { minutes: v })} />
       </Section>
 
-      <Section title="인지·정서 지원" said={saidQuotes.cognitive} missing={cogMissing}>
+      <Section title="인지·정서 지원" said={said?.cognitive ?? undefined} missing={cogMissing}>
         {(
           [
             ["stimulation", "인지자극활동"],
@@ -223,7 +227,7 @@ export default function ReviewPage() {
         ))}
       </Section>
 
-      <Section title="가사·일상생활지원" hint="한 것을 눌러 주세요." missing={r.household.minutes === null}>
+      <Section title="가사·일상생활지원" hint="한 것을 눌러 주세요." said={said?.household ?? undefined} missing={r.household.minutes === null}>
         <div className="flex flex-wrap gap-2">
           <Toggle label="식사준비·청소·세탁" on={!!r.household.mealPrepCleaningLaundry} onChange={(v) => set("household", { mealPrepCleaningLaundry: v })} />
           <Toggle label="외출 동행" on={!!r.household.personalActivity} onChange={(v) => set("household", { personalActivity: v })} />
@@ -231,13 +235,13 @@ export default function ReviewPage() {
         <NumberRow label="제공시간" unit="분" value={r.household.minutes} onChange={(v) => set("household", { minutes: v })} />
       </Section>
 
-      <Section title="변화상태" hint="지난 방문과 비교해 골라 주세요." missing={changeMissing}>
+      <Section title="변화상태" hint="지난 방문과 비교해 골라 주세요." said={said?.change ?? undefined} missing={changeMissing}>
         <ChangeRow label="신체기능" value={r.change.physical} onChange={(v) => set("change", { physical: v })} />
         <ChangeRow label="식사기능" value={r.change.meal} onChange={(v) => set("change", { meal: v })} />
         <ChangeRow label="인지기능" value={r.change.cognitive} onChange={(v) => set("change", { cognitive: v })} />
       </Section>
 
-      <Section title="배변 변화" missing={bowelMissing}>
+      <Section title="배변 변화" said={said?.bowel ?? undefined} missing={bowelMissing}>
         <NumberRow label="대변 실수" unit="회" value={r.bowel.stoolAccidents} onChange={(v) => set("bowel", { stoolAccidents: v })} />
         <NumberRow label="소변 실수" unit="회" value={r.bowel.urineAccidents} onChange={(v) => set("bowel", { urineAccidents: v })} />
         <label className="flex min-h-12 items-center gap-3 text-base">
@@ -254,7 +258,7 @@ export default function ReviewPage() {
         )}
       </Section>
 
-      <Section title="특이사항" said={saidQuotes.notes} missing={!r.notes}>
+      <Section title="특이사항" said={said?.notes ?? undefined} missing={!r.notes}>
         <textarea
           className="min-h-24 w-full rounded-xl border border-border p-3 text-lg font-bold"
           value={r.notes ?? ""}

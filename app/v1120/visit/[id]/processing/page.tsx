@@ -3,16 +3,17 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Screen } from "../../../_components/ui";
-import { saveDraft } from "../../../_store";
-import { aiDraftRecord } from "../../../_mock";
+import { loadDraft, saveDraft } from "../../../_store";
+import { extractRecord } from "../../../_extract";
 
-// C-13 AI 처리중. 1120.ver에서는 AI를 부르지 않고 임시 초안을 넣은 뒤 C-14로 넘어간다.
+// C-13 AI 처리중. 1120.ver에서는 AI 대신 _extract.ts가 녹음 내용에서 칸을 채운 뒤 C-14로 넘어간다.
 export default function ProcessingPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
   useEffect(() => {
-    saveDraft(id, { record: structuredClone(aiDraftRecord), sentAt: null });
+    const { record, quotes } = extractRecord(loadDraft(id).transcript);
+    saveDraft(id, { record, quotes, sentAt: null });
     const t = setTimeout(() => router.replace(`/v1120/visit/${id}/review`), 1800);
     return () => clearTimeout(t);
   }, [id, router]);

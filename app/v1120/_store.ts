@@ -4,10 +4,12 @@
 // API 연결 때 이 파일 대신 서버 액션·API 호출을 쓴다.
 import type { CareRecord } from "./_types";
 import { aiDraftRecord } from "./_mock";
+import type { SaidQuotes } from "./_extract";
 
 type VisitDraft = {
   transcript: string;
   record: CareRecord;
+  quotes: SaidQuotes | null; // 항목마다 "내가 한 말"
   sentAt: string | null;
 };
 
@@ -18,7 +20,7 @@ export function loadDraft(visitId: string): VisitDraft {
     const raw = sessionStorage.getItem(key(visitId));
     if (raw) return JSON.parse(raw) as VisitDraft;
   } catch {}
-  return { transcript: "", record: structuredClone(aiDraftRecord), sentAt: null };
+  return { transcript: "", record: structuredClone(aiDraftRecord), quotes: null, sentAt: null };
 }
 
 export function saveDraft(visitId: string, patch: Partial<VisitDraft>) {

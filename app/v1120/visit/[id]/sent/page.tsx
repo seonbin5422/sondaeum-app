@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { LinkButton, Screen } from "../../../_components/ui";
-import { findVisit, guardianName, visitTime } from "../../../_mock";
+import { findVisit, guardianName, visitInfo } from "../../../_mock";
 
 // C-16 보호자에게 보내기 (와이어 263:334). ① 저장 완료 → ② 카카오톡으로 보내기, 보낸 뒤 누구에게 언제 보냈는지 초록으로.
 
@@ -15,6 +15,7 @@ function formatSent(d: Date) {
 export default function SentPage() {
   const { id } = useParams<{ id: string }>();
   const visit = findVisit(id);
+  const visitTime = visitInfo(id);
   const [sharedAt, setSharedAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
   const [link, setLink] = useState("");

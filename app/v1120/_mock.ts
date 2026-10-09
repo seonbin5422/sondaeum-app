@@ -45,17 +45,28 @@ export const aiDraftRecord: CareRecord = {
   notes: "오후에 오른쪽 무릎이 아프다고 하심. 혈압 128/82, 점심 약 드심.",
 };
 
-// 항목마다 보여 줄 "내가 한 말" (AI가 근거로 쓴 문장). 개발 1의 aiRawJson 항목별 근거로 바꾼다.
-export const saidQuotes = {
-  physical: "세수 도와드리고, 점심 다 드시게 도와드렸어요. 산책 다녀왔어요",
-  cognitive: "옛날 사진 보면서 20분 이야기했어요",
-  notes: "오후에 무릎 아프다고 하셨어요. 혈압은 128에 82",
-};
-
 export const sampleTranscript =
-  "아침에 세면하고 옷 갈아입는 거 도와드렸어요. 식사는 죽 반 그릇 드셨고, 말벗은 30분 정도 했어요.";
+  "아침에 세수하고 옷 갈아입는 거 도와드렸어요. 점심은 죽 반 그릇 드셨어요. 세면이랑 식사 도와드리는 데 40분 걸렸어요. 옛날 사진 보면서 말벗 30분 했어요. 설거지랑 빨래 20분 했어요. 소변 실수 한 번 있었고 대변 실수는 없었어요. 지난번보다 식사량이 줄었어요. 혈압은 135에 85였고 아침 약 드셨어요.";
 
-export const visitTime = { date: "10월 6일", start: "09:00", end: "12:00", minutes: 180 };
+// 오늘 방문의 서비스 시간: 그 수급자 일정(scheduleLabel의 시작·끝)과 오늘 날짜로 계산한다.
+// 실제로는 출근·퇴근 버튼을 누른 시각(Visit.startedAt·endedAt)을 쓴다.
+export const TODAY_ISO = "2026-10-09";
+const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
+export function visitInfo(visitId: string) {
+  const v = findVisit(visitId);
+  const m = v?.scheduleLabel.match(/(\d\d):(\d\d)–(\d\d):(\d\d)/);
+  const [sh, sm, eh, em] = m ? m.slice(1).map(Number) : [9, 0, 11, 0];
+  const d = new Date(`${TODAY_ISO}T12:00:00+09:00`);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    date: `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAY[d.getDay()]})`,
+    start: `${pad(sh)}:${pad(sm)}`,
+    end: `${pad(eh)}:${pad(em)}`,
+    minutes: eh * 60 + em - (sh * 60 + sm),
+    startedAt: `${TODAY_ISO}T${pad(sh)}:${pad(sm)}:00+09:00`,
+    endedAt: `${TODAY_ISO}T${pad(eh)}:${pad(em)}:00+09:00`,
+  };
+}
 
 
 export const caregiverLicense = "2019-서울-012345";

@@ -53,7 +53,7 @@ export default function SentPage() {
           기록 저장 완료
         </p>
         <p className="text-base">
-          {visit?.clientName} 어르신 {visitTime.date} 기록을 저장했어요.
+          {visit?.clientName} 수급자 {visitTime.date} 기록을 저장했어요.
         </p>
       </section>
 

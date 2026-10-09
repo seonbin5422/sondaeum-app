@@ -63,7 +63,7 @@ export function RecordScreen({ visitId, clientName }: { visitId: string; clientN
         transcript && <Button onClick={finish}>다 말했어요: AI로 정리하기</Button>
       }
     >
-      <TopBar backHref="/v1120" title={`${clientName} 어르신 기록`} />
+      <TopBar backHref="/v1120" title={`${clientName} 수급자 기록`} />
 
       <p className="text-xl font-bold">
         {speech.recording ? "듣고 있어요. 편하게 계속 말씀하세요." : "오늘 돌봄 내용을 편하게 말씀해 주세요."}

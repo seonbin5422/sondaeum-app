@@ -4,7 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { LinkButton, Screen, TopBar } from "../../../_components/ui";
 import { loadDraft, saveDraft } from "../../../_store";
-import { saidQuotes, visitTime } from "../../../_mock";
+import { caregiverName, findVisit, saidQuotes, visitTime } from "../../../_mock";
+import { CareSheet } from "../../../_components/CareSheet";
 import type { CareRecord, Change } from "../../../_types";
 
 // C-14 기록 확인 (와이어 263:171). 말하지 않은 칸은 비워 두고 "확인 필요", 그 자리에서 바로 채운다.
@@ -100,10 +101,15 @@ export default function ReviewPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [r, setR] = useState<CareRecord | null>(null);
+  const [tab, setTab] = useState<"check" | "sheet">("check");
+  const [flagged, setFlagged] = useState(false);
 
   useEffect(() => {
+    const draft = loadDraft(id);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load the draft from sessionStorage on mount
-    setR(loadDraft(id).record);
+    setR(draft.record);
+    // LAW-7: 학대가 의심되는 말은 보고서에 자동으로 싣지 않고 요양보호사에게 신고 안내
+    setFlagged(/때리|때렸|맞았|멍이|욕을|가두|굶겨/.test(draft.transcript));
   }, [id]);
 
   if (!r) return null;
@@ -133,6 +139,47 @@ export default function ReviewPage() {
     >
       <TopBar backHref={`/v1120/visit/${id}/record`} title="기록 확인" />
 
+      <div role="tablist" className="grid grid-cols-2 rounded-xl bg-(--neutral-soft) p-1">
+        {(
+          [
+            ["check", "기록 확인"],
+            ["sheet", "급여제공기록지"],
+          ] as const
+        ).map(([k, l]) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={tab === k}
+            onClick={() => setTab(k)}
+            className={`min-h-12 rounded-lg text-base font-bold ${tab === k ? "bg-white shadow-sm" : "text-muted"}`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {flagged && (
+        <div className="flex flex-col gap-1 rounded-xl bg-(--danger-soft) px-4 py-3 text-(--danger)">
+          <p className="text-lg font-bold">보호자 보고서에 싣지 않은 말이 있어요</p>
+          <p className="text-base text-foreground">
+            학대가 의심되는 말은 자동으로 보내지 않아요. 걱정되면 기관에 먼저 알리고, 노인보호전문기관(1577-1389)에 신고할 수 있어요.
+          </p>
+        </div>
+      )}
+
+      {tab === "sheet" ? (
+        <>
+          <p className="text-base text-muted">오늘 기록을 기관 서식 순서로 본 화면이에요. 여기서 고친 값은 기록 확인 탭과 같아요.</p>
+          <CareSheet
+            record={r}
+            date={visitTime.date}
+            time={`${visitTime.start}~${visitTime.end}`}
+            clientName={findVisit(id)?.clientName ?? ""}
+            caregiverName={caregiverName}
+          />
+        </>
+      ) : (
+      <>
       <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
         <p className="text-lg font-bold">AI가 급여제공기록지에 맞춰 적었어요</p>
         <p className="text-base">&quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. 비워 두었으니 채워 주세요.</p>
@@ -215,6 +262,9 @@ export default function ReviewPage() {
           onChange={(e) => update({ ...r, notes: e.target.value || null })}
         />
       </Section>
+
+      </>
+      )}
 
       <LinkButton href="/v1120" variant="secondary">
         나중에 하기 (홈으로)

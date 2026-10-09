@@ -56,3 +56,42 @@ export type GuardianReportProps = {
   endedAt: string;
   record: CareRecord;
 };
+
+export const CARE_GRADES = ["1등급", "2등급", "3등급", "4등급", "5등급", "인지지원등급"] as const;
+export type CareGrade = (typeof CARE_GRADES)[number];
+
+export type ClientProfile = {
+  id: string;
+  name: string;
+  age: number | null;
+  gender: string | null;
+  allergies: string | null;
+  medicalHistory: string | null;
+  medicationNotes: string | null;
+  personalNotes: string | null;
+  guardianName: string;
+  guardianRelation: string;
+  careRegistrationNumber: string | null;
+  careGrade: CareGrade | null; // 장기요양등급 (LAW-4)
+  phone: string | null;
+  scheduleLabel: string;
+  scheduleDays: number[]; // 0=일 … 6=토
+  isActive: boolean;
+};
+
+export type HistoryVisit = {
+  visitId: string;
+  date: string; // YYYY-MM-DD
+  start: string;
+  end: string;
+  status: VisitStatus;
+  record: CareRecord;
+};
+
+export type ChatMessage = {
+  id: string;
+  from: "caregiver" | "guardian";
+  at: string; // ISO
+  text?: string;
+  report?: { visitId: string; title: string };
+};

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ReportSections } from "../../_components/ReportView";
 import { loadDraft } from "../../_store";
-import { sampleGuardianReport } from "../../_mock";
+import { historyByClient, sampleGuardianReport } from "../../_mock";
 import type { CareRecord } from "../../_types";
 
 // G-01 보호자 보고서 (와이어 263:692). ?order=improved 를 붙이면 개선안(263:822, PR #9 머지 보류) 순서로 본다.
@@ -19,7 +19,11 @@ function formatVisit(startIso: string, endIso: string) {
 }
 
 export function GuardianReport({ token, order }: { token: string; order: "base" | "improved" }) {
-  const report = sampleGuardianReport;
+  // 이력(C-22)·대화방 카드에서 열면 그 날짜 기록을, 아니면 예시 보고서를 보여 준다
+  const past = Object.values(historyByClient).flat().find((v) => v.visitId === token);
+  const report = past
+    ? { ...sampleGuardianReport, startedAt: `${past.date}T${past.start}:00+09:00`, endedAt: `${past.date}T${past.end}:00+09:00`, record: past.record }
+    : sampleGuardianReport;
   const [record, setRecord] = useState<CareRecord>(report.record);
 
   useEffect(() => {

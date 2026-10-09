@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import type { VisitStatus } from "../_types";
+import { BottomNav } from "./BottomNav";
 
 // 1120.ver 공용 컴포넌트. 기준: 본문 18px, 터치 48px 이상, 아이콘만 있는 버튼 없음, 비활성 버튼에는 이유 한 줄.
 
@@ -61,13 +62,20 @@ export function SmallLinkButton({ href, children }: { href: string; children: Re
   );
 }
 
-export function Screen({ children, bottom }: { children: ReactNode; bottom?: ReactNode }) {
+// nav: 하단 메뉴바(홈·수급자·대화·내 정보)를 붙인다. 기록 흐름·보호자 화면에는 붙이지 않는다.
+export function Screen({ children, bottom, nav = false }: { children: ReactNode; bottom?: ReactNode; nav?: boolean }) {
+  const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
   return (
-    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 ${bottom ? "pb-40" : ""}`}>
+    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 ${pad}`}>
       {children}
-      {bottom && (
-        <div className="fixed inset-x-0 bottom-0 bg-gradient-to-t from-white via-white to-white/0 pt-6">
-          <div className="mx-auto flex w-full max-w-md flex-col gap-3 p-6 pt-0">{bottom}</div>
+      {(bottom || nav) && (
+        <div className="fixed inset-x-0 bottom-0 z-10">
+          {bottom && (
+            <div className="bg-gradient-to-t from-white via-white to-white/0 pt-6">
+              <div className="mx-auto flex w-full max-w-md flex-col gap-3 p-6 pt-0">{bottom}</div>
+            </div>
+          )}
+          {nav && <BottomNav />}
         </div>
       )}
     </main>
@@ -129,4 +137,25 @@ export function Avatar({ name }: { name: string }) {
       {name.slice(0, 1)}
     </span>
   );
+}
+
+export function Field({
+  label,
+  hint,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-lg font-bold">{label}</span>
+      <input
+        className="h-14 rounded-[15px] border border-border px-4 text-lg placeholder:text-muted focus:border-accent focus:outline-none"
+        {...props}
+      />
+      {hint && <span className="text-base text-muted">{hint}</span>}
+    </label>
+  );
+}
+
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return <h2 className="text-lg font-bold">{children}</h2>;
 }

@@ -1,12 +1,14 @@
 import Image from "next/image";
-import { caregiverName, todayVisits } from "./_mock";
+import Link from "next/link";
+import { caregiverName, todayVisits, unreadByClient } from "./_mock";
+import { ScheduleSheet } from "./_components/ScheduleSheet";
 import type { TodayVisit } from "./_types";
-import { Avatar, Card, Chip, LinkButton, Screen, SmallLinkButton, StatusBadge } from "./_components/ui";
+import { Avatar, Card, Chip, LinkButton, Screen, StatusBadge } from "./_components/ui";
 
 // C-03 홈: 오늘의 돌봄 (와이어 263:397)
 export default function HomePage() {
   return (
-    <Screen bottom={<LinkButton href="/v1120/client/new">+ 어르신 등록하기</LinkButton>}>
+    <Screen nav bottom={<LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}>
       <Image src="/brand/logo-full.svg" alt="손다음" width={96} height={32} priority />
 
       <header className="flex items-end justify-between gap-3">
@@ -14,7 +16,7 @@ export default function HomePage() {
           <p className="text-lg text-muted">{caregiverName} 요양보호사님,</p>
           <h1 className="text-2xl font-bold">오늘 돌봄 {todayVisits.length}건이에요</h1>
         </div>
-        <SmallLinkButton href="/v1120/schedule">일정 보기</SmallLinkButton>
+        <ScheduleSheet />
       </header>
 
       <ul className="flex flex-col gap-4">
@@ -36,12 +38,22 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
         <Avatar name={visit.clientName} />
         <div className="flex flex-col items-start gap-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold">{visit.clientName} 어르신</h2>
+            <h2 className="text-lg font-bold">{visit.clientName} 수급자</h2>
             <StatusBadge status={visit.status} />
           </div>
           <Chip>{visit.scheduleLabel}</Chip>
         </div>
       </div>
+
+      {(unreadByClient[visit.clientId] ?? 0) > 0 && (
+        <Link
+          href={`/v1120/chats/${visit.clientId}`}
+          className="flex min-h-12 items-center justify-between rounded-xl border border-(--line) px-4 text-base font-bold"
+        >
+          <span>✉ 보호자님 새 메시지 {unreadByClient[visit.clientId]}개</span>
+          <span className="text-muted">대화 보기 ›</span>
+        </Link>
+      )}
 
       {visit.interrupted && (
         <>

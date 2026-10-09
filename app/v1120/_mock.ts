@@ -1,5 +1,5 @@
 // 1120.ver 화면용 임시 데이터. DB에 쓰지 않는다. API 연결 때 page.tsx의 조회로 바꾼다.
-import type { CareRecord, GuardianReportProps, TodayVisit } from "./_types";
+import type { CareRecord, ChatMessage, ClientProfile, GuardianReportProps, HistoryVisit, TodayVisit } from "./_types";
 
 export const caregiverName = "박현우";
 
@@ -56,3 +56,84 @@ export const sampleTranscript =
   "아침에 세면하고 옷 갈아입는 거 도와드렸어요. 식사는 죽 반 그릇 드셨고, 말벗은 30분 정도 했어요.";
 
 export const visitTime = { date: "10월 6일", start: "09:00", end: "12:00", minutes: 180 };
+
+
+export const caregiverLicense = "2019-서울-012345";
+
+export const clients: ClientProfile[] = [
+  {
+    id: "c-hong", name: "홍길순", age: 82, gender: "여", allergies: "없음", medicalHistory: "고혈압, 무릎 관절염",
+    medicationNotes: "혈압약(아침), 당뇨약(아침·저녁)", personalNotes: "오른쪽 무릎이 자주 아프심. 계단 이동 때 부축",
+    guardianName: "김○○", guardianRelation: "딸", careRegistrationNumber: "L1234567890", careGrade: "3등급", phone: "010-0000-0000",
+    scheduleLabel: "월·수·금 09:00–11:00", scheduleDays: [1, 3, 5], isActive: true,
+  },
+  {
+    id: "c-kim", name: "김영자", age: 79, gender: "여", allergies: "페니실린", medicalHistory: "경도 치매",
+    medicationNotes: "치매약(저녁)", personalNotes: null, guardianName: "박○○", guardianRelation: "아들",
+    careRegistrationNumber: "L2345678901", careGrade: "5등급", phone: null, scheduleLabel: "화·목 13:00–15:00", scheduleDays: [2, 4], isActive: true,
+  },
+  {
+    id: "c-lee", name: "이복순", age: 88, gender: "여", allergies: null, medicalHistory: "당뇨",
+    medicationNotes: "당뇨약(아침)", personalNotes: "저녁 식사량 확인", guardianName: "이○○", guardianRelation: "아들",
+    careRegistrationNumber: null, careGrade: "2등급", phone: null, scheduleLabel: "매일 16:00–17:00", scheduleDays: [0, 1, 2, 3, 4, 5, 6], isActive: true,
+  },
+  {
+    id: "c-choi", name: "최말순", age: 91, gender: "여", allergies: null, medicalHistory: null, medicationNotes: null,
+    personalNotes: null, guardianName: "최○○", guardianRelation: "딸", careRegistrationNumber: null, careGrade: null, phone: null,
+    scheduleLabel: "월 10:00–12:00", scheduleDays: [1], isActive: false,
+  },
+];
+
+export function findClient(id: string) {
+  return clients.find((c) => c.id === id) ?? null;
+}
+
+export const unreadByClient: Record<string, number> = { "c-hong": 2, "c-kim": 0, "c-lee": 1 };
+
+// 홍길순 수급자 지난 한 달 방문 (9/9 ~ 10/9, 월·수·금). 진료 참고용 요약·이력 화면이 쓴다.
+function makeHistory(): HistoryVisit[] {
+  const out: HistoryVisit[] = [];
+  const special: Record<string, Partial<CareRecord>> = {
+    "2026-10-07": { change: { physical: "same", meal: "worse", cognitive: "same" }, bowel: { stoolAccidents: 0, urineAccidents: 2, diaperChanges: null }, notes: "점심을 반만 드셨어요. 혈압 142/90." },
+    "2026-10-05": { change: { physical: "worse", meal: "same", cognitive: "same" }, bowel: { stoolAccidents: 0, urineAccidents: 1, diaperChanges: null }, notes: "오른쪽 무릎이 아프다고 하셨어요. 혈압 128/82." },
+    "2026-10-02": { change: { physical: "same", meal: "same", cognitive: "same" }, bowel: { stoolAccidents: 1, urineAccidents: 0, diaperChanges: null }, notes: null },
+    "2026-09-30": { change: { physical: "same", meal: "improved", cognitive: "same" }, bowel: { stoolAccidents: 0, urineAccidents: 1, diaperChanges: null }, notes: "밤에 두 번 깨셨다고 하셨어요." },
+  };
+  for (let d = new Date("2026-09-09T12:00:00+09:00"); d <= new Date("2026-10-09T12:00:00+09:00"); d.setDate(d.getDate() + 1)) {
+    if (![1, 3, 5].includes(d.getDay())) continue;
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const base: CareRecord = {
+      ...structuredClone(sampleRecord),
+      change: { physical: "same", meal: "same", cognitive: "same" },
+      bowel: { stoolAccidents: 0, urineAccidents: 0, diaperChanges: null },
+      notes: null,
+      ...structuredClone(special[date] ?? {}),
+    };
+    out.push({ visitId: `h-${date}`, date, start: "09:00", end: "11:00", status: date === "2026-10-09" ? "RECORDING" : "SENT", record: base });
+  }
+  return out.reverse(); // 최근 것부터
+}
+
+export const historyByClient: Record<string, HistoryVisit[]> = { "c-hong": makeHistory() };
+
+export function historyOf(clientId: string) {
+  return historyByClient[clientId] ?? [];
+}
+
+export const chatByClient: Record<string, ChatMessage[]> = {
+  "c-hong": [
+    { id: "m1", from: "caregiver", at: "2026-10-05T12:05:00+09:00", report: { visitId: "h-2026-10-05", title: "10월 5일 방문 보고서" } },
+    { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?" },
+    { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요." },
+    { id: "m4", from: "caregiver", at: "2026-10-07T12:02:00+09:00", report: { visitId: "h-2026-10-07", title: "10월 7일 방문 보고서" } },
+    { id: "m5", from: "guardian", at: "2026-10-07T20:41:00+09:00", text: "식사를 반만 드셨네요. 내일 반찬을 좀 보낼게요." },
+    { id: "m6", from: "guardian", at: "2026-10-07T20:42:00+09:00", text: "감사합니다." },
+  ],
+  "c-kim": [],
+  "c-lee": [
+    { id: "l1", from: "caregiver", at: "2026-10-08T17:05:00+09:00", report: { visitId: "v-lee", title: "10월 8일 방문 보고서" } },
+    { id: "l2", from: "guardian", at: "2026-10-08T21:00:00+09:00", text: "저녁은 잘 드셨나요?" },
+  ],
+};
+
+export const chatTokenToClient: Record<string, string> = { "hong-demo": "c-hong", "lee-demo": "c-lee" };

@@ -46,6 +46,7 @@
 - 표에 없던 화면: 대화 탭 목록(`/v1120/chats`), 보고서 모아보기(`/v1120/chats/[clientId]/reports`, 보호자 `/v1120/c/[token]/reports`), 내 정보 탭(C-06 대신), 개인정보 처리방침(`/v1120/privacy`, LAW-12), 서류 · 급여제공기록지 결과(`/v1120/client/[id]/documents/care-sheet`)
 - C-05 수급자 정보는 모달이 아니라 수급자 탭의 화면(`/v1120/client/[id]`), C-09는 수급자 탭에 합침
 - 요양보호사 화면 호칭은 "수급자", 보호자 화면은 "어르신" (D-31)
+- 접근성 버전 와이어: Figma wireframe-1120 페이지의 ["접근성 버전 (WCAG 2.1 AA)" 줄](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=359-942)과 [기준·색 대비표](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=361-4). 색은 브랜드 귤색 `#ffb133`을 유지하되 다시 검토 예정 (10/9)
 
 ## 화면 흐름
 

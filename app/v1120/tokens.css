@@ -1,0 +1,15 @@
+/* 1120.ver 토큰. app/v1120 안에서만 쓴다. 값은 디자인 트랙 10/6 디자인 시스템 수정안 기준 */
+.v1120 {
+  --muted: #5c5c5c;
+  --border: #8c8c8c;
+  --line: #e3e3e3;
+  --neutral-soft: #f4f4f4;
+  --danger: #c2301a;
+  --danger-soft: #fdecea;
+  --success: #1e7846;
+  --success-soft: #e8f5ee;
+  --memo: #fff6c7;
+
+  font-size: 18px;
+  line-height: 1.6;
+}

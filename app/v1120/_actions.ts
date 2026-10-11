@@ -186,3 +186,13 @@ export async function sendReport(visitId: string) {
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
   redirect(`/v1120/visit/${visitId}/sent`);
 }
+
+// C-06 내 정보 고치기
+export async function updateMe(form: FormData) {
+  const caregiver = await requireCaregiver();
+  const name = text(form, "name");
+  const licenseNumber = text(form, "licenseNumber");
+  if (!name || !licenseNumber) throw new Error("이름과 자격번호를 적어 주세요.");
+  await prisma.caregiver.update({ where: { id: caregiver.id }, data: { name, licenseNumber } });
+  redirect("/v1120/me");
+}

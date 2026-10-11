@@ -7,7 +7,7 @@ import { Avatar, Screen } from "../_components/ui";
 export default async function MePage() {
   const { name: caregiverName, licenseNumber: caregiverLicense } = await requireCaregiver();
   const links: [string, string][] = [
-    ["내 정보 고치기", "/v1120/onboarding"],
+    ["내 정보 고치기", "/v1120/me/edit"],
     ["동의한 내용 보기", "/v1120/onboarding/consent"],
     ["개인정보 처리방침", "/v1120/privacy"],
   ];

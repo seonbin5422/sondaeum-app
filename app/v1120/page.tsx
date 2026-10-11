@@ -51,14 +51,12 @@ export default async function HomePage() {
 
 function VisitCard({ visit }: { visit: TodayVisit }) {
   const start = startVisit.bind(null, visit.clientId);
-  // 상태마다 다음 할 일 버튼. 보낸 뒤에는 없다
+  // 상태마다 다음 할 일 버튼. 보낸 뒤에는 "전송 완료"(누르면 보낸 화면에서 링크를 다시 보낼 수 있음)
   const action = visit.interrupted
     ? "이어서 기록하기"
     : visit.status === "NOT_STARTED" || visit.status === "RECORDING"
       ? "기록하기"
-      : visit.status === "SENT"
-        ? null
-        : "기록 확인하고 보내기";
+      : "기록 확인하고 보내기";
   return (
     <Card>
       <div className="flex items-center gap-4">
@@ -81,11 +79,15 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
       )}
 
       {/* 정보 수정은 방문 상태와 상관없이 늘 보인다 */}
-      <div className={`grid gap-2 ${action ? "grid-cols-2" : "grid-cols-1"}`}>
+      <div className="grid grid-cols-2 gap-2">
         <LinkButton href={`/v1120/client/${visit.clientId}/edit`} variant="secondary">
           정보 수정
         </LinkButton>
-        {action && (
+        {visit.status === "SENT" ? (
+          <LinkButton href={`/v1120/visit/${visit.visitId}/sent`} variant="secondary">
+            ✓ 전송 완료
+          </LinkButton>
+        ) : (
           <form action={start} className="flex">
             <Button type="submit">{action}</Button>
           </form>

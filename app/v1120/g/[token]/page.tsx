@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { decryptText } from "@/lib/crypto";
+import { serviceTimeOf } from "../../_data";
 import type { CareRecord, GuardianReportProps } from "../../_types";
 import { GuardianReport } from "./GuardianReport";
 
@@ -12,12 +13,13 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
   });
   const { visit } = r ?? {};
   if (!r?.sentAt || !r.careRecord || !visit || !visit.client.isActive || visit.client.purgeAt) return null;
+  const time = serviceTimeOf(visit.client.scheduleLabel, visit.startedAt ?? visit.createdAt);
   return {
     guardianName: visit.client.guardianName,
     clientName: visit.client.name,
     caregiverName: visit.caregiver.name,
-    startedAt: (visit.startedAt ?? r.sentAt).toISOString(),
-    endedAt: (visit.endedAt ?? r.sentAt).toISOString(),
+    startedAt: time.startedAt,
+    endedAt: time.endedAt,
     record: JSON.parse(decryptText(r.careRecord)) as CareRecord,
   };
 }

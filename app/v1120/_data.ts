@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionCaregiverId } from "@/lib/session";
 import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
-import { WEEKDAY_LABELS, parseScheduleDays } from "@/lib/schedule";
+import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, safeDecryptText } from "@/lib/crypto";
 import type { CareGrade, CareRecord, ClientProfile } from "./_types";
@@ -80,20 +80,23 @@ export function kstWeekday(d = new Date()) {
   return WEEKDAY_LABELS.indexOf(new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: KST }).format(d));
 }
 
-// 서비스 시간 (D-24: Visit.startedAt·endedAt에서 계산). 아직 안 끝났으면 지금까지
-export function visitTimeOf(startedAt: Date | null, endedAt: Date | null) {
-  const s = startedAt ?? new Date();
-  const e = endedAt ?? new Date();
-  const hm = (d: Date) => new Intl.DateTimeFormat("ko-KR", { timeZone: KST, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
-  const md = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, month: "numeric", day: "numeric" }).formatToParts(s);
+// 서비스 시간 = 수급자를 등록할 때 정한 계약 시간(scheduleLabel의 시작~끝)을 방문한 날에 놓은 것.
+// 기록을 시작·끝낸 시각(Visit.startedAt·endedAt)과 다르다 (D-37)
+export function serviceTimeOf(scheduleLabel: string | null, visitDay: Date) {
+  const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: KST }).format(visitDay);
+  const [start, end] = (getScheduleTimeRange(scheduleLabel) || "").split("-");
+  // 계약 시간이 없는 옛 수급자는 시간을 비워 둔다
+  const s = start ? new Date(`${ymd}T${start.padStart(5, "0")}:00+09:00`) : null;
+  const e = end ? new Date(`${ymd}T${end.padStart(5, "0")}:00+09:00`) : null;
+  const md = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, month: "numeric", day: "numeric" }).formatToParts(visitDay);
   const part = (t: string) => md.find((p) => p.type === t)?.value;
   return {
-    date: `${part("month")}월 ${part("day")}일 (${WEEKDAY_LABELS[kstWeekday(s)]})`,
-    start: hm(s),
-    end: hm(e),
-    minutes: Math.max(0, Math.round((e.getTime() - s.getTime()) / 60000)),
-    startedAt: s.toISOString(),
-    endedAt: e.toISOString(),
+    date: `${part("month")}월 ${part("day")}일 (${WEEKDAY_LABELS[kstWeekday(visitDay)]})`,
+    start: start ?? "--:--",
+    end: end ?? "--:--",
+    minutes: s && e ? Math.max(0, Math.round((e.getTime() - s.getTime()) / 60000)) : 0,
+    startedAt: (s ?? visitDay).toISOString(),
+    endedAt: (e ?? visitDay).toISOString(),
   };
 }
 
@@ -137,6 +140,6 @@ export async function myVisit(visitId: string) {
     quotes: json<SaidQuotes>(v.report?.aiRawJson),
     shareToken: v.report?.shareToken ?? null,
     sentAt: v.report?.sentAt ?? null,
-    time: visitTimeOf(v.startedAt, v.endedAt),
+    time: serviceTimeOf(v.client.scheduleLabel, v.startedAt ?? v.createdAt),
   };
 }

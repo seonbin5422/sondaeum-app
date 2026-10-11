@@ -212,7 +212,7 @@ export function ReviewScreen({
         <p className="text-xl font-bold">
           {visitTime.start} ~ {visitTime.end} · 총 {visitTime.minutes}분
         </p>
-        <p className="text-base text-muted">{visitTime.date} · 기록을 시작하고 끝낸 시각이에요.</p>
+        <p className="text-base text-muted">{visitTime.date} · 수급자를 등록할 때 정한 서비스 시간이에요.</p>
       </Section>
 
       <Section title="신체활동지원" hint="한 것을 눌러 주세요." said={said?.physical ?? undefined} missing={r.physical.minutes === null}>

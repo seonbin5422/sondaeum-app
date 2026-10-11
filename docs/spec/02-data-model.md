@@ -128,7 +128,7 @@ type CareRecord = {
 };
 ```
 
-1번 서비스 시간은 따로 저장하지 않고 `Visit.startedAt`·`endedAt`에서 계산한다.
+1번 서비스 시간은 따로 저장하지 않고, 수급자를 등록할 때 정한 계약 시간(`Client.scheduleLabel`의 시작~끝)을 방문한 날에 놓아 계산한다 (`app/v1120/_data.ts`의 `serviceTimeOf`, D-37). `Visit.startedAt`·`endedAt`은 기록을 시작·끝낸 시각이라 서비스 시간이 아니다.
 
 ### 보호자 보고서 화면(G-01)이 받는 값
 

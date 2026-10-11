@@ -51,6 +51,14 @@ export default async function HomePage() {
 
 function VisitCard({ visit }: { visit: TodayVisit }) {
   const start = startVisit.bind(null, visit.clientId);
+  // 상태마다 다음 할 일 버튼. 보낸 뒤에는 없다
+  const action = visit.interrupted
+    ? "이어서 기록하기"
+    : visit.status === "NOT_STARTED" || visit.status === "RECORDING"
+      ? "기록하기"
+      : visit.status === "SENT"
+        ? null
+        : "기록 확인하고 보내기";
   return (
     <Card>
       <div className="flex items-center gap-4">
@@ -67,32 +75,22 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
       <UnreadMessageLink clientId={visit.clientId} />
 
       {visit.interrupted && (
-        <>
-          <p className="rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
-            녹음이 중간에 멈췄어요. 이어서 기록할 수 있어요.
-          </p>
-          <form action={start} className="flex">
-            <Button type="submit">이어서 기록하기</Button>
-          </form>
-        </>
+        <p className="rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
+          녹음이 중간에 멈췄어요. 이어서 기록할 수 있어요.
+        </p>
       )}
 
-      {(visit.status === "RECORDED" || visit.status === "SUMMARIZING" || visit.status === "DRAFT_READY") && (
-        <form action={start} className="flex">
-          <Button type="submit">기록 확인하고 보내기</Button>
-        </form>
-      )}
-
-      {visit.status === "NOT_STARTED" && (
-        <div className="grid grid-cols-2 gap-2">
-          <LinkButton href={`/v1120/client/${visit.clientId}/edit`} variant="secondary">
-            정보 수정
-          </LinkButton>
+      {/* 정보 수정은 방문 상태와 상관없이 늘 보인다 */}
+      <div className={`grid gap-2 ${action ? "grid-cols-2" : "grid-cols-1"}`}>
+        <LinkButton href={`/v1120/client/${visit.clientId}/edit`} variant="secondary">
+          정보 수정
+        </LinkButton>
+        {action && (
           <form action={start} className="flex">
-            <Button type="submit">기록하기</Button>
+            <Button type="submit">{action}</Button>
           </form>
-        </div>
-      )}
+        )}
+      </div>
     </Card>
   );
 }

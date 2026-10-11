@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { CARE_GRADES, type ClientProfile } from "../_types";
+import { saveClient } from "../_actions";
 import { Button, Field } from "./ui";
 
-// C-07 등록 · C-08 수정 공용 폼. 1120.ver 미리보기에서는 저장하지 않고 목록으로 돌아간다.
+// C-07 등록 · C-08 수정 공용 폼. 저장은 서버 액션 saveClient.
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const RELATIONS = ["딸", "아들", "배우자", "직접 입력"];
 
 export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; submitLabel: string }) {
-  const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
   const [guardian, setGuardian] = useState(initial?.guardianName ?? "");
   const [relation, setRelation] = useState(initial?.guardianRelation ?? "");
@@ -30,29 +29,25 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
           : null;
 
   return (
-    <form
-      className="flex flex-col gap-5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (initial) router.push(`/v1120/client/${initial.id}`);
-        // 새로 등록하면 바로 보호자 대화방 초대 화면으로
-        else
-          router.push(
-            `/v1120/client/new/invite?name=${encodeURIComponent(name)}&guardian=${encodeURIComponent(guardian)}&phone=${encodeURIComponent(guardianPhone)}`,
-          );
-      }}
-    >
-      <Field label="수급자 이름 (필수)" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
+    <form className="flex flex-col gap-5" action={saveClient}>
+      {initial && <input type="hidden" name="id" value={initial.id} />}
+      {grade && <input type="hidden" name="careGrade" value={grade} />}
+      {relation && <input type="hidden" name="guardianRelation" value={relation} />}
+      {days.map((d) => (
+        <input key={d} type="hidden" name="days" value={d} />
+      ))}
+      <Field label="수급자 이름 (필수)" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
       <Field
         label="장기요양인정번호 (필수)"
+        name="careRegistrationNumber"
         value={careNo}
         onChange={(e) => setCareNo(e.target.value)}
         placeholder="예: L1234567890"
         hint="장기요양인정서에 적힌 번호예요."
       />
       <div className="grid grid-cols-2 gap-3">
-        <Field label="나이" inputMode="numeric" defaultValue={initial?.age ?? ""} placeholder="예: 82" />
-        <Field label="성별" defaultValue={initial?.gender ?? ""} placeholder="여 / 남" />
+        <Field label="나이" name="age" inputMode="numeric" defaultValue={initial?.age ?? ""} placeholder="예: 82" />
+        <Field label="성별" name="gender" defaultValue={initial?.gender ?? ""} placeholder="여 / 남" />
       </div>
 
       <fieldset className="flex flex-col gap-2">
@@ -90,11 +85,11 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         </div>
       </fieldset>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="시작 시간" type="time" defaultValue={initial?.scheduleLabel.match(/(\d\d:\d\d)–/)?.[1] ?? "09:00"} />
-        <Field label="끝 시간" type="time" defaultValue={initial?.scheduleLabel.match(/–(\d\d:\d\d)/)?.[1] ?? "11:00"} />
+        <Field label="시작 시간" name="start" type="time" required defaultValue={initial?.scheduleLabel.match(/(\d\d:\d\d)–/)?.[1] ?? "09:00"} />
+        <Field label="끝 시간" name="end" type="time" required defaultValue={initial?.scheduleLabel.match(/–(\d\d:\d\d)/)?.[1] ?? "11:00"} />
       </div>
 
-      <Field label="보호자 성함 (필수)" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
+      <Field label="보호자 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-lg font-bold">보호자와 수급자의 관계</legend>
         <div className="flex flex-wrap gap-2">
@@ -114,6 +109,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
 
       <Field
         label="보호자 전화번호"
+        name="guardianPhone"
         inputMode="tel"
         value={guardianPhone}
         onChange={(e) => setGuardianPhone(e.target.value)}
@@ -121,12 +117,11 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         hint="등록하면 이 번호로 보호자님을 대화방에 초대할 수 있어요."
       />
 
-      <Field label="알레르기" defaultValue={initial?.allergies ?? ""} placeholder="없으면 비워 두세요" />
-      <Field label="병력" defaultValue={initial?.medicalHistory ?? ""} placeholder="예: 고혈압" />
-      <Field label="복용 중인 약" defaultValue={initial?.medicationNotes ?? ""} placeholder="예: 혈압약(아침)" />
-      <Field label="수급자 전화번호" inputMode="tel" defaultValue={initial?.phone ?? ""} placeholder="예: 010-0000-0000" />
+      <Field label="알레르기" name="allergies" defaultValue={initial?.allergies ?? ""} placeholder="없으면 비워 두세요" />
+      <Field label="병력" name="medicalHistory" defaultValue={initial?.medicalHistory ?? ""} placeholder="예: 고혈압" />
+      <Field label="복용 중인 약" name="medicationNotes" defaultValue={initial?.medicationNotes ?? ""} placeholder="예: 혈압약(아침)" />
+      <Field label="수급자 전화번호" name="phone" inputMode="tel" defaultValue={initial?.phone ?? ""} placeholder="예: 010-0000-0000" />
 
-      <p className="text-base text-muted">1120.ver 미리보기에서는 저장되지 않아요.</p>
       <Button type="submit" disabled={!!missing} disabledReason={missing ?? undefined}>
         {submitLabel}
       </Button>

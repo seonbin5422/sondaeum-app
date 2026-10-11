@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { clients } from "../_mock";
+import type { ClientProfile } from "../_types";
 
 // C-04 일정 달력 (와이어 278:2). 홈의 "일정 보기"를 누르면 아래에서 올라오는 시트.
-const TODAY = new Date(2026, 9, 9); // 1120.ver 임시 데이터의 "오늘"
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
-function visitsOn(d: Date) {
+function visitsOn(clients: ClientProfile[], d: Date) {
   return clients
     .filter((c) => c.isActive && c.scheduleDays.includes(d.getDay()))
     .map((c) => ({ name: c.name, time: c.scheduleLabel.split(" ").pop() ?? "" }));
 }
 
-export function ScheduleSheet() {
+export function ScheduleSheet({ clients }: { clients: ClientProfile[] }) {
+  const [TODAY] = useState(() => new Date());
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(new Date(TODAY.getFullYear(), TODAY.getMonth(), 1));
   const [picked, setPicked] = useState(TODAY);
@@ -25,7 +25,7 @@ export function ScheduleSheet() {
     ...Array.from({ length: days }, (_, i) => new Date(month.getFullYear(), month.getMonth(), i + 1)),
   ];
   const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  const list = visitsOn(picked);
+  const list = visitsOn(clients, picked);
 
   return (
     <>
@@ -83,8 +83,8 @@ export function ScheduleSheet() {
                     className={`flex h-[60px] flex-col items-center justify-center rounded-xl ${same(d, picked) ? "bg-accent" : ""}`}
                   >
                     <span className="text-lg">{d.getDate()}</span>
-                    {visitsOn(d).length > 0 && (
-                      <span className="text-sm font-bold text-accent-soft-foreground">{visitsOn(d).length}건</span>
+                    {visitsOn(clients, d).length > 0 && (
+                      <span className="text-sm font-bold text-accent-soft-foreground">{visitsOn(clients, d).length}건</span>
                     )}
                   </button>
                 ) : (

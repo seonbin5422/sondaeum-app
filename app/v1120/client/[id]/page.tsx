@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { findClient, historyOf } from "../../_mock";
+import { historyOf } from "../../_mock";
+import { myClient } from "../../_data";
 import { Avatar, Chip, LinkButton, Screen, TopBar } from "../../_components/ui";
 
 // C-05 수급자 정보 (기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면)
 export default async function ClientPage({ params }: PageProps<"/v1120/client/[id]">) {
   const { id } = await params;
-  const c = findClient(id);
+  const c = await myClient(id);
   if (!c) notFound();
   const last = historyOf(id).find((v) => v.status === "SENT");
 
@@ -28,7 +29,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
         <div className="flex flex-col items-start gap-1">
           <h1 className="text-2xl font-bold">{c.name} 수급자</h1>
           <p className="text-lg text-muted">
-            {c.age}세 · {c.gender} · <span className="font-bold text-foreground">장기요양 {c.careGrade ?? "등급 미입력"}</span>
+            {[c.age && `${c.age}세`, c.gender].filter(Boolean).join(" · ")}{(c.age || c.gender) && " · "}<span className="font-bold text-foreground">장기요양 {c.careGrade ?? "등급 미입력"}</span>
           </p>
           <Chip>{c.scheduleLabel}</Chip>
         </div>

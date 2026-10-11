@@ -1,22 +1,32 @@
 import Image from "next/image";
-import { caregiverName, todayVisits } from "./_mock";
+import { myClients, requireCaregiver } from "./_data";
 import { UnreadMessageLink } from "./_components/Unread";
 import { ScheduleSheet } from "./_components/ScheduleSheet";
 import type { TodayVisit } from "./_types";
 import { Avatar, Card, Chip, LinkButton, Screen, StatusBadge } from "./_components/ui";
 
 // C-03 홈: 오늘의 돌봄 (와이어 263:397)
-export default function HomePage() {
+export default async function HomePage() {
+  const caregiver = await requireCaregiver();
+  const clients = await myClients();
+  // 서버(Vercel)는 UTC라서 한국 시간 기준 요일로 센다
+  const today = ["일", "월", "화", "수", "목", "금", "토"].indexOf(
+    new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: "Asia/Seoul" }).format(new Date()),
+  );
+  // shortcut: 방문(Visit) 연결 전이라 오늘 방문 요일인 수급자를 "시작 전"으로 보여 준다, 2단계(방문 기록)에서 실제 방문 상태로 바꾼다
+  const todayVisits: TodayVisit[] = clients
+    .filter((c) => c.isActive && c.scheduleDays.includes(today))
+    .map((c) => ({ visitId: c.id, clientId: c.id, clientName: c.name, scheduleLabel: c.scheduleLabel, status: "NOT_STARTED", interrupted: false }));
   return (
     <Screen nav bottom={<LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}>
       <Image src="/brand/logo-full.svg" alt="손다음" width={96} height={32} priority />
 
       <header className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-lg text-muted">{caregiverName} 요양보호사님,</p>
+          <p className="text-lg text-muted">{caregiver.name} 요양보호사님,</p>
           <h1 className="text-2xl font-bold">오늘 돌봄 {todayVisits.length}건이에요</h1>
         </div>
-        <ScheduleSheet />
+        <ScheduleSheet clients={clients} />
       </header>
 
       <ul className="flex flex-col gap-4">

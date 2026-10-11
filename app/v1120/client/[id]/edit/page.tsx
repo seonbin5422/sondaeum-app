@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
-import { findClient } from "../../../_mock";
+import { myClient } from "../../../_data";
 import { ClientForm } from "../../../_components/ClientForm";
 import { Screen, TopBar } from "../../../_components/ui";
 
 // C-08 수급자 정보 수정
 export default async function EditClientPage({ params }: PageProps<"/v1120/client/[id]/edit">) {
   const { id } = await params;
-  const c = findClient(id);
+  const c = await myClient(id);
   if (!c) notFound();
   return (
     <Screen>

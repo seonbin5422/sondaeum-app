@@ -1,40 +1,25 @@
 import { notFound } from "next/navigation";
-import { caregiverName, chatTokenOf, findClient } from "../../../_mock";
+import { myClient, requireCaregiver } from "../../../_data";
 import { InviteScreen } from "./InviteScreen";
 
-// 보호자 대화방 초대 (와이어 없음, 제안안). 수급자를 등록하면 바로 이 화면으로 오고,
+// 보호자 대화방 초대 (와이어 없음, 제안안). 수급자를 등록하면 바로 이 화면으로 오고(?new=1),
 // 아직 들어오지 않은 보호자에게는 수급자 정보·대화방에서 다시 보낼 수 있다.
 export default async function InvitePage({ params, searchParams }: PageProps<"/v1120/client/[id]/invite">) {
   const { id } = await params;
-  const q = await searchParams;
-  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
-
-  if (id === "new") {
-    const name = one(q.name) || "새 수급자";
-    const guardian = one(q.guardian) || "보호자";
-    return (
-      <InviteScreen
-        justRegistered
-        clientName={name}
-        guardianName={guardian}
-        guardianPhone={one(q.phone) || null}
-        caregiverName={caregiverName}
-        chatPath={`/v1120/c/new-${encodeURIComponent(name)}~${encodeURIComponent(guardian)}`}
-        doneHref="/v1120/clients"
-      />
-    );
-  }
-
-  const c = findClient(id);
+  const { new: justRegistered } = await searchParams;
+  const caregiver = await requireCaregiver();
+  const c = await myClient(id);
   if (!c) notFound();
   return (
     <InviteScreen
+      justRegistered={justRegistered === "1"}
       clientName={c.name}
       guardianName={c.guardianName}
       guardianPhone={c.guardianPhone}
-      caregiverName={caregiverName}
-      chatPath={`/v1120/c/${chatTokenOf(c.id) ?? "kim-demo"}`}
-      doneHref={`/v1120/client/${c.id}`}
+      caregiverName={caregiver.name}
+      // shortcut: 보호자 입장 토큰은 대화방(DIF-5, 개발 1)에서 만든다, 그 전까지 링크는 열리지 않는다
+      chatPath={`/v1120/c/pending-${c.id}`}
+      doneHref={justRegistered === "1" ? "/v1120/clients" : `/v1120/client/${c.id}`}
     />
   );
 }

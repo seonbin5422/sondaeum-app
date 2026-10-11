@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { findClient } from "../../../_mock";
+import { myClient } from "../../../_data";
 import { Screen, TopBar } from "../../../_components/ui";
 import { DeleteSteps } from "./DeleteSteps";
 
@@ -7,12 +7,12 @@ import { DeleteSteps } from "./DeleteSteps";
 export default async function DeleteClientPage({ params, searchParams }: PageProps<"/v1120/client/[id]/delete">) {
   const { id } = await params;
   const { step } = await searchParams;
-  const c = findClient(id);
+  const c = await myClient(id);
   if (!c) notFound();
   return (
     <Screen>
       <TopBar backHref={step === "permanent" ? "/v1120/clients" : `/v1120/client/${id}`} />
-      <DeleteSteps name={c.name} permanent={step === "permanent"} />
+      <DeleteSteps id={c.id} name={c.name} permanent={step === "permanent"} />
     </Screen>
   );
 }

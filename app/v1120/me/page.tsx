@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { caregiverLicense, caregiverName } from "../_mock";
+import { requireCaregiver } from "../_data";
+import { logout } from "../_actions";
 import { Avatar, Screen } from "../_components/ui";
 
 // 내 정보 탭 (C-06 요양보호사 프로필 + 설정)
-export default function MePage() {
+export default async function MePage() {
+  const { name: caregiverName, licenseNumber: caregiverLicense } = await requireCaregiver();
   const links: [string, string][] = [
     ["내 정보 고치기", "/v1120/onboarding"],
     ["동의한 내용 보기", "/v1120/onboarding/consent"],
     ["개인정보 처리방침", "/v1120/privacy"],
-    ["로그아웃", "/v1120/login"],
   ];
   return (
     <Screen nav>
@@ -17,7 +18,7 @@ export default function MePage() {
         <Avatar name={caregiverName} />
         <div>
           <p className="text-xl font-bold">{caregiverName} 요양보호사</p>
-          <p className="text-base text-muted">자격번호 {caregiverLicense}</p>
+          <p className="text-base text-muted">자격번호 {caregiverLicense ?? "미입력"}</p>
         </div>
       </div>
       <ul className="flex flex-col divide-y divide-(--line) rounded-[15px] border border-(--line)">
@@ -31,6 +32,13 @@ export default function MePage() {
             </Link>
           </li>
         ))}
+        <li>
+          <form action={logout}>
+            <button type="submit" className="flex min-h-16 w-full items-center justify-between px-4 text-lg font-bold">
+              로그아웃
+            </button>
+          </form>
+        </li>
       </ul>
       <p className="text-center text-base text-muted">손다음 1120.ver 미리보기</p>
     </Screen>

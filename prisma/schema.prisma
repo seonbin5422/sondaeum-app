@@ -13,6 +13,7 @@ model Caregiver {
   licenseNumber String?
   kakaoId       String? @unique
   visits        Visit[]
+  clients       Client[]
 }
 
 model Client {
@@ -26,11 +27,16 @@ model Client {
   personalNotes          String?
   guardianName           String
   guardianRelation       String   @default("기타")
+  guardianPhone          String?
   careRegistrationNumber String?
+  careGrade              String?
   phone                  String?
   scheduleLabel          String?
   isActive               Boolean  @default(true)
   purgeAt                DateTime?
+  // SEC-2: 담당 요양보호사. 1120 화면은 이 값으로 거른다. 옛 화면이 만든 수급자는 비어 있을 수 있다
+  caregiverId            String?
+  caregiver              Caregiver? @relation(fields: [caregiverId], references: [id])
   visits                 Visit[]
 }
 

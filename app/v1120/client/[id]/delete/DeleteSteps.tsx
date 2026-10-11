@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../_components/ui";
+import { deleteClient, permanentDeleteClient } from "../../../_actions";
 
-export function DeleteSteps({ name, permanent }: { name: string; permanent: boolean }) {
+export function DeleteSteps({ id, name, permanent }: { id: string; name: string; permanent: boolean }) {
   const router = useRouter();
   const [moved, setMoved] = useState(false);
   const [typed, setTyped] = useState("");
@@ -18,9 +19,11 @@ export function DeleteSteps({ name, permanent }: { name: string; permanent: bool
           <li>· 14일 동안은 수급자 탭 아래 &quot;삭제한 수급자&quot;에서 되살릴 수 있어요.</li>
           <li>· 보호자 대화방 링크는 바로 닫혀요.</li>
         </ul>
-        <Button variant="danger" onClick={() => router.push("/v1120/clients")}>
-          삭제하기
-        </Button>
+        <form action={deleteClient.bind(null, id)} className="flex">
+          <Button type="submit" variant="danger">
+            삭제하기
+          </Button>
+        </form>
         <Button variant="secondary" onClick={() => router.back()}>
           취소
         </Button>
@@ -50,14 +53,16 @@ export function DeleteSteps({ name, permanent }: { name: string; permanent: bool
           onChange={(e) => setTyped(e.target.value)}
         />
       </label>
-      <Button
-        variant="danger"
-        disabled={!ok}
-        disabledReason={!moved ? "기관 시스템에 옮겼는지 먼저 확인해 주세요" : "수급자 이름을 똑같이 적어 주세요"}
-        onClick={() => router.push("/v1120/clients")}
-      >
-        완전히 지우기
-      </Button>
+      <form action={permanentDeleteClient.bind(null, id)} className="flex">
+        <Button
+          type="submit"
+          variant="danger"
+          disabled={!ok}
+          disabledReason={!moved ? "기관 시스템에 옮겼는지 먼저 확인해 주세요" : "수급자 이름을 똑같이 적어 주세요"}
+        >
+          완전히 지우기
+        </Button>
+      </form>
     </div>
   );
 }

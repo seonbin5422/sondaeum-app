@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { clients } from "../_mock";
+import { myClients } from "../_data";
+import { restoreClient } from "../_actions";
 import { ChatLabel } from "../_components/Unread";
 import { Avatar, Card, Chip, LinkButton, Screen } from "../_components/ui";
 
 // 수급자 탭: 담당 수급자 목록 (기존 C-09 관리 화면을 합침). 삭제한 수급자은 아래에서 되살린다.
-export default function ClientsPage() {
+export default async function ClientsPage() {
+  const clients = await myClients();
   const active = clients.filter((c) => c.isActive);
   const removed = clients.filter((c) => !c.isActive);
   return (
@@ -22,7 +24,7 @@ export default function ClientsPage() {
                 <Avatar name={c.name} />
                 <div className="flex flex-1 flex-col items-start gap-1">
                   <h2 className="text-lg font-bold">
-                    {c.name} 수급자 <span className="text-base font-normal text-muted">{c.age}세 · {c.gender} · {c.careGrade ?? "등급 미입력"}</span>
+                    {c.name} 수급자 <span className="text-base font-normal text-muted">{[c.age && `${c.age}세`, c.gender, c.careGrade ?? "등급 미입력"].filter(Boolean).join(" · ")}</span>
                   </h2>
                   <Chip>{c.scheduleLabel}</Chip>
                 </div>
@@ -60,9 +62,11 @@ export default function ClientsPage() {
             <div key={c.id} className="flex items-center justify-between rounded-[15px] border border-(--line) px-4 py-3">
               <span className="text-lg">{c.name} 수급자</span>
               <span className="flex gap-2">
-                <button type="button" className="min-h-12 rounded-xl border border-border px-3 text-base font-bold">
-                  되살리기
-                </button>
+                <form action={restoreClient.bind(null, c.id)}>
+                  <button type="submit" className="min-h-12 rounded-xl border border-border px-3 text-base font-bold">
+                    되살리기
+                  </button>
+                </form>
                 <Link
                   href={`/v1120/client/${c.id}/delete?step=permanent`}
                   className="flex min-h-12 items-center rounded-xl px-3 text-base font-bold text-(--danger)"

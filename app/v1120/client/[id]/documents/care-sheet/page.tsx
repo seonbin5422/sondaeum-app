@@ -1,8 +1,23 @@
+import { notFound } from "next/navigation";
 import { CareSheetView } from "../../../../_components/DocumentViews";
+import { kstYmd, myClient, myHistory, requireCaregiver } from "../../../../_data";
 
 // 서류 · 급여제공기록지 (날짜마다 한 장)
-export default async function CareSheetPage({ params, searchParams }: PageProps<"/v1120/client/[id]/documents/care-sheet">) {
+export default async function Page({ params, searchParams }: PageProps<"/v1120/client/[id]/documents/care-sheet">) {
   const { id } = await params;
   const { from, to } = await searchParams;
-  return <CareSheetView clientId={id} from={String(from ?? "2026-10-08")} to={String(to ?? "2026-10-08")} backHref={`/v1120/client/${id}/documents`} role="caregiver" />;
+  const c = await myClient(id);
+  if (!c) notFound();
+  const today = kstYmd();
+  return (
+    <CareSheetView
+      client={c}
+      history={await myHistory(id)}
+      caregiverName={(await requireCaregiver()).name}
+      from={String(from ?? today)}
+      to={String(to ?? today)}
+      backHref={`/v1120/client/${id}/documents`}
+      role="caregiver"
+    />
+  );
 }

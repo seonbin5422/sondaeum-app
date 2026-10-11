@@ -7,7 +7,7 @@ import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, safeDecryptText } from "@/lib/crypto";
-import type { CareGrade, CareRecord, ClientProfile } from "./_types";
+import type { CareGrade, CareRecord, ClientProfile, HistoryVisit } from "./_types";
 import type { SaidQuotes } from "./_extract";
 
 // 1120.ver 화면이 DB에서 읽는 곳. 수급자는 로그인한 요양보호사 것만 보인다 (SEC-2).
@@ -142,4 +142,51 @@ export async function myVisit(visitId: string) {
     sentAt: v.report?.sentAt ?? null,
     time: serviceTimeOf(v.client.scheduleLabel, v.startedAt ?? v.createdAt),
   };
+}
+
+// ---- 이력·서류 (3단계) ----
+
+export function kstYmd(d = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: KST }).format(d); // YYYY-MM-DD
+}
+
+export function kstYmdDaysAgo(days: number) {
+  return kstYmd(new Date(Date.now() - days * 24 * 60 * 60 * 1000));
+}
+
+const EMPTY_RECORD: CareRecord = {
+  physical: { personalHygiene: null, bathing: null, mealAssist: null, repositioning: null, mobility: null, toileting: null, minutes: null },
+  physicalNote: null,
+  cognitive: { stimulation: null, dailyLiving: null, behaviorManagement: null, emotional: null },
+  household: { mealPrepCleaningLaundry: null, personalActivity: null, minutes: null },
+  change: { physical: null, meal: null, cognitive: null },
+  bowel: { stoolAccidents: null, urineAccidents: null, diaperChanges: null },
+  notes: null,
+};
+
+// 내 수급자의 방문 기록 (최근 것부터). 시간은 서비스 시간(계약 시간, D-37)
+export async function myHistory(clientId: string): Promise<HistoryVisit[]> {
+  const caregiver = await requireCaregiver();
+  const visits = await prisma.visit.findMany({
+    where: { clientId, caregiverId: caregiver.id, client: { caregiverId: caregiver.id } },
+    include: { report: true, client: { select: { scheduleLabel: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return visits.map((v) => {
+    const day = v.startedAt ?? v.createdAt;
+    const time = serviceTimeOf(v.client.scheduleLabel, day);
+    let record = EMPTY_RECORD;
+    try {
+      if (v.report?.careRecord) record = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
+    } catch {}
+    return {
+      visitId: v.id,
+      date: kstYmd(day),
+      start: time.start,
+      end: time.end,
+      status: v.status,
+      record,
+      shareToken: v.status === "SENT" ? v.report?.shareToken : undefined,
+    };
+  });
 }

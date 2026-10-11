@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
-import { findClient, historyOf } from "../../../_mock";
+import { kstYmd, myClient, myHistory } from "../../../_data";
 import { DocumentPicker } from "../../../_components/DocumentPicker";
 import { Screen, TopBar } from "../../../_components/ui";
 
 // C-19 서류 만들기 (D-29 초안)
 export default async function DocumentsPage({ params }: PageProps<"/v1120/client/[id]/documents">) {
   const { id } = await params;
-  const c = findClient(id);
+  const c = await myClient(id);
   if (!c) notFound();
-  const sent = historyOf(id).filter((v) => v.status === "SENT").map((v) => v.date);
+  const sent = (await myHistory(id)).filter((v) => v.status === "SENT").map((v) => v.date);
   return (
     <Screen>
       <TopBar backHref={`/v1120/client/${id}`} />
@@ -20,7 +20,7 @@ export default async function DocumentsPage({ params }: PageProps<"/v1120/client
         <p className="font-bold">요양보호사가 보낸 기록으로 만들어요</p>
         <p>진단서나 기관이 발급하는 공식 사본은 아니에요.</p>
       </div>
-      <DocumentPicker basePath={`/v1120/client/${id}/documents`} sentDates={sent} />
+      <DocumentPicker basePath={`/v1120/client/${id}/documents`} sentDates={sent} today={kstYmd()} />
     </Screen>
   );
 }

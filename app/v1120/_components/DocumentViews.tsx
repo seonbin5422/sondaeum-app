@@ -1,5 +1,4 @@
-import { caregiverName, findClient, historyOf } from "../_mock";
-import type { Change, HistoryVisit } from "../_types";
+import type { Change, ClientProfile, HistoryVisit } from "../_types";
 import { CareSheet } from "./CareSheet";
 import { PrintActions } from "./PrintActions";
 import { SmallLinkButton } from "./ui";
@@ -9,8 +8,8 @@ import { SmallLinkButton } from "./ui";
 const fmt = (iso: string) => iso.replaceAll("-", ".");
 const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8))}`;
 
-function visitsIn(clientId: string, from: string, to: string): HistoryVisit[] {
-  return historyOf(clientId)
+function visitsIn(history: HistoryVisit[], from: string, to: string): HistoryVisit[] {
+  return history
     .filter((v) => v.status === "SENT" && v.date >= from && v.date <= to)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -33,10 +32,38 @@ function Shell({ backHref, children, canShare }: { backHref: string; children: R
   );
 }
 
+// 서류 화면이 받는 값: 수급자, 그 수급자의 방문 기록 전부, 작성한 요양보호사, 오늘(YYYY-MM-DD)
+type ViewProps = {
+  client: ClientProfile;
+  history: HistoryVisit[];
+  caregiverName: string;
+  today: string;
+  from: string;
+  to: string;
+  backHref: string;
+  role: "caregiver" | "guardian";
+};
+
+// 기간 요약: 기록에 있는 사실만 센다 (LAW-1: 진단·해석 없이)
+// shortcut: AI 요약(DIF-4) 대신 횟수를 세어 문장으로 만든다, AI 요약이 준비되면 바꾼다
+function periodSummary(visits: HistoryVisit[]) {
+  if (visits.length === 0) return "기간 중 보낸 방문 기록이 없어요.";
+  const worse = (["physical", "meal", "cognitive"] as const)
+    .map((k) => [{ physical: "신체기능", meal: "식사기능", cognitive: "인지기능" }[k], visits.filter((v) => v.record.change[k] === "worse").length] as const)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${k} ${n}번`);
+  const sum = (k: "stoolAccidents" | "urineAccidents") => visits.reduce((t, v) => t + (v.record.bowel[k] ?? 0), 0);
+  const notes = visits.filter((v) => v.record.notes).length;
+  return [
+    `방문 ${visits.length}번 중 나빠졌다고 적은 기록은 ${worse.length ? worse.join(", ") : "없어요"}${worse.length ? "이에요" : ""}.`,
+    `대변 실수 ${sum("stoolAccidents")}번, 소변 실수 ${sum("urineAccidents")}번이 적혀 있어요.`,
+    notes ? `특이사항은 ${notes}번 적혀 있어요.` : "",
+  ].join(" ");
+}
+
 // C-20 진료 참고용 요약 (와이어 305:38)
-export function SummaryView({ clientId, from, to, backHref, role }: { clientId: string; from: string; to: string; backHref: string; role: "caregiver" | "guardian" }) {
-  const c = findClient(clientId);
-  const visits = visitsIn(clientId, from, to);
+export function SummaryView({ client: c, history, caregiverName, today, from, to, backHref, role }: ViewProps) {
+  const visits = visitsIn(history, from, to);
   const recent = visits.slice(-5);
   const worse = visits
     .flatMap((v) =>
@@ -59,12 +86,12 @@ export function SummaryView({ clientId, from, to, backHref, role }: { clientId: 
         <header className="flex flex-col gap-0.5">
           <h1 className="text-2xl font-bold">진료 참고용 기록 요약</h1>
           <p className="text-lg font-bold">
-            {c?.name} · {c?.age}세 · {c?.gender} · 장기요양 {c?.careGrade ?? "등급 미입력"}
+            {[c.name, c.age && `${c.age}세`, c.gender, `장기요양 ${c.careGrade ?? "등급 미입력"}`].filter(Boolean).join(" · ")}
           </p>
           <p className="text-base text-muted">
             {fmt(from)} ~ {fmt(to)} · 방문 {visits.length}번
           </p>
-          {c?.medicationNotes && <p className="text-base text-muted">복용 중인 약: {c.medicationNotes}</p>}
+          {c.medicationNotes && <p className="text-base text-muted">복용 중인 약: {c.medicationNotes}</p>}
         </header>
 
         <section className="flex flex-col gap-2 border-t border-(--line) pt-3">
@@ -168,16 +195,14 @@ export function SummaryView({ clientId, from, to, backHref, role }: { clientId: 
 
         <section className="flex flex-col gap-1 border-t border-(--line) pt-3">
           <h2 className="text-lg font-bold">5. 기간 요약</h2>
-          <p className="text-base">
-            최근 1주 사이 식사량이 줄고 무릎 통증을 말씀하셨어요. 소변 실수가 10월에 늘었어요. 혈압은 128~142 사이였어요.
-          </p>
-          <p className="text-sm text-muted">AI가 위 기록을 모아 쓴 요약이에요.</p>
+          <p className="text-base">{periodSummary(visits)}</p>
+          <p className="text-sm text-muted">위 기록의 횟수를 센 요약이에요.</p>
         </section>
 
         <footer className="rounded-md bg-(--neutral-soft) px-3 py-2 text-base text-muted">
           <p className="font-bold">요양보호사 관찰 기록이며 의료적 진단이 아닙니다.</p>
           <p>
-            작성 {caregiverName} 요양보호사 · 작성일 {fmt("2026-10-09")}
+            작성 {caregiverName} 요양보호사 · 작성일 {fmt(today)}
           </p>
         </footer>
       </article>
@@ -186,9 +211,8 @@ export function SummaryView({ clientId, from, to, backHref, role }: { clientId: 
 }
 
 // 급여제공기록지: 날짜마다 한 장 (결과 화면은 D-29 정할 것 ① 이후 다듬는다)
-export function CareSheetView({ clientId, from, to, backHref, role }: { clientId: string; from: string; to: string; backHref: string; role: "caregiver" | "guardian" }) {
-  const c = findClient(clientId);
-  const visits = visitsIn(clientId, from, to);
+export function CareSheetView({ client: c, history, caregiverName, from, to, backHref, role }: Omit<ViewProps, "today">) {
+  const visits = visitsIn(history, from, to);
   return (
     <Shell backHref={backHref} canShare={role === "caregiver"}>
       <header className="print:hidden">
@@ -203,7 +227,7 @@ export function CareSheetView({ clientId, from, to, backHref, role }: { clientId
             record={v.record}
             date={`${fmt(v.date)}`}
             time={`${v.start}~${v.end}`}
-            clientName={c?.name ?? ""}
+            clientName={c.name}
             caregiverName={caregiverName}
           />
         </div>

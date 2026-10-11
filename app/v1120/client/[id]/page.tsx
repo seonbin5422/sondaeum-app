@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { historyOf } from "../../_mock";
-import { myClient } from "../../_data";
+import { myClient, myHistory } from "../../_data";
 import { Avatar, Chip, LinkButton, Screen, TopBar } from "../../_components/ui";
 
 // C-05 수급자 정보 (기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면)
@@ -9,7 +8,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
   const { id } = await params;
   const c = await myClient(id);
   if (!c) notFound();
-  const last = historyOf(id).find((v) => v.status === "SENT");
+  const last = (await myHistory(id)).find((v) => v.status === "SENT");
 
   const rows: [string, string | null][] = [
     ["알레르기", c.allergies],

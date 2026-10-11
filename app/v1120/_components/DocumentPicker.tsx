@@ -10,7 +10,6 @@ import { Button } from "./ui";
 type Doc = "summary" | "care-sheet";
 type Period = "day" | "week" | "month" | "custom";
 
-const TODAY = "2026-10-09";
 const shift = (iso: string, days: number) => {
   const d = new Date(`${iso}T12:00:00+09:00`);
   d.setDate(d.getDate() + days);
@@ -37,7 +36,7 @@ function Option({ on, title, sub, onClick }: { on: boolean; title: string; sub: 
   );
 }
 
-export function DocumentPicker({ basePath, sentDates }: { basePath: string; sentDates: string[] }) {
+export function DocumentPicker({ basePath, sentDates, today: TODAY }: { basePath: string; sentDates: string[]; today: string }) {
   const router = useRouter();
   const [doc, setDoc] = useState<Doc | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { chatTokenToClient, findClient, historyOf } from "../../../_mock";
+import { TODAY_ISO, chatTokenToClient, findClient, historyOf } from "../../../_mock";
 import { DocumentPicker } from "../../../_components/DocumentPicker";
 
 // G-03 서류 만들기 (보호자, D-26). C-19와 같은 화면.
@@ -22,7 +22,7 @@ export default async function GuardianDocumentsPage({ params }: PageProps<"/v112
         <p className="font-bold">요양보호사가 보낸 기록으로 만들어요</p>
         <p>진단서나 기관이 발급하는 공식 사본은 아니에요. 병원·기관에는 보호자님이 직접 내 주세요.</p>
       </div>
-      <DocumentPicker basePath={`/v1120/c/${token}/documents`} sentDates={sent} />
+      <DocumentPicker basePath={`/v1120/c/${token}/documents`} sentDates={sent} today={TODAY_ISO} />
     </main>
   );
 }

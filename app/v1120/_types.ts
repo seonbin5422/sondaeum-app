@@ -88,6 +88,7 @@ export type HistoryVisit = {
   end: string;
   status: VisitStatus;
   record: CareRecord;
+  shareToken?: string; // 보낸 기록의 보호자 링크 (/v1120/g/[token])
 };
 
 export type ChatMessage = {

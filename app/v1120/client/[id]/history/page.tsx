@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { findClient, historyOf } from "../../../_mock";
+import { myClient, myHistory } from "../../../_data";
 import { LinkButton, Screen, StatusBadge, TopBar } from "../../../_components/ui";
 
 // C-22 수급자 방문 기록 (DIF-9, 와이어 없음). 날짜별 방문과 보고서, 서류 만들기로 이어지는 입구.
@@ -8,9 +8,9 @@ const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default async function HistoryPage({ params }: PageProps<"/v1120/client/[id]/history">) {
   const { id } = await params;
-  const c = findClient(id);
+  const c = await myClient(id);
   if (!c) notFound();
-  const visits = historyOf(id);
+  const visits = await myHistory(id);
 
   const byMonth = new Map<string, typeof visits>();
   for (const v of visits) {
@@ -42,7 +42,7 @@ export default async function HistoryPage({ params }: PageProps<"/v1120/client/[
               const worse = Object.entries(v.record.change).filter(([, x]) => x === "worse").length > 0;
               return (
                 <li key={v.visitId}>
-                  <Link href={v.status === "SENT" ? `/v1120/g/${v.visitId}` : `/v1120/visit/v-hong/record`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-2">
+                  <Link href={v.shareToken ? `/v1120/g/${v.shareToken}` : `/v1120/visit/${v.visitId}/record`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-2">
                     <span className="flex flex-col">
                       <span className="text-lg font-bold">
                         {d.getMonth() + 1}월 {d.getDate()}일 ({WEEK[d.getDay()]})

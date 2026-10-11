@@ -1,22 +1,31 @@
 import Image from "next/image";
-import { myClients, requireCaregiver } from "./_data";
+import { kstWeekday, myClients, myTodayVisits, requireCaregiver } from "./_data";
+import { startVisit } from "./_actions";
 import { UnreadMessageLink } from "./_components/Unread";
 import { ScheduleSheet } from "./_components/ScheduleSheet";
 import type { TodayVisit } from "./_types";
-import { Avatar, Card, Chip, LinkButton, Screen, StatusBadge } from "./_components/ui";
+import { Avatar, Button, Card, Chip, LinkButton, Screen, StatusBadge } from "./_components/ui";
 
 // C-03 홈: 오늘의 돌봄 (와이어 263:397)
 export default async function HomePage() {
   const caregiver = await requireCaregiver();
   const clients = await myClients();
-  // 서버(Vercel)는 UTC라서 한국 시간 기준 요일로 센다
-  const today = ["일", "월", "화", "수", "목", "금", "토"].indexOf(
-    new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: "Asia/Seoul" }).format(new Date()),
-  );
-  // shortcut: 방문(Visit) 연결 전이라 오늘 방문 요일인 수급자를 "시작 전"으로 보여 준다, 2단계(방문 기록)에서 실제 방문 상태로 바꾼다
+  const visits = await myTodayVisits();
+  // 서버(Vercel)는 UTC라서 한국 시간 기준 요일로 센다. 오늘 요일이 아니어도 오늘 기록을 시작했으면 보여 준다
+  const today = kstWeekday();
   const todayVisits: TodayVisit[] = clients
-    .filter((c) => c.isActive && c.scheduleDays.includes(today))
-    .map((c) => ({ visitId: c.id, clientId: c.id, clientName: c.name, scheduleLabel: c.scheduleLabel, status: "NOT_STARTED", interrupted: false }));
+    .filter((c) => c.isActive && (c.scheduleDays.includes(today) || visits.has(c.id)))
+    .map((c) => {
+      const v = visits.get(c.id);
+      return {
+        visitId: v?.id ?? "",
+        clientId: c.id,
+        clientName: c.name,
+        scheduleLabel: c.scheduleLabel,
+        status: v?.status ?? "NOT_STARTED",
+        interrupted: v?.status === "RECORDING" && !!v.transcript, // 녹음이 중간에 멈춤 (D-27)
+      };
+    });
   return (
     <Screen nav bottom={<LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}>
       <Image src="/brand/logo-full.svg" alt="손다음" width={96} height={32} priority />
@@ -41,7 +50,7 @@ export default async function HomePage() {
 }
 
 function VisitCard({ visit }: { visit: TodayVisit }) {
-  const recordHref = `/v1120/visit/${visit.visitId}/record`;
+  const start = startVisit.bind(null, visit.clientId);
   return (
     <Card>
       <div className="flex items-center gap-4">
@@ -62,8 +71,16 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
           <p className="rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
             녹음이 중간에 멈췄어요. 이어서 기록할 수 있어요.
           </p>
-          <LinkButton href={recordHref}>이어서 기록하기</LinkButton>
+          <form action={start} className="flex">
+            <Button type="submit">이어서 기록하기</Button>
+          </form>
         </>
+      )}
+
+      {(visit.status === "RECORDED" || visit.status === "SUMMARIZING" || visit.status === "DRAFT_READY") && (
+        <form action={start} className="flex">
+          <Button type="submit">기록 확인하고 보내기</Button>
+        </form>
       )}
 
       {visit.status === "NOT_STARTED" && (
@@ -71,7 +88,9 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
           <LinkButton href={`/v1120/client/${visit.clientId}/edit`} variant="secondary">
             정보 수정
           </LinkButton>
-          <LinkButton href={recordHref}>기록하기</LinkButton>
+          <form action={start} className="flex">
+            <Button type="submit">기록하기</Button>
+          </form>
         </div>
       )}
     </Card>

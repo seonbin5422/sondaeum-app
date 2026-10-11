@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
-import { CARE_GRADES } from "./_types";
-import { requireCaregiver } from "./_data";
+import { decryptText, encryptText } from "@/lib/crypto";
+import { CARE_GRADES, type CareRecord } from "./_types";
+import { extractRecord } from "./_extract";
+import { kstTodayRange, requireCaregiver } from "./_data";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
 
@@ -96,4 +98,91 @@ export async function permanentDeleteClient(id: string) {
 export async function logout() {
   await deleteSession();
   redirect("/v1120/login");
+}
+
+// ---- 방문 기록 (2단계) ----
+
+// 내 방문인지 확인. 보낸 뒤에는 고칠 수 없다 (STB-1)
+async function ownVisitOrThrow(visitId: string, { editable = true } = {}) {
+  const caregiver = await requireCaregiver();
+  const v = await prisma.visit.findFirst({ where: { id: visitId, caregiverId: caregiver.id }, include: { report: true } });
+  if (!v) throw new Error("방문 기록을 찾을 수 없어요.");
+  if (editable && v.status === "SENT") throw new Error("이미 보낸 기록은 고칠 수 없어요.");
+  return v;
+}
+
+// 홈 "기록하기": 오늘 이 수급자 방문이 이미 있으면 이어서, 없으면 새로 만든다
+export async function startVisit(clientId: string) {
+  const caregiver = await requireCaregiver();
+  await ownClientOrThrow(clientId);
+  const { start, end } = kstTodayRange();
+  const existing = await prisma.visit.findFirst({
+    where: { caregiverId: caregiver.id, clientId, createdAt: { gte: start, lt: end }, status: { not: "SENT" } },
+    orderBy: { createdAt: "desc" },
+  });
+  const visit =
+    existing ??
+    (await prisma.visit.create({ data: { caregiverId: caregiver.id, clientId, status: "RECORDING", startedAt: new Date() } }));
+  const next = { DRAFT_READY: "review", RECORDED: "processing", SUMMARIZING: "processing" }[visit.status as string] ?? "record";
+  redirect(`/v1120/visit/${visit.id}/${next}`);
+}
+
+// 녹음 내용을 문장마다 저장 (D-27: 중간에 멈춰도 이어서 기록)
+// shortcut: 개인정보 필터(lib/pii, Groq)를 거치지 않고 암호화만 한다. 지금은 녹음 내용이 외부 AI로 나가지 않아서다,
+// 진짜 AI 요약을 붙일 때 AI로 보내기 전에 필터를 건다 (LAW-6·DIF-8)
+export async function saveTranscript(visitId: string, transcript: string) {
+  await ownVisitOrThrow(visitId);
+  await prisma.visit.update({ where: { id: visitId }, data: { transcript: encryptText(transcript), status: "RECORDING" } });
+}
+
+// "다 말했어요": 녹음을 끝내고 정리 화면으로
+export async function finishRecording(visitId: string, transcript: string) {
+  await ownVisitOrThrow(visitId);
+  if (!transcript.trim()) throw new Error("녹음 내용이 없어요.");
+  await prisma.visit.update({
+    where: { id: visitId },
+    data: { transcript: encryptText(transcript), status: "RECORDED", endedAt: new Date() },
+  });
+}
+
+// C-13 정리: 녹음 내용을 급여제공기록지 모양으로 채워 보고서 초안을 만든다
+// shortcut: AI 대신 _extract.ts(낱말·숫자 찾기)로 채운다, 개발 1의 AI 요약(LAW-1·2 프롬프트)이 준비되면 여기만 바꾼다
+export async function summarizeVisit(visitId: string) {
+  const v = await ownVisitOrThrow(visitId);
+  // 이미 정리 중이거나 끝났으면 다시 하지 않는다 (STB-2)
+  if (v.status === "SUMMARIZING" || v.status === "DRAFT_READY") return;
+  await prisma.visit.update({ where: { id: visitId }, data: { status: "SUMMARIZING" } });
+  try {
+    const { record, quotes } = extractRecord(v.transcript ? decryptText(v.transcript) : "");
+    const fields = { careRecord: encryptText(JSON.stringify(record)), aiRawJson: encryptText(JSON.stringify(quotes)) };
+    await prisma.report.upsert({
+      where: { visitId },
+      // 옛 화면용 칸(식사·복약·특이사항)은 1120 기록에서 쓰지 않는다
+      create: { visitId, meals: encryptText(""), medication: encryptText(""), notes: encryptText(record.notes ?? ""), ...fields },
+      update: fields,
+    });
+    await prisma.visit.update({ where: { id: visitId }, data: { status: "DRAFT_READY" } });
+  } catch (err) {
+    await prisma.visit.update({ where: { id: visitId }, data: { status: "RECORDED" } });
+    throw err;
+  }
+}
+
+// C-14 기록 확인에서 고친 값 저장
+export async function saveRecord(visitId: string, record: CareRecord) {
+  const v = await ownVisitOrThrow(visitId);
+  if (!v.report) throw new Error("정리된 기록이 없어요.");
+  await prisma.report.update({
+    where: { visitId },
+    data: { careRecord: encryptText(JSON.stringify(record)), notes: encryptText(record.notes ?? ""), wasEdited: true },
+  });
+}
+
+// C-15 "저장하고 보내기": 보낸 뒤에는 고칠 수 없다
+export async function sendReport(visitId: string) {
+  const v = await ownVisitOrThrow(visitId);
+  if (!v.report) throw new Error("정리된 기록이 없어요.");
+  await prisma.report.update({ where: { visitId }, data: { sentAt: new Date() } });
+  await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
+  redirect(`/v1120/visit/${visitId}/sent`);
 }

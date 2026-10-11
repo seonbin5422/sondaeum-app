@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Screen, TopBar } from "../../../_components/ui";
 import { useSpeech } from "../../../_components/useSpeech";
-import { loadDraft, saveDraft } from "../../../_store";
+import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
 
 // 말한 내용에 이 낱말이 나오면 그 기록지 항목을 "말함"으로 본다. 화면 안내용이고, 실제 정리는 AI가 한다.
@@ -21,24 +21,30 @@ function formatTime(sec: number) {
   return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 }
 
-export function RecordScreen({ visitId, clientName }: { visitId: string; clientName: string }) {
+export function RecordScreen({ visitId, clientName, initialTranscript }: { visitId: string; clientName: string; initialTranscript: string }) {
   const router = useRouter();
-  const [transcript, setTranscript] = useState("");
+  const [transcript, setTranscript] = useState(initialTranscript);
+  const [saveError, setSaveError] = useState("");
+  const [finishing, setFinishing] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // DB에 저장. 실패해도 화면의 글은 남기고 알려 준다
+  function persist(text: string) {
+    saveTranscript(visitId, text).then(
+      () => setSaveError(""),
+      () => setSaveError("저장하지 못했어요. 인터넷 연결을 확인해 주세요. 적은 내용은 화면에 남아 있어요."),
+    );
+  }
   const [typing, setTyping] = useState(false);
   const [seconds, setSeconds] = useState(0);
 
   const speech = useSpeech((text) => {
     setTranscript((prev) => {
       const next = (prev + " " + text).trim();
-      saveDraft(visitId, { transcript: next }); // 문장마다 바로 저장 (D-27)
+      persist(next); // 문장마다 바로 저장 (D-27)
       return next;
     });
   });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- restore the saved transcript from sessionStorage on mount
-    setTranscript(loadDraft(visitId).transcript);
-  }, [visitId]);
 
   useEffect(() => {
     if (!speech.recording) return;
@@ -50,17 +56,27 @@ export function RecordScreen({ visitId, clientName }: { visitId: string; clientN
   const said = ITEMS.map((it) => ({ ...it, done: it.words.test(shown) }));
   const resumed = transcript.length > 0 && !speech.recording;
 
-  function finish() {
+  async function finish() {
     if (speech.recording) speech.stop();
-    saveDraft(visitId, { transcript });
-    router.push(`/v1120/visit/${visitId}/processing`);
+    setFinishing(true);
+    try {
+      await finishRecording(visitId, transcript);
+      router.push(`/v1120/visit/${visitId}/processing`);
+    } catch {
+      setSaveError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+      setFinishing(false);
+    }
   }
 
   return (
     <Screen
       bottom={
         !speech.recording &&
-        transcript && <Button onClick={finish}>다 말했어요: AI로 정리하기</Button>
+        transcript && (
+          <Button onClick={finish} disabled={finishing}>
+            다 말했어요: AI로 정리하기
+          </Button>
+        )
       }
     >
       <TopBar backHref="/v1120" title={`${clientName} 수급자 기록`} />
@@ -103,6 +119,7 @@ export function RecordScreen({ visitId, clientName }: { visitId: string; clientN
           <p className="text-base text-muted">이 브라우저는 음성 인식이 안 돼요. 아래 &quot;글로 쓰기&quot;를 눌러 주세요.</p>
         )}
         {speech.error && <p className="text-base font-bold text-(--danger)">{speech.error}</p>}
+        {saveError && <p className="text-base font-bold text-(--danger)">{saveError}</p>}
       </div>
 
       <div className="flex flex-col gap-1 rounded-[15px] border border-border p-4">
@@ -113,8 +130,11 @@ export function RecordScreen({ visitId, clientName }: { visitId: string; clientN
             value={transcript}
             placeholder="오늘 한 일을 적어 주세요."
             onChange={(e) => {
-              setTranscript(e.target.value);
-              saveDraft(visitId, { transcript: e.target.value });
+              const text = e.target.value;
+              setTranscript(text);
+              // 글자마다 저장하지 않고 잠깐 멈췄을 때 저장
+              clearTimeout(typingTimer.current);
+              typingTimer.current = setTimeout(() => persist(text), 800);
             }}
           />
         ) : shown ? (
@@ -131,7 +151,7 @@ export function RecordScreen({ visitId, clientName }: { visitId: string; clientN
               className="mt-1 self-start text-base font-bold text-accent-soft-foreground underline underline-offset-4"
               onClick={() => {
                 setTranscript(sampleTranscript);
-                saveDraft(visitId, { transcript: sampleTranscript });
+                persist(sampleTranscript);
               }}
             >
               미리보기: 예시 내용 넣기

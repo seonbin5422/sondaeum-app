@@ -60,7 +60,8 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `visitId` | String unique | |
 | `meals`, `medication`, `notes` | String | 식사·복약·특이사항, **암호화**. D-24 이후 새 기록은 `careRecord`에 (아래 절) |
 | `medicationMorning` / `Lunch` / `Evening` / `Bedtime` / `None` | Boolean | 복약 체크박스 |
-| `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화** |
+| `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화**. 1120 기록은 항목별 "내가 한 말"(`SaidQuotes`) |
+| `careRecord` | String? | 급여제공기록지 모양 `CareRecord` JSON, **암호화** (DIF-2, D-36). 아래 절 |
 | `wasEdited` | Boolean | 요양보호사가 수정했는지 |
 | `shareToken` | String unique | 보호자 링크 `/g/[token]` |
 | `sentAt`, `viewedAt`, `viewCount` | | 전송·첫 열람 시각, 열람 횟수 |
@@ -231,14 +232,15 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | → `SUMMARIZING` → `DRAFT_READY` | `POST /api/visits/[id]/summarize` (실패 시 `RECORDED`로 되돌림) |
 | → `SENT` | `POST /api/reports/[id]/send` |
 
-**알려진 문제**: 이전 상태를 확인하지 않는다. `SENT` 뒤에도 수정·재전송이 되고(STB-1), `SUMMARIZING` 중에 다시 요약할 수 있다(STB-2).
+1120 화면은 `app/v1120/_actions.ts`의 서버 액션을 쓴다: `startVisit`(→ `RECORDING`, 오늘 방문이 있으면 이어서) · `saveTranscript`(문장마다, D-27) · `finishRecording`(→ `RECORDED`) · `summarizeVisit`(→ `SUMMARIZING` → `DRAFT_READY`, 실패 시 `RECORDED`. 이미 정리 중이거나 끝났으면 다시 하지 않음) · `saveRecord` · `sendReport`(→ `SENT`). `SENT` 뒤에는 모두 막는다(STB-1). 지금 정리는 AI 대신 `app/v1120/_extract.ts`(낱말·숫자 찾기)가 하고, 녹음 내용은 외부로 나가지 않아 개인정보 필터 없이 암호화만 한다.
+
+**알려진 문제 (옛 화면)**: 이전 상태를 확인하지 않는다. `SENT` 뒤에도 수정·재전송이 되고(STB-1), `SUMMARIZING` 중에 다시 요약할 수 있다(STB-2).
 
 ## 추가 예정
 
 | 요구사항 | 변경 |
 | --- | --- |
 | SEC-2 | `Client.caregiverId`를 필수로 바꾸기 (기존 데이터는 시드 요양보호사로 채움). 칸은 D-35에서 선택 칸으로 추가됨 |
-| DIF-2 | `Report.careRecord` (String, 암호화된 `CareRecord` JSON, 위 "급여제공기록지 기록" 절) |
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각, 보호자 첫 입장 시각 = 초대 수락 여부 D-33), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29 검토 중) |

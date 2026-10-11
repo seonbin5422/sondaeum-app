@@ -3,7 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/absoluteUrl";
 import { createSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
-import { clients as sampleClients } from "@/app/v1120/_mock";
+import { randomUUID } from "node:crypto";
+import { encryptText } from "@/lib/crypto";
+import type { Prisma } from "@/app/generated/prisma/client";
+import { clients as sampleClients, sampleRecord } from "@/app/v1120/_mock";
+import type { CareRecord } from "@/app/v1120/_types";
 
 export const runtime = "nodejs";
 
@@ -24,8 +28,47 @@ async function purgeExpiredDemos() {
   }
 }
 
-// OPS-1 체험하기: 카카오 없이 체험용 요양보호사 계정과 샘플 수급자 3명을 만들고, 처음 가입처럼 온보딩부터 보여준다.
-// shortcut: 지난 2주 방문 기록은 아직 없음, 방문 기록(2단계)을 DB에 연결할 때 함께 만든다
+// 지난 2주 동안 일정 요일마다 보낸 방문 기록 (이력·서류 화면에서 볼 수 있게)
+const NOTES = ["점심을 반만 드셨어요. 혈압 142/90.", "오른쪽 무릎이 아프다고 하셨어요. 혈압 128/82.", null, "밤에 두 번 깨셨다고 하셨어요.", null];
+async function createSampleHistory(caregiverId: string) {
+  const clients = await prisma.client.findMany({ where: { caregiverId } });
+  const kstMidnight = new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date())}T00:00:00+09:00`);
+  let n = 0;
+  // DB가 멀 수 있어서 한 건씩 만들지 않고 모아서 두 번에 넣는다
+  const visits: Prisma.VisitCreateManyInput[] = [];
+  const reports: Prisma.ReportCreateManyInput[] = [];
+  for (const c of clients) {
+    const [days, time] = (c.scheduleLabel ?? "").split(" ");
+    const [[sh, sm], [eh, em]] = (time ?? "09:00-11:00").split("-").map((t) => t.split(":").map(Number));
+    for (let back = 14; back >= 1; back--) {
+      const day = new Date(kstMidnight.getTime() - back * 24 * 60 * 60 * 1000);
+      const kstWeekday = new Date(day.getTime() + 9 * 60 * 60 * 1000).getUTCDay(); // day는 한국 0시
+      if (!days.split(",").includes(WEEKDAY_LABELS[kstWeekday])) continue;
+      const at = (h: number, m: number) => new Date(day.getTime() + (h * 60 + m) * 60 * 1000);
+      const notes = NOTES[n++ % NOTES.length];
+      const record: CareRecord = {
+        ...structuredClone(sampleRecord),
+        change: { physical: "same", meal: n % 4 === 0 ? "worse" : "same", cognitive: "same" },
+        bowel: { stoolAccidents: 0, urineAccidents: n % 3 === 0 ? 1 : 0, diaperChanges: null },
+        notes,
+      };
+      const visitId = randomUUID();
+      visits.push({ id: visitId, caregiverId, clientId: c.id, status: "SENT", startedAt: at(sh, sm), endedAt: at(eh, em), createdAt: at(sh, sm) });
+      reports.push({
+        visitId,
+        meals: encryptText(""),
+        medication: encryptText(""),
+        notes: encryptText(notes ?? ""),
+        careRecord: encryptText(JSON.stringify(record)),
+        sentAt: at(eh, em),
+      });
+    }
+  }
+  await prisma.visit.createMany({ data: visits });
+  await prisma.report.createMany({ data: reports });
+}
+
+// OPS-1 체험하기: 카카오 없이 체험용 요양보호사 계정과 샘플 수급자 3명, 지난 2주 방문 기록을 만들고, 처음 가입처럼 온보딩부터 보여준다.
 export async function POST(req: NextRequest) {
   await purgeExpiredDemos();
   const caregiver = await prisma.caregiver.create({
@@ -57,6 +100,7 @@ export async function POST(req: NextRequest) {
         };
       }),
   });
+  await createSampleHistory(caregiver.id);
   await createSession(caregiver.id);
   return NextResponse.redirect(absoluteUrl("/v1120/onboarding", req), 303);
 }

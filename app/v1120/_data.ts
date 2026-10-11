@@ -6,7 +6,9 @@ import { getSessionCaregiverId } from "@/lib/session";
 import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
-import type { CareGrade, ClientProfile } from "./_types";
+import { decryptText, safeDecryptText } from "@/lib/crypto";
+import type { CareGrade, CareRecord, ClientProfile } from "./_types";
+import type { SaidQuotes } from "./_extract";
 
 // 1120.ver 화면이 DB에서 읽는 곳. 수급자는 로그인한 요양보호사 것만 보인다 (SEC-2).
 
@@ -61,4 +63,80 @@ export async function myClient(id: string) {
   const caregiver = await requireCaregiver();
   const c = await prisma.client.findFirst({ where: { id, caregiverId: caregiver.id, purgeAt: null } });
   return c ? toProfile(c) : null;
+}
+
+// ---- 방문 기록 (2단계) ----
+
+const KST = "Asia/Seoul";
+
+// 한국 시간 기준 오늘 0시~내일 0시 (서버는 UTC)
+export function kstTodayRange() {
+  const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: KST }).format(new Date()); // YYYY-MM-DD
+  const start = new Date(`${ymd}T00:00:00+09:00`);
+  return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+}
+
+export function kstWeekday(d = new Date()) {
+  return WEEKDAY_LABELS.indexOf(new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: KST }).format(d));
+}
+
+// 서비스 시간 (D-24: Visit.startedAt·endedAt에서 계산). 아직 안 끝났으면 지금까지
+export function visitTimeOf(startedAt: Date | null, endedAt: Date | null) {
+  const s = startedAt ?? new Date();
+  const e = endedAt ?? new Date();
+  const hm = (d: Date) => new Intl.DateTimeFormat("ko-KR", { timeZone: KST, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
+  const md = new Intl.DateTimeFormat("ko-KR", { timeZone: KST, month: "numeric", day: "numeric" }).formatToParts(s);
+  const part = (t: string) => md.find((p) => p.type === t)?.value;
+  return {
+    date: `${part("month")}월 ${part("day")}일 (${WEEKDAY_LABELS[kstWeekday(s)]})`,
+    start: hm(s),
+    end: hm(e),
+    minutes: Math.max(0, Math.round((e.getTime() - s.getTime()) / 60000)),
+    startedAt: s.toISOString(),
+    endedAt: e.toISOString(),
+  };
+}
+
+// 오늘 내 방문들 (수급자별로 가장 최근 것)
+export async function myTodayVisits() {
+  const caregiver = await requireCaregiver();
+  const { start, end } = kstTodayRange();
+  const visits = await prisma.visit.findMany({
+    where: { caregiverId: caregiver.id, createdAt: { gte: start, lt: end } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, clientId: true, status: true, transcript: true },
+  });
+  const byClient = new Map<string, (typeof visits)[number]>();
+  for (const v of visits) if (!byClient.has(v.clientId)) byClient.set(v.clientId, v);
+  return byClient;
+}
+
+// 내 방문 하나 + 수급자 + 복호화한 기록. 남의 방문이면 null
+export async function myVisit(visitId: string) {
+  const caregiver = await requireCaregiver();
+  const v = await prisma.visit.findFirst({
+    where: { id: visitId, caregiverId: caregiver.id },
+    include: { client: true, report: true },
+  });
+  if (!v) return null;
+  const json = <T>(enc: string | null | undefined): T | null => {
+    if (!enc) return null;
+    try {
+      return JSON.parse(decryptText(enc)) as T;
+    } catch {
+      return null;
+    }
+  };
+  return {
+    id: v.id,
+    status: v.status,
+    caregiverName: caregiver.name,
+    client: toProfile(v.client),
+    transcript: v.transcript ? safeDecryptText(v.transcript, "") : "",
+    record: json<CareRecord>(v.report?.careRecord),
+    quotes: json<SaidQuotes>(v.report?.aiRawJson),
+    shareToken: v.report?.shareToken ?? null,
+    sentAt: v.report?.sentAt ?? null,
+    time: visitTimeOf(v.startedAt, v.endedAt),
+  };
 }

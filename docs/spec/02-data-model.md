@@ -24,6 +24,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `name` | String | |
 | `licenseNumber` | String? | 요양보호사 자격번호. 처음 설정(C-02)에서 필수로 받는다 (D-31) |
 | `kakaoId` | String? unique | 카카오 사용자 ID |
+| `isDemo`, `demoExpiresAt` | Boolean, DateTime? | 체험 계정(OPS-1). 만든 지 24시간 뒤 수급자·방문 기록과 함께 지운다 (`app/api/auth/demo`, 누가 체험하기를 누를 때 정리) |
 
 ### Client (수급자)
 
@@ -242,5 +243,4 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각, 보호자 첫 입장 시각 = 초대 수락 여부 D-33), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29 검토 중) |
 | STB-5 | `Report.shareExpiresAt` |
-| OPS-1 | `Caregiver.isDemo`, `Caregiver.demoExpiresAt` (체험 계정 24시간 뒤 관련 데이터와 함께 삭제) |
 | LAW-3 | 동의 기록 (항목별 동의 여부·시각) |

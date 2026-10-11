@@ -10,7 +10,7 @@ export default async function EditClientPage({ params }: PageProps<"/v1120/clien
   if (!c) notFound();
   return (
     <Screen>
-      <TopBar backHref={`/v1120/client/${id}`} title={`${c.name} 수급자 정보 수정`} />
+      <TopBar backHref={`/v1120/client/${id}`} title={`${c.name} 정보 수정`} />
       <ClientForm initial={c} submitLabel="고친 내용 저장하기" />
     </Screen>
   );

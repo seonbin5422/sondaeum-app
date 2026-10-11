@@ -105,7 +105,7 @@ export function ScheduleSheet({ clients }: { clients: ClientProfile[] }) {
               {list.length === 0 && <p className="text-base text-muted">이 날은 예정된 돌봄이 없어요.</p>}
               {list.map((v) => (
                 <div key={v.name} className="flex items-center justify-between rounded-xl border border-(--line) px-4 py-3">
-                  <span className="text-lg font-bold">{v.name} 수급자</span>
+                  <span className="text-lg font-bold">{v.name}</span>
                   <span className="text-base text-muted">{v.time}</span>
                 </div>
               ))}

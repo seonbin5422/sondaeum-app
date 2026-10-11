@@ -57,7 +57,7 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
         <Avatar name={visit.clientName} />
         <div className="flex flex-col items-start gap-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold">{visit.clientName} 수급자</h2>
+            <h2 className="text-lg font-bold">{visit.clientName}</h2>
             <StatusBadge status={visit.status} />
           </div>
           <Chip>{visit.scheduleLabel}</Chip>

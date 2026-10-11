@@ -59,7 +59,7 @@ export function SummaryView({ clientId, from, to, backHref, role }: { clientId: 
         <header className="flex flex-col gap-0.5">
           <h1 className="text-2xl font-bold">진료 참고용 기록 요약</h1>
           <p className="text-lg font-bold">
-            {c?.name} 수급자 · {c?.age}세 · {c?.gender} · 장기요양 {c?.careGrade ?? "등급 미입력"}
+            {c?.name} · {c?.age}세 · {c?.gender} · 장기요양 {c?.careGrade ?? "등급 미입력"}
           </p>
           <p className="text-base text-muted">
             {fmt(from)} ~ {fmt(to)} · 방문 {visits.length}번

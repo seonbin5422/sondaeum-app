@@ -60,7 +60,7 @@ export function InviteScreen({
       <TopBar backHref={doneHref} />
       {justRegistered && (
         <p className="flex items-center gap-2 rounded-xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--success)">
-          ✓ {clientName} 수급자를 등록했어요
+          ✓ {clientName} 정보를 등록했어요
         </p>
       )}
       <header>

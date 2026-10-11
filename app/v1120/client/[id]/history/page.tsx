@@ -20,7 +20,7 @@ export default async function HistoryPage({ params }: PageProps<"/v1120/client/[
 
   return (
     <Screen nav>
-      <TopBar backHref={`/v1120/client/${id}`} title={`${c.name} 수급자 방문 기록`} />
+      <TopBar backHref={`/v1120/client/${id}`} title={`${c.name} 방문 기록`} />
 
       <div className="flex items-center justify-between gap-3 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
         <p className="text-base">병원에 가시거나 기관에 낼 때는 기간을 골라 서류로 만들어요.</p>

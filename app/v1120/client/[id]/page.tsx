@@ -27,7 +27,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
       <header className="flex items-center gap-4">
         <Avatar name={c.name} />
         <div className="flex flex-col items-start gap-1">
-          <h1 className="text-2xl font-bold">{c.name} 수급자</h1>
+          <h1 className="text-2xl font-bold">{c.name}</h1>
           <p className="text-lg text-muted">
             {[c.age && `${c.age}세`, c.gender].filter(Boolean).join(" · ")}{(c.age || c.gender) && " · "}<span className="font-bold text-foreground">장기요양 {c.careGrade ?? "등급 미입력"}</span>
           </p>

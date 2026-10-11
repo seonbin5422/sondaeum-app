@@ -64,7 +64,7 @@ export function SentScreen({
           기록 저장 완료
         </p>
         <p className="text-base">
-          {clientName} 수급자 {date} 기록을 저장했어요.
+          {clientName} {date} 기록을 저장했어요.
         </p>
       </section>
 

@@ -10,7 +10,7 @@ export default async function ChatRoomPage({ params }: PageProps<"/v1120/chats/[
   if (!c) notFound();
   return (
     <Screen>
-      <TopBar backHref="/v1120/chats" title={`${c.name} 수급자 · ${c.guardianName} 보호자`} />
+      <TopBar backHref="/v1120/chats" title={`${c.name} · ${c.guardianName} 보호자`} />
       {!c.guardianJoined && (
         <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
           <p className="text-base font-bold">보호자님이 아직 대화방에 들어오지 않았어요</p>

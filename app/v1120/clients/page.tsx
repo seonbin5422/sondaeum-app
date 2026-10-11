@@ -24,7 +24,7 @@ export default async function ClientsPage() {
                 <Avatar name={c.name} />
                 <div className="flex flex-1 flex-col items-start gap-1">
                   <h2 className="text-lg font-bold">
-                    {c.name} 수급자 <span className="text-base font-normal text-muted">{[c.age && `${c.age}세`, c.gender, c.careGrade ?? "등급 미입력"].filter(Boolean).join(" · ")}</span>
+                    {c.name} <span className="text-base font-normal text-muted">{[c.age && `${c.age}세`, c.gender, c.careGrade ?? "등급 미입력"].filter(Boolean).join(" · ")}</span>
                   </h2>
                   <Chip>{c.scheduleLabel}</Chip>
                 </div>
@@ -60,7 +60,7 @@ export default async function ClientsPage() {
           <p className="-mt-2 text-base text-muted">14일이 지나면 완전히 지워져요. 그 전에는 되살릴 수 있어요.</p>
           {removed.map((c) => (
             <div key={c.id} className="flex items-center justify-between rounded-[15px] border border-(--line) px-4 py-3">
-              <span className="text-lg">{c.name} 수급자</span>
+              <span className="text-lg">{c.name}</span>
               <span className="flex gap-2">
                 <form action={restoreClient.bind(null, c.id)}>
                   <button type="submit" className="min-h-12 rounded-xl border border-border px-3 text-base font-bold">

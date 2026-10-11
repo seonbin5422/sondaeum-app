@@ -13,7 +13,7 @@ export function DeleteSteps({ id, name, permanent }: { id: string; name: string;
   if (!permanent) {
     return (
       <div className="flex flex-col gap-5">
-        <h1 className="text-2xl font-bold">{name} 수급자를 삭제할까요?</h1>
+        <h1 className="text-2xl font-bold">{name} 정보를 삭제할까요?</h1>
         <ul className="flex flex-col gap-2 rounded-xl bg-(--neutral-soft) px-4 py-3 text-lg">
           <li>· 목록과 홈에서 보이지 않아요.</li>
           <li>· 14일 동안은 수급자 탭 아래 &quot;삭제한 수급자&quot;에서 되살릴 수 있어요.</li>
@@ -34,7 +34,7 @@ export function DeleteSteps({ id, name, permanent }: { id: string; name: string;
   const ok = moved && typed.trim() === name;
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-bold">{name} 수급자 기록을 완전히 지울까요?</h1>
+      <h1 className="text-2xl font-bold">{name} 기록을 완전히 지울까요?</h1>
       <p className="text-lg">방문 기록, 보고서, 대화가 모두 지워지고 되살릴 수 없어요.</p>
       <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
         <p className="text-lg font-bold">먼저 확인해 주세요</p>

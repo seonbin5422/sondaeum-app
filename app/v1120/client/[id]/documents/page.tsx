@@ -13,7 +13,7 @@ export default async function DocumentsPage({ params }: PageProps<"/v1120/client
     <Screen>
       <TopBar backHref={`/v1120/client/${id}`} />
       <header>
-        <p className="text-lg text-muted">{c.name} 수급자</p>
+        <p className="text-lg text-muted">{c.name}</p>
         <h1 className="text-2xl font-bold">서류 만들기</h1>
       </header>
       <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">

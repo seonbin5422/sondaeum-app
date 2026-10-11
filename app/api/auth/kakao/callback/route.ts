@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
   });
   await createSession(caregiver.id);
 
-  const nextPath = caregiver.licenseNumber ? "/" : "/onboarding";
+  const base = state === "v1120" ? "/v1120" : "";
+  const nextPath = caregiver.licenseNumber ? base || "/" : `${base}/onboarding`;
   return NextResponse.redirect(absoluteUrl(nextPath, req), 303);
 }

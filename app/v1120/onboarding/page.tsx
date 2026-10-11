@@ -24,7 +24,11 @@ export default function OnboardingPage() {
       />
       <Button
         disabled={!name || !license.trim()}
-        disabledReason={!name ? "이름을 적어 주세요" : "자격번호를 적어 주세요"} onClick={() => router.push("/v1120/onboarding/consent")}>
+        disabledReason={!name ? "이름을 적어 주세요" : "자격번호를 적어 주세요"} onClick={() => {
+          // 동의(C-21) 전에는 서버에 저장하지 않고 이 탭에만 잠시 둔다
+          sessionStorage.setItem("v1120-onboarding", JSON.stringify({ name: name.trim(), licenseNumber: license.trim() }));
+          router.push("/v1120/onboarding/consent");
+        }}>
         다음
       </Button>
     </Screen>

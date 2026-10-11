@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Screen } from "../../_components/ui";
@@ -17,6 +17,21 @@ export default function ConsentPage() {
   const router = useRouter();
   const [agreed, setAgreed] = useState<Record<string, boolean>>({});
   const all = ITEMS.every((i) => agreed[i.key]);
+  // 동의하고 시작하기: 1단계에서 받아 둔 이름·자격번호를 실어 보내 실제로 저장한다
+  function submit(e: FormEvent<HTMLFormElement>) {
+    const saved = sessionStorage.getItem("v1120-onboarding");
+    if (!saved) {
+      // 1단계를 거치지 않고 들어왔으면 저장할 값이 없으니 1단계로 돌려보낸다
+      e.preventDefault();
+      router.replace("/v1120/onboarding");
+      return;
+    }
+    const { name, licenseNumber } = JSON.parse(saved);
+    const form = e.currentTarget;
+    (form.elements.namedItem("name") as HTMLInputElement).value = name;
+    (form.elements.namedItem("licenseNumber") as HTMLInputElement).value = licenseNumber;
+    sessionStorage.removeItem("v1120-onboarding");
+  }
   return (
     <Screen>
       <p className="text-base font-bold text-muted">2 / 2</p>
@@ -52,9 +67,14 @@ export default function ConsentPage() {
       <Link href="/v1120/privacy" className="text-lg font-bold underline underline-offset-4">
         개인정보 처리방침 전체 보기
       </Link>
-      <Button disabled={!all} disabledReason="모든 항목에 동의해야 쓸 수 있어요" onClick={() => router.push("/v1120")}>
-        동의하고 시작하기
-      </Button>
+      <form action="/api/caregivers/onboard" method="post" onSubmit={submit}>
+        <input type="hidden" name="name" />
+        <input type="hidden" name="licenseNumber" />
+        <input type="hidden" name="next" value="/v1120" />
+        <Button type="submit" disabled={!all} disabledReason="모든 항목에 동의해야 쓸 수 있어요">
+          동의하고 시작하기
+        </Button>
+      </form>
     </Screen>
   );
 }

@@ -17,5 +17,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.redirect(absoluteUrl("/", req), 303);
+  // 1120 온보딩(동의 화면)에서 온 요청은 1120 홈으로 돌려보낸다
+  const next = formData.get("next") === "/v1120" ? "/v1120" : "/";
+  return NextResponse.redirect(absoluteUrl(next, req), 303);
 }

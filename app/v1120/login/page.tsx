@@ -1,8 +1,16 @@
 import Image from "next/image";
-import Link from "next/link";
+import { headers } from "next/headers";
+import { buildAuthorizeUrl } from "@/lib/kakaoAuth";
+
+export const dynamic = "force-dynamic";
 
 // C-01 로그인 (와이어 263:368, DIF-1-9). "먼저 둘러보기"는 OPS-1 체험하기 (카카오 없이 체험 계정으로).
-export default function LoginPage() {
+export default async function LoginPage() {
+  const host = (await headers()).get("host");
+  const protocol = host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http:" : "https:";
+  // state "v1120": 콜백이 로그인 뒤 1120 화면으로 보내도록
+  const authorizeUrl = buildAuthorizeUrl({ state: "v1120", redirectUri: `${protocol}//${host}/api/auth/kakao/callback` });
+
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
       <Image src="/brand/logo-full.svg" alt="손다음" width={110} height={36} priority />
@@ -22,12 +30,14 @@ export default function LoginPage() {
         </ul>
       </div>
       <div className="mt-auto flex flex-col gap-3">
-        <Link href="/v1120/onboarding" className="flex h-16 items-center justify-center rounded-[15px] bg-[#FEE500] text-lg font-bold text-[#191919]">
+        <a href={authorizeUrl} className="flex h-16 items-center justify-center rounded-[15px] bg-[#FEE500] text-lg font-bold text-[#191919]">
           카카오로 시작하기
-        </Link>
-        <Link href="/v1120" className="flex h-16 items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold">
-          먼저 둘러보기
-        </Link>
+        </a>
+        <form action="/api/auth/demo" method="post" className="flex">
+          <button type="submit" className="flex h-16 flex-1 items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold">
+            먼저 둘러보기
+          </button>
+        </form>
         <p className="text-center text-base text-muted">둘러보기는 예시 수급자 3명으로 체험해요. 24시간 뒤 지워져요.</p>
       </div>
     </main>

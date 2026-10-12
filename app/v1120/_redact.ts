@@ -30,9 +30,9 @@ const NUMBER_RULES: [RegExp, string][] = [
 export function redactForAi(text: string, people: KnownPeople) {
   let out = text;
   const names: [string, string][] = [
-    ...nameForms(people.client).map((n): [string, string] => [n, "수급자"]),
-    ...(people.guardian ? nameForms(people.guardian).map((n): [string, string] => [n, "보호자"]) : []),
-    ...(people.caregiver ? nameForms(people.caregiver).map((n): [string, string] => [n, "요양보호사"]) : []),
+    ...nameForms(people.client).map((n): [string, string] => [n, "[수급자]"]),
+    ...(people.guardian ? nameForms(people.guardian).map((n): [string, string] => [n, "[보호자]"]) : []),
+    ...(people.caregiver ? nameForms(people.caregiver).map((n): [string, string] => [n, "[요양보호사]"]) : []),
   ]
     .filter(([n]) => n.length >= 2)
     .sort((a, b) => b[0].length - a[0].length); // 긴 이름 먼저 ("홍길순" 다음 "길순")
@@ -43,4 +43,16 @@ export function redactForAi(text: string, people: KnownPeople) {
   }
   for (const [re, label] of NUMBER_RULES) out = out.replace(re, (m) => (label !== "[번호]" || m.replace(/\D/g, "").length >= 10 ? label : m));
   return out;
+}
+
+// AI 결과를 되돌릴 때: "내가 한 말"(요양보호사 본인이 보는 근거)은 이름으로, 보호자에게 가는 글은 호칭으로
+export function restoreNames(text: string, people: KnownPeople) {
+  return text
+    .replaceAll("[수급자]", people.client)
+    .replaceAll("[보호자]", people.guardian ?? "보호자")
+    .replaceAll("[요양보호사]", people.caregiver ?? "요양보호사");
+}
+
+export function toRoleWords(text: string) {
+  return text.replaceAll("[수급자]", "어르신").replaceAll("[보호자]", "보호자").replaceAll("[요양보호사]", "요양보호사");
 }

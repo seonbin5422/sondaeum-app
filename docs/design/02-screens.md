@@ -42,7 +42,7 @@
 
 와이어프레임 기준 새 화면은 `app/v1120/` 아래에 있다 (브랜치 `feature/v1120`, 임시 데이터). 주소는 위 표의 경로 앞에 `/v1120`을 붙인다 (예: `/v1120/visit/[id]/review`). 코드 화면 캡처는 Figma [1120.ver 구현](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=317-2) 페이지에 있다.
 
-- 하단 메뉴바(제안, D-32): 홈 `/v1120` · 수급자 `/v1120/clients` · 대화 `/v1120/chats` · 내 정보 `/v1120/me`
+- 하단 메뉴바(D-32): 홈 `/v1120` · 수급자 `/v1120/clients` · 대화 `/v1120/chats` · 내 정보 `/v1120/me`
 - 표에 없던 화면: 대화 탭 목록(`/v1120/chats`), 보고서 모아보기(`/v1120/chats/[clientId]/reports`, 보호자 `/v1120/c/[token]/reports`), 내 정보 탭(C-06 대신), 개인정보 처리방침(`/v1120/privacy`, LAW-12), 서류 · 급여제공기록지 결과(`/v1120/client/[id]/documents/care-sheet`)
 - C-05 수급자 정보는 모달이 아니라 수급자 탭의 화면(`/v1120/client/[id]`), C-09는 수급자 탭에 합침
 - 요양보호사 화면 호칭은 "수급자", 보호자 화면은 "어르신" (D-31)

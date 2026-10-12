@@ -20,6 +20,7 @@ interface RecognitionLike {
   onresult: ((e: EventLike) => void) | null;
   onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
+  abort(): void;
   start: () => void;
   stop: () => void;
 }
@@ -46,6 +47,22 @@ export function useSpeech(onFinal: (text: string) => void) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time browser feature detection, unavailable during SSR
     setSupported(!!getCtor());
+  }, []);
+
+  // LAW-5: 녹음은 누를 때만. 화면을 떠나거나(뒤로 가기) 다른 앱으로 가면 마이크를 끄고 자동으로 다시 켜지 않는다
+  useEffect(() => {
+    const off = () => {
+      keepRef.current = false;
+      recRef.current?.abort();
+      recRef.current = null;
+      setRecording(false);
+    };
+    const onHide = () => document.visibilityState === "hidden" && off();
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      off();
+    };
   }, []);
 
   function create(): RecognitionLike | null {

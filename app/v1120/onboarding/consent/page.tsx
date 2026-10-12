@@ -66,6 +66,7 @@ export default function ConsentPage() {
         <input type="hidden" name="name" />
         <input type="hidden" name="licenseNumber" />
         <input type="hidden" name="next" value="/v1120" />
+        <input type="hidden" name="consent" value={ITEMS.filter((i) => agreed[i.key]).map((i) => i.key).join(",")} />
         <Button type="submit" disabled={!all} disabledReason="모든 항목에 동의해야 쓸 수 있어요">
           동의하고 시작하기
         </Button>

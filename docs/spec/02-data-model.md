@@ -1,6 +1,6 @@
 # 02. 데이터 모델
 
-모델은 4개(`Caregiver`, `Client`, `Visit`, `Report`)다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
+모델은 5개(`Caregiver`, `Client`, `Visit`, `Report`, `AiUsage`)다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
 
 ## 관계
 
@@ -25,6 +25,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `licenseNumber` | String? | 요양보호사 자격번호. 처음 설정(C-02)에서 필수로 받는다 (D-31) |
 | `kakaoId` | String? unique | 카카오 사용자 ID |
 | `isDemo`, `demoExpiresAt` | Boolean, DateTime? | 체험 계정(OPS-1). 만든 지 24시간 뒤 수급자·방문 기록과 함께 지운다 (`app/api/auth/demo`, 누가 체험하기를 누를 때 정리) |
+| `consentedAt`, `consentItems` | DateTime?, String? | LAW-3 동의 기록. 1120 동의 화면(C-21)에서 모든 항목에 동의한 시각과 항목 키(`personal,health,guardian,overseas`, `app/v1120/_consent.ts`). 10/13 전에 가입한 계정은 비어 있다 |
 
 ### Client (수급자)
 
@@ -43,6 +44,16 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `scheduleLabel` | String? | 돌봄 계약시간, 예: `수,금,토 17:00-23:00` (`lib/schedule.ts`가 해석) | 아니오 |
 | `isActive` | Boolean | `false` = 삭제됨(복원 가능) | |
 | `purgeAt` | DateTime? | 영구 삭제 예정 시각 (요청 후 14일) | |
+
+### AiUsage (AI 호출 기록, SEC-3)
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `caregiverId` | String | 부른 요양보호사 |
+| `kind` | String | `fill-record`(1120 정리), `summarize`·`classify-preview`·`redact`·`transcribe`(옛 API) |
+| `createdAt` | DateTime | 부른 시각. `(caregiverId, createdAt)` 색인 |
+
+요양보호사마다 시간당 30회·하루 100회까지 (`lib/aiLimit.ts`). 넘으면 1120 정리는 AI 없이 낱말 찾기로 채우고, 옛 API는 429를 돌려준다.
 
 ### Visit (방문)
 
@@ -245,4 +256,4 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각, 보호자 첫 입장 시각 = 초대 수락 여부 D-33), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29 검토 중) |
 | STB-5 | `Report.shareExpiresAt` |
-| LAW-3 | 동의 기록 (항목별 동의 여부·시각) |
+| LAW-3 | 동의 기록: `Caregiver.consentedAt`·`consentItems`로 넣음 (10/13, D-40) |

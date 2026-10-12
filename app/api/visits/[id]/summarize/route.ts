@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { decryptText, encryptText } from "@/lib/crypto";
 import { classifyCareNote } from "@/lib/careNoteAi";
+import { apiCaregiverId, notFound, ownsVisit, unauthorized } from "@/lib/apiAuth";
+import { AI_LIMIT_MESSAGE, takeAiCall } from "@/lib/aiLimit";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const me = await apiCaregiverId();
+  if (!me) return unauthorized();
+  if (!(await ownsVisit(id, me))) return notFound();
+  if (!(await takeAiCall(me, "summarize"))) return NextResponse.json({ error: AI_LIMIT_MESSAGE }, { status: 429 });
 
   const visit = await prisma.visit.update({
     where: { id },

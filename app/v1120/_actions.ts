@@ -9,6 +9,7 @@ import { CARE_GRADES, type CareRecord } from "./_types";
 import { extractRecord } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
+import { takeAiCall } from "@/lib/aiLimit";
 import { kstTodayRange, requireCaregiver } from "./_data";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
@@ -156,6 +157,8 @@ async function fillVisitRecord(transcript: string, clientId: string, caregiverId
     prisma.caregiver.findUnique({ where: { id: caregiverId }, select: { name: true } }),
   ]);
   if (!client) return fallback();
+  // SEC-3: 한도를 넘으면 AI 없이 낱말 찾기로 채운다 (기록은 막지 않음)
+  if (!(await takeAiCall(caregiverId, "fill-record"))) return fallback();
   const people = { client: client.name, guardian: client.guardianName, caregiver: caregiver?.name, phones: [client.phone, client.guardianPhone] };
   try {
     const { record, quotes } = fillGaps(await fillRecord(redactForAi(transcript, people)), fallback());

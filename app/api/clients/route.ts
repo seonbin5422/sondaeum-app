@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/absoluteUrl";
+import { apiCaregiverId, unauthorized } from "@/lib/apiAuth";
 
 export async function POST(req: NextRequest) {
+  const me = await apiCaregiverId();
+  if (!me) return unauthorized();
   const formData = await req.formData();
   const name = formData.get("name");
   const guardianName = formData.get("guardianName");
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
 
   await prisma.client.create({
     data: {
+      caregiverId: me, // SEC-2
       name: name.trim(),
       guardianName: guardianName.trim(),
       guardianRelation: finalRelation,

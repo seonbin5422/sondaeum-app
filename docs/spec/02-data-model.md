@@ -1,6 +1,6 @@
 # 02. 데이터 모델
 
-모델은 4개(`Caregiver`, `Client`, `Visit`, `Report`)다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
+모델은 5개(`Caregiver`, `Client`, `Visit`, `Report`, `AiUsage`)다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
 
 ## 관계
 
@@ -12,7 +12,7 @@ Caregiver 1 ── N Visit N ── 1 Client
                Report (0..1)
 ```
 
-`Client`에는 담당 요양보호사가 없다. 그래서 모든 요양보호사가 모든 수급자를 본다. → SEC-2에서 `Client.caregiverId` 추가
+`Client.caregiverId`는 담당 요양보호사다 (SEC-2, D-35). 1120 화면(`app/v1120/_data.ts`)은 이 값으로 걸러서 자기 수급자만 보여 준다. 옛 화면은 아직 거르지 않고, 옛 화면이 만든 수급자는 이 값이 비어 있을 수 있다 (그래서 지금은 선택 칸).
 
 ## 모델
 
@@ -24,6 +24,8 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `name` | String | |
 | `licenseNumber` | String? | 요양보호사 자격번호. 처음 설정(C-02)에서 필수로 받는다 (D-31) |
 | `kakaoId` | String? unique | 카카오 사용자 ID |
+| `isDemo`, `demoExpiresAt` | Boolean, DateTime? | 체험 계정(OPS-1). 만든 지 24시간 뒤 수급자·방문 기록과 함께 지운다 (`app/api/auth/demo`, 누가 체험하기를 누를 때 정리) |
+| `consentedAt`, `consentItems` | DateTime?, String? | LAW-3 동의 기록. 1120 동의 화면(C-21)에서 모든 항목에 동의한 시각과 항목 키(`personal,health,guardian,overseas`, `app/v1120/_consent.ts`). 10/13 전에 가입한 계정은 비어 있다 |
 
 ### Client (수급자)
 
@@ -34,12 +36,24 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `allergies`, `medicalHistory`, `medicationNotes` | String? | 알레르기, 병력, 복용약 | 아니오 (SEC-5) |
 | `personalNotes` | String? | 요양보호사의 지속 메모(특이사항) | 아니오 |
 | `guardianName`, `guardianRelation` | String | 보호자 이름, 관계(아들·딸·배우자·직접 입력) | 아니오 |
-| `guardianPhone` | String? | 보호자 전화번호. 대화방 초대 문자에 씀 (D-33, 추가 예정) | 아니오 (SEC-5) |
+| `guardianPhone` | String? | 보호자 전화번호. 대화방 초대 문자에 씀 (D-33) | 아니오 (SEC-5) |
 | `careRegistrationNumber` | String? | 장기요양인정번호. 등록·수정(C-07·C-08)에서 필수 (D-31) | 아니오 (SEC-5) |
+| `careGrade` | String? | 장기요양등급 `"1등급"`~`"5등급"`, `"인지지원등급"` (LAW-4, D-31) | 아니오 |
+| `caregiverId` | String? | 담당 요양보호사 (SEC-2, D-35) | |
 | `phone` | String? | 수급자 전화번호 (보호자 번호는 `guardianPhone`, D-33) | 아니오 (SEC-5) |
 | `scheduleLabel` | String? | 돌봄 계약시간, 예: `수,금,토 17:00-23:00` (`lib/schedule.ts`가 해석) | 아니오 |
 | `isActive` | Boolean | `false` = 삭제됨(복원 가능) | |
 | `purgeAt` | DateTime? | 영구 삭제 예정 시각 (요청 후 14일) | |
+
+### AiUsage (AI 호출 기록, SEC-3)
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| `caregiverId` | String | 부른 요양보호사 |
+| `kind` | String | `fill-record`(1120 정리), `summarize`·`classify-preview`·`redact`·`transcribe`(옛 API) |
+| `createdAt` | DateTime | 부른 시각. `(caregiverId, createdAt)` 색인 |
+
+요양보호사마다 시간당 30회·하루 100회까지 (`lib/aiLimit.ts`). 넘으면 1120 정리는 AI 없이 낱말 찾기로 채우고, 옛 API는 429를 돌려준다.
 
 ### Visit (방문)
 
@@ -57,7 +71,8 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `visitId` | String unique | |
 | `meals`, `medication`, `notes` | String | 식사·복약·특이사항, **암호화**. D-24 이후 새 기록은 `careRecord`에 (아래 절) |
 | `medicationMorning` / `Lunch` / `Evening` / `Bedtime` / `None` | Boolean | 복약 체크박스 |
-| `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화** |
+| `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화**. 1120 기록은 항목별 "내가 한 말"(`SaidQuotes`) |
+| `careRecord` | String? | 급여제공기록지 모양 `CareRecord` JSON, **암호화** (DIF-2, D-36). 아래 절 |
 | `wasEdited` | Boolean | 요양보호사가 수정했는지 |
 | `shareToken` | String unique | 보호자 링크 `/g/[token]` |
 | `sentAt`, `viewedAt`, `viewCount` | | 전송·첫 열람 시각, 열람 횟수 |
@@ -124,7 +139,7 @@ type CareRecord = {
 };
 ```
 
-1번 서비스 시간은 따로 저장하지 않고 `Visit.startedAt`·`endedAt`에서 계산한다.
+1번 서비스 시간은 따로 저장하지 않고, 수급자를 등록할 때 정한 계약 시간(`Client.scheduleLabel`의 시작~끝)을 방문한 날에 놓아 계산한다 (`app/v1120/_data.ts`의 `serviceTimeOf`, D-37). `Visit.startedAt`·`endedAt`은 기록을 시작·끝낸 시각이라 서비스 시간이 아니다.
 
 ### 보호자 보고서 화면(G-01)이 받는 값
 
@@ -225,18 +240,17 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | → `SUMMARIZING` → `DRAFT_READY` | `POST /api/visits/[id]/summarize` (실패 시 `RECORDED`로 되돌림) |
 | → `SENT` | `POST /api/reports/[id]/send` |
 
-**알려진 문제**: 이전 상태를 확인하지 않는다. `SENT` 뒤에도 수정·재전송이 되고(STB-1), `SUMMARIZING` 중에 다시 요약할 수 있다(STB-2).
+1120 화면은 `app/v1120/_actions.ts`의 서버 액션을 쓴다: `startVisit`(→ `RECORDING`, 오늘 방문이 있으면 이어서) · `saveTranscript`(문장마다, D-27) · `finishRecording`(→ `RECORDED`) · `summarizeVisit`(→ `SUMMARIZING` → `DRAFT_READY`, 실패 시 `RECORDED`. 이미 정리 중이거나 끝났으면 다시 하지 않음) · `saveRecord` · `sendReport`(→ `SENT`). `SENT` 뒤에는 모두 막는다(STB-1). 지금 정리는 AI 대신 `app/v1120/_extract.ts`(낱말·숫자 찾기)가 하고, 녹음 내용은 외부로 나가지 않아 개인정보 필터 없이 암호화만 한다.
+
+**알려진 문제 (옛 화면)**: 이전 상태를 확인하지 않는다. `SENT` 뒤에도 수정·재전송이 되고(STB-1), `SUMMARIZING` 중에 다시 요약할 수 있다(STB-2).
 
 ## 추가 예정
 
 | 요구사항 | 변경 |
 | --- | --- |
-| SEC-2 | `Client.caregiverId` (필수, 기존 데이터는 시드 요양보호사로 채움) |
-| DIF-2 | `Report.careRecord` (String, 암호화된 `CareRecord` JSON, 위 "급여제공기록지 기록" 절) |
+| SEC-2 | `Client.caregiverId`를 필수로 바꾸기 (기존 데이터는 시드 요양보호사로 채움). 칸은 D-35에서 선택 칸으로 추가됨 |
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각, 보호자 첫 입장 시각 = 초대 수락 여부 D-33), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29) |
 | STB-5 | `Report.shareExpiresAt` |
-| LAW-4 | `Client.careGrade` 장기요양등급 (`"1등급"`~`"5등급"`, `"인지지원등급"`, D-31) |
-| OPS-1 | `Caregiver.isDemo`, `Caregiver.demoExpiresAt` (체험 계정 24시간 뒤 관련 데이터와 함께 삭제) |
-| LAW-3 | 동의 기록 (항목별 동의 여부·시각) |
+| LAW-3 | 동의 기록: `Caregiver.consentedAt`·`consentItems`로 넣음 (10/13, D-40) |

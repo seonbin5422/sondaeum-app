@@ -7,6 +7,8 @@ import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText } from "@/lib/crypto";
 import { CARE_GRADES, type CareRecord } from "./_types";
 import { extractRecord } from "./_extract";
+import { redactForAi } from "./_redact";
+import { summarizeNotes } from "./_ai";
 import { kstTodayRange, requireCaregiver } from "./_data";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
@@ -128,8 +130,7 @@ export async function startVisit(clientId: string) {
 }
 
 // 녹음 내용을 문장마다 저장 (D-27: 중간에 멈춰도 이어서 기록)
-// shortcut: 개인정보 필터(lib/pii, Groq)를 거치지 않고 암호화만 한다. 지금은 녹음 내용이 외부 AI로 나가지 않아서다,
-// 진짜 AI 요약을 붙일 때 AI로 보내기 전에 필터를 건다 (LAW-6·DIF-8)
+// 원문은 암호화만 해서 저장한다. AI로 나가는 건 정리 때 _redact.ts로 개인정보를 지운 특이사항 문장뿐이다 (LAW-6)
 export async function saveTranscript(visitId: string, transcript: string) {
   await ownVisitOrThrow(visitId);
   await prisma.visit.update({ where: { id: visitId }, data: { transcript: encryptText(transcript), status: "RECORDING" } });
@@ -145,15 +146,39 @@ export async function finishRecording(visitId: string, transcript: string) {
   });
 }
 
+// 특이사항 문장을 개인정보를 지운 뒤 AI로 요약한다. AI가 실패하면 원문 문장을 그대로 둬서 기록은 계속 만든다
+async function aiNotes(said: string | null, clientId: string, caregiverId: string) {
+  if (!said || !process.env.GROQ_API_KEY) return said;
+  const [client, caregiver] = await Promise.all([
+    prisma.client.findUnique({ where: { id: clientId }, select: { name: true, guardianName: true, phone: true, guardianPhone: true } }),
+    prisma.caregiver.findUnique({ where: { id: caregiverId }, select: { name: true } }),
+  ]);
+  if (!client) return said;
+  const redacted = redactForAi(said, {
+    client: client.name,
+    guardian: client.guardianName,
+    caregiver: caregiver?.name,
+    phones: [client.phone, client.guardianPhone],
+  });
+  try {
+    return await summarizeNotes(redacted);
+  } catch (err) {
+    console.error("AI 특이사항 요약 실패, 원문 문장을 씀", err);
+    return said;
+  }
+}
+
 // C-13 정리: 녹음 내용을 급여제공기록지 모양으로 채워 보고서 초안을 만든다
-// shortcut: AI 대신 _extract.ts(낱말·숫자 찾기)로 채운다, 개발 1의 AI 요약(LAW-1·2 프롬프트)이 준비되면 여기만 바꾼다
+// shortcut: 특이사항만 AI(LAW-1 프롬프트)로 요약하고 나머지 칸은 _extract.ts(낱말·숫자 찾기)로 채운다, 개발 1의 AI 요약이 준비되면 여기만 바꾼다
 export async function summarizeVisit(visitId: string) {
   const v = await ownVisitOrThrow(visitId);
   // 이미 정리 중이거나 끝났으면 다시 하지 않는다 (STB-2)
   if (v.status === "SUMMARIZING" || v.status === "DRAFT_READY") return;
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SUMMARIZING" } });
   try {
-    const { record, quotes } = extractRecord(v.transcript ? decryptText(v.transcript) : "");
+    const extracted = extractRecord(v.transcript ? decryptText(v.transcript) : "");
+    const quotes = extracted.quotes; // "내가 한 말" 근거는 원문 그대로
+    const record = { ...extracted.record, notes: await aiNotes(extracted.record.notes, v.clientId, v.caregiverId) };
     const fields = { careRecord: encryptText(JSON.stringify(record)), aiRawJson: encryptText(JSON.stringify(quotes)) };
     await prisma.report.upsert({
       where: { visitId },

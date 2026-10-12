@@ -27,8 +27,8 @@
 | C-17 | **기관 서류 초안** (신규) | `/visit/[id]/review` 안 탭 | 신규 | DIF-3, LAW-4, LAW-9 | |
 | C-18 | **수급자 대화방** (신규, 날짜별 보고서 모아보기 포함) | `/client/[id]/chat` (안) | 신규 | DIF-5 | |
 | C-23 | **보호자 대화방 초대** (신규, D-33) | `/client/[id]/invite` (안), 등록 직후 `/client/new/invite` | 신규 | DIF-5 | 와이어 없음 (1120.ver 코드 기준) |
-| C-19 | **서류 만들기: 서류 종류·기간 선택** (신규, D-29 초안) | `/client/[id]/report` (안) | 신규 | DIF-4 |[1 처음](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=308-57) · [2 서류 고름](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=308-2) · [3 다 고름](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=307-2) (D-29 초안) |
-| C-20 | **서류: 진료 참고용 요약 A4 화면** (신규, D-29 초안) | `/client/[id]/report/print` (안) | 신규 | DIF-4, LAW-10 |[Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=305-38) (D-29 초안) |
+| C-19 | **서류 만들기: 서류 종류·기간 선택** (신규, D-29) | `/client/[id]/report` (안) | 신규 | DIF-4 |[1 처음](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=308-57) · [2 서류 고름](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=308-2) · [3 다 고름](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=307-2) |
+| C-20 | **서류: 진료 참고용 요약 A4 화면** (신규, D-29) | `/client/[id]/report/print` (안) | 신규 | DIF-4, LAW-10 |[Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=305-38) |
 
 ## 보호자 화면
 
@@ -36,13 +36,13 @@
 | --- | --- | --- | --- | --- | --- |
 | G-01 | 방문 보고서 | `/g/[token]` | `app/g/[token]/page.tsx` | STB-5, DIF-2 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-692) |
 | G-02 | **수급자 대화방** (신규, 날짜별 보고서 모아보기 포함) | `/c/[token]` (안) | 신규 | DIF-5, LAW-11 | |
-| G-03 | **제출용 보고서 만들기·저장·인쇄** (신규) | C-19·C-20과 같은 화면, 대화방에서 열기 (보호자도 서류 종류·기간 선택, D-26·D-29 초안) | 신규 | DIF-4 | |
+| G-03 | **서류 만들기·저장·인쇄** (신규) | C-19·C-20과 같은 화면, 대화방에서 열기 (보호자도 서류 종류·기간 선택, D-26·D-29) | 신규 | DIF-4 | |
 
 ## 1120.ver 구현 (D-30)
 
 와이어프레임 기준 새 화면은 `app/v1120/` 아래에 있다 (브랜치 `feature/v1120`, 임시 데이터). 주소는 위 표의 경로 앞에 `/v1120`을 붙인다 (예: `/v1120/visit/[id]/review`). 코드 화면 캡처는 Figma [1120.ver 구현](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=317-2) 페이지에 있다.
 
-- 하단 메뉴바(제안, D-32): 홈 `/v1120` · 수급자 `/v1120/clients` · 대화 `/v1120/chats` · 내 정보 `/v1120/me`
+- 하단 메뉴바(D-32): 홈 `/v1120` · 수급자 `/v1120/clients` · 대화 `/v1120/chats` · 내 정보 `/v1120/me`
 - 표에 없던 화면: 대화 탭 목록(`/v1120/chats`), 보고서 모아보기(`/v1120/chats/[clientId]/reports`, 보호자 `/v1120/c/[token]/reports`), 내 정보 탭(C-06 대신), 개인정보 처리방침(`/v1120/privacy`, LAW-12), 서류 · 급여제공기록지 결과(`/v1120/client/[id]/documents/care-sheet`)
 - C-05 수급자 정보는 모달이 아니라 수급자 탭의 화면(`/v1120/client/[id]`), C-09는 수급자 탭에 합침
 - 요양보호사 화면 호칭은 "수급자", 보호자 화면은 "어르신" (D-31)

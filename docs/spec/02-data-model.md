@@ -160,9 +160,7 @@ type GuardianReportProps = {
 - `Report.careRecord` 한 칸에 통째로 암호화할지, 항목별로 나눌지 (개발 2)
 - C-14의 "내가 한 말" 근거를 `aiRawJson`에 항목별로 둘지 (개발 1, C-14 설계 때)
 
-## 진료용 기간 요약 (DIF-4, 제안 · D-29 검토 중)
-
-> 팀 확인 전 초안이다. D-29가 확정되면 [../prd/02-requirements.md](../prd/02-requirements.md) DIF-4 상세와 [../prd/04-prd.md](../prd/04-prd.md) 7절의 "내용"을 이 절에 맞춰 고친다.
+## 진료용 기간 요약 (DIF-4, D-29 확정 10/13)
 
 보험금 청구는 공단 등급 서류·의사 진단서 같은 공적 서류로 하므로, 앱 보고서는 그 근거가 될 수 없다. 대신 병원 진료 때 보호자가 의료진에게 보여 줄 **한 장짜리 기간 요약**으로 만든다. 미국 요양시설의 INTERACT "Stop and Watch"(돌봄 인력이 평소와 달라진 점만 체크해 간호사·의사에게 넘기는 도구)와 같은 역할이다. 양식은 저작권이 있어 구조만 참고한다.
 
@@ -204,7 +202,6 @@ type PeriodSummaryProps = {
 
 ### 정할 것
 
-- DIF-4 목적을 "의료기관·보험사 제출용"에서 "진료용 기간 요약"으로 좁히고 이름을 바꿀지 (기획, D-29)
 - 서류 만들기의 급여제공기록지는 기관이 발급하는 공식 사본이 아니다. 문서 이름과 고지 문구 (기획)
 - DIF-3 기관 서류 탭(C-17)과 서류 만들기의 급여제공기록지 나누기. 제안: 탭은 방문 직후 그날 기록 확인, 서류 만들기는 지난 날짜·여러 날 출력 (기획·개발 1)
 - 급여제공기록지 서식이 한 장에 담는 기간 확인 (기획). 결과는 날짜마다 한 장으로 가정
@@ -238,7 +235,7 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-2 | `Report.careRecord` (String, 암호화된 `CareRecord` JSON, 위 "급여제공기록지 기록" 절) |
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
 | DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각, 보호자 첫 입장 시각 = 초대 수락 여부 D-33), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
-| DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29 검토 중) |
+| DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29) |
 | STB-5 | `Report.shareExpiresAt` |
 | LAW-4 | `Client.careGrade` 장기요양등급 (`"1등급"`~`"5등급"`, `"인지지원등급"`, D-31) |
 | OPS-1 | `Caregiver.isDemo`, `Caregiver.demoExpiresAt` (체험 계정 24시간 뒤 관련 데이터와 함께 삭제) |

@@ -72,3 +72,4 @@ assert.equal(extractRecord("이십 분 아니 삼십 분 옛날 사진 보면서
 const photo = "한 삼십 분 정도 옛날 사진 보면서 얘기 나눴어요";
 const photoAi = checkAiRecord({ cognitive: { emotional: 30 }, quotes: { cognitive: [photo] } }, photo);
 assert.equal(fillGaps(photoAi, extractRecord(photo)).record.cognitive.stimulation, null); // 같은 30분을 인지자극에 또 넣지 않음
+assert.equal(checkAiRecord({ notes: "물도 안 드셨어요.-요 약은 드셨어요.-요", quotes: { notes: ["물"] } }, "물").record.notes, "물도 안 드셨어요. 약은 드셨어요.");

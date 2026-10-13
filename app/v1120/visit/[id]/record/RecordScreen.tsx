@@ -87,7 +87,12 @@ export function RecordScreen({ visitId, clientName, initialTranscript }: { visit
 
       <div className="rounded-xl bg-(--neutral-soft) px-4 py-3">
         <p className="text-base font-bold text-muted">이렇게 말해 보세요</p>
-        <p className="text-lg">한 일(세면·식사도움·이동), 대소변 실수 횟수, 지난번과 달라진 점. 말벗·인지활동은 몇 분 했는지 꼭 말해 주세요(예: 딸 얘기 들어드림 20분).</p>
+        <p className="text-lg">
+          <b>평소와 달랐던 점</b>(식사량·기분·하신 말·몸 상태)과 그때 어떻게 해 드렸는지
+        </p>
+        <p className="text-lg">
+          한 일은 <b>시간까지</b> 말해야 기록지에 들어가요(예: 세수 도와드림 15분, 딸 얘기 들어드림 20분). 시간을 빠뜨리면 다음 화면에서 직접 넣어요.
+        </p>
       </div>
 
       <div className="flex flex-col items-center gap-2">

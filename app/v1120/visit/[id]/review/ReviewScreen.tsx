@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { LinkButton, Screen, TopBar } from "../../../_components/ui";
+import { Button, LinkButton, Screen, TopBar } from "../../../_components/ui";
 import { saveRecord } from "../../../_actions";
 import type { SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
@@ -18,16 +18,47 @@ function NeedsCheck() {
   );
 }
 
-function Section({ title, hint, missing, said, children }: { title: string; hint?: string; missing?: boolean; said?: string; children: ReactNode }) {
+// 섹션은 하나씩 나타난다. 머리를 누르면 이름·시간만 남기고 접히고, 다시 누르면 펼쳐진다.
+function Section({
+  id,
+  title,
+  time,
+  hint,
+  missing,
+  said,
+  open,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  time?: string;
+  hint?: string;
+  missing?: boolean;
+  said?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
   return (
-    <section className="flex flex-col gap-3 rounded-[15px] border border-(--line) bg-white p-5">
-      <div className="flex items-center justify-between gap-2">
+    <section id={id} className="flex scroll-mt-4 flex-col gap-3 rounded-[15px] border border-(--line) bg-white p-5">
+      <button type="button" aria-expanded={open} onClick={onToggle} className="flex min-h-12 items-center justify-between gap-2 text-left">
         <h2 className="text-lg font-bold">{title}</h2>
-        {missing && <NeedsCheck />}
-      </div>
-      {hint && <p className="-mt-2 text-base text-muted">{hint}</p>}
-      {children}
-      {said && <p className="text-base text-muted">내가 한 말: &quot;{said}&quot;</p>}
+        <span className="flex items-center gap-2">
+          {missing && <NeedsCheck />}
+          {time && <span className="text-lg font-bold">{time}</span>}
+          <span aria-hidden className={`text-muted transition-transform ${open ? "rotate-180" : ""}`}>
+            ▾
+          </span>
+        </span>
+      </button>
+      {open && (
+        <>
+              {hint && <p className="-mt-2 text-base text-muted">{hint}</p>}
+              {children}
+              {said && <p className="text-base text-muted">내가 한 말: &quot;{said}&quot;</p>}
+        </>
+      )}
     </section>
   );
 }
@@ -146,17 +177,150 @@ export function ReviewScreen({
   const cogMissing = Object.values(r.cognitive).some((v) => v === null);
   const changeMissing = Object.values(r.change).some((v) => v === null);
   const bowelMissing = r.bowel.stoolAccidents === null || r.bowel.urineAccidents === null;
+  const cogValues = Object.values(r.cognitive).filter((v): v is number => v !== null);
+  const cogMinutes = cogValues.length ? cogValues.reduce((a, b) => a + b, 0) : null;
+  const min = (v: number | null) => (v === null ? undefined : `${v}분`);
+
+  // 하나씩 확인: confirmed = 확인을 누른 섹션 수, 그다음 섹션까지만 보인다
+  const [confirmed, setConfirmed] = useState(0);
+  const [open, setOpen] = useState(new Set([0]));
+  const toggle = (i: number) =>
+    setOpen((o) => {
+      const n = new Set(o);
+      if (!n.delete(i)) n.add(i);
+      return n;
+    });
+  function next(i: number) {
+    setConfirmed(i + 1);
+    setOpen((o) => {
+      const n = new Set(o);
+      n.delete(i);
+      n.add(i + 1);
+      return n;
+    });
+    // 새로 나온 섹션이 아래 버튼에 가리지 않게
+    setTimeout(() => document.getElementById(`step-${i + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  }
+
+  const steps: { title: string; time?: string; hint?: string; missing?: boolean; said?: string; body: ReactNode }[] = [
+    {
+      title: "서비스 시간", time: `${visitTime.start}~${visitTime.end}`,
+      body: (
+        <>
+          <p className="text-xl font-bold">
+            {visitTime.start} ~ {visitTime.end} · 총 {visitTime.minutes}분
+          </p>
+          <p className="text-base text-muted">{visitTime.date} · 수급자를 등록할 때 정한 서비스 시간이에요.</p>
+        </>
+      ),
+    },
+    {
+      title: "신체활동지원", hint: "한 것을 눌러 주세요.", said: said?.physical ?? undefined, missing: r.physical.minutes === null, time: min(r.physical.minutes),
+      body: (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                ["personalHygiene", "개인위생"],
+                ["bathing", "몸씻기"],
+                ["mealAssist", "식사도움"],
+                ["repositioning", "체위변경"],
+                ["mobility", "이동도움"],
+                ["toileting", "화장실 이용"],
+              ] as const
+            ).map(([k, l]) => (
+              <Toggle key={k} label={l} on={!!r.physical[k]} onChange={(v) => set("physical", { [k]: v })} />
+            ))}
+          </div>
+          <NumberRow label="제공시간" unit="분" value={r.physical.minutes} onChange={(v) => set("physical", { minutes: v })} />
+        </>
+      ),
+    },
+    {
+      title: "인지·정서 지원", said: said?.cognitive ?? undefined, missing: cogMissing, time: min(cogMinutes),
+      body: (
+        <>
+          {(
+            [
+              ["stimulation", "인지자극활동"],
+              ["dailyLiving", "일상생활 함께하기"],
+              ["behaviorManagement", "인지행동변화 관리"],
+              ["emotional", "의사소통·말벗·격려"],
+            ] as const
+          ).map(([k, l]) => (
+            <NumberRow key={k} label={l} unit="분" value={r.cognitive[k]} onChange={(v) => set("cognitive", { [k]: v })} />
+          ))}
+        </>
+      ),
+    },
+    {
+      title: "가사·일상생활지원", hint: "한 것을 눌러 주세요.", said: said?.household ?? undefined, missing: r.household.minutes === null, time: min(r.household.minutes),
+      body: (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <Toggle label="식사준비·청소·세탁" on={!!r.household.mealPrepCleaningLaundry} onChange={(v) => set("household", { mealPrepCleaningLaundry: v })} />
+            <Toggle label="외출 동행" on={!!r.household.personalActivity} onChange={(v) => set("household", { personalActivity: v })} />
+          </div>
+          <NumberRow label="제공시간" unit="분" value={r.household.minutes} onChange={(v) => set("household", { minutes: v })} />
+        </>
+      ),
+    },
+    {
+      title: "변화상태", hint: "지난 방문과 비교해 골라 주세요.", said: said?.change ?? undefined, missing: changeMissing,
+      body: (
+        <>
+          <ChangeRow label="신체기능" value={r.change.physical} onChange={(v) => set("change", { physical: v })} />
+          <ChangeRow label="식사기능" value={r.change.meal} onChange={(v) => set("change", { meal: v })} />
+          <ChangeRow label="인지기능" value={r.change.cognitive} onChange={(v) => set("change", { cognitive: v })} />
+        </>
+      ),
+    },
+    {
+      title: "배변 변화", said: said?.bowel ?? undefined, missing: bowelMissing,
+      body: (
+        <>
+          <NumberRow label="대변 실수" unit="회" value={r.bowel.stoolAccidents} onChange={(v) => set("bowel", { stoolAccidents: v })} />
+          <NumberRow label="소변 실수" unit="회" value={r.bowel.urineAccidents} onChange={(v) => set("bowel", { urineAccidents: v })} />
+          <label className="flex min-h-12 items-center gap-3 text-base">
+            <input
+              type="checkbox"
+              className="h-6 w-6 accent-[var(--accent)]"
+              checked={r.bowel.diaperChanges !== null}
+              onChange={(e) => set("bowel", { diaperChanges: e.target.checked ? 0 : null })}
+            />
+            기저귀 사용 (교환 횟수로 적기)
+          </label>
+          {r.bowel.diaperChanges !== null && (
+            <NumberRow label="기저귀 교환" unit="회" value={r.bowel.diaperChanges} onChange={(v) => set("bowel", { diaperChanges: v ?? 0 })} />
+          )}
+        </>
+      ),
+    },
+    {
+      title: "특이사항", said: said?.notes ?? undefined, missing: !r.notes,
+      body: (
+        <>
+          <textarea
+            className="min-h-24 w-full rounded-xl border border-border p-3 text-lg font-bold"
+            value={r.notes ?? ""}
+            placeholder="혈압, 복약, 아픈 곳처럼 보호자가 알아야 할 것"
+            onChange={(e) => update({ ...r, notes: e.target.value || null })}
+          />
+        </>
+      ),
+    },
+  ];
 
   return (
     <Screen
       bottom={
-        <button
-          type="button"
+        <Button
           onClick={toConfirm}
-          className="flex h-16 w-full items-center justify-center rounded-[15px] bg-accent text-lg font-bold text-accent-foreground active:bg-accent-dark"
+          disabled={confirmed < steps.length}
+          disabledReason={`항목을 하나씩 확인해 주세요 (${confirmed}/${steps.length})`}
         >
           다음: 보낼 내용 보기
-        </button>
+        </Button>
       }
     >
       <TopBar backHref={`/v1120/visit/${id}/record`} title="기록 확인" />
@@ -192,14 +356,14 @@ export function ReviewScreen({
 
       {tab === "sheet" ? (
         <>
-          <p className="text-base text-muted">오늘 기록을 기관 서식 순서로 본 화면이에요. 여기서 고친 값은 기록 확인 탭과 같아요.</p>
-          <CareSheet
-            record={r}
-            date={visitTime.date}
-            time={`${visitTime.start}~${visitTime.end}`}
-            clientName={clientName}
-            caregiverName={caregiverName}
-          />
+              <p className="text-base text-muted">오늘 기록을 기관 서식 순서로 본 화면이에요. 여기서 고친 값은 기록 확인 탭과 같아요.</p>
+              <CareSheet
+                record={r}
+                date={visitTime.date}
+                time={`${visitTime.start}~${visitTime.end}`}
+                clientName={clientName}
+                caregiverName={caregiverName}
+              />
         </>
       ) : (
       <>
@@ -208,84 +372,14 @@ export function ReviewScreen({
         <p className="text-base">&quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. 비워 두었으니 채워 주세요.</p>
       </div>
 
-      <Section title="서비스 시간">
-        <p className="text-xl font-bold">
-          {visitTime.start} ~ {visitTime.end} · 총 {visitTime.minutes}분
-        </p>
-        <p className="text-base text-muted">{visitTime.date} · 수급자를 등록할 때 정한 서비스 시간이에요.</p>
-      </Section>
-
-      <Section title="신체활동지원" hint="한 것을 눌러 주세요." said={said?.physical ?? undefined} missing={r.physical.minutes === null}>
-        <div className="grid grid-cols-3 gap-2">
-          {(
-            [
-              ["personalHygiene", "개인위생"],
-              ["bathing", "몸씻기"],
-              ["mealAssist", "식사도움"],
-              ["repositioning", "체위변경"],
-              ["mobility", "이동도움"],
-              ["toileting", "화장실 이용"],
-            ] as const
-          ).map(([k, l]) => (
-            <Toggle key={k} label={l} on={!!r.physical[k]} onChange={(v) => set("physical", { [k]: v })} />
-          ))}
-        </div>
-        <NumberRow label="제공시간" unit="분" value={r.physical.minutes} onChange={(v) => set("physical", { minutes: v })} />
-      </Section>
-
-      <Section title="인지·정서 지원" said={said?.cognitive ?? undefined} missing={cogMissing}>
-        {(
-          [
-            ["stimulation", "인지자극활동"],
-            ["dailyLiving", "일상생활 함께하기"],
-            ["behaviorManagement", "인지행동변화 관리"],
-            ["emotional", "의사소통·말벗·격려"],
-          ] as const
-        ).map(([k, l]) => (
-          <NumberRow key={k} label={l} unit="분" value={r.cognitive[k]} onChange={(v) => set("cognitive", { [k]: v })} />
-        ))}
-      </Section>
-
-      <Section title="가사·일상생활지원" hint="한 것을 눌러 주세요." said={said?.household ?? undefined} missing={r.household.minutes === null}>
-        <div className="flex flex-wrap gap-2">
-          <Toggle label="식사준비·청소·세탁" on={!!r.household.mealPrepCleaningLaundry} onChange={(v) => set("household", { mealPrepCleaningLaundry: v })} />
-          <Toggle label="외출 동행" on={!!r.household.personalActivity} onChange={(v) => set("household", { personalActivity: v })} />
-        </div>
-        <NumberRow label="제공시간" unit="분" value={r.household.minutes} onChange={(v) => set("household", { minutes: v })} />
-      </Section>
-
-      <Section title="변화상태" hint="지난 방문과 비교해 골라 주세요." said={said?.change ?? undefined} missing={changeMissing}>
-        <ChangeRow label="신체기능" value={r.change.physical} onChange={(v) => set("change", { physical: v })} />
-        <ChangeRow label="식사기능" value={r.change.meal} onChange={(v) => set("change", { meal: v })} />
-        <ChangeRow label="인지기능" value={r.change.cognitive} onChange={(v) => set("change", { cognitive: v })} />
-      </Section>
-
-      <Section title="배변 변화" said={said?.bowel ?? undefined} missing={bowelMissing}>
-        <NumberRow label="대변 실수" unit="회" value={r.bowel.stoolAccidents} onChange={(v) => set("bowel", { stoolAccidents: v })} />
-        <NumberRow label="소변 실수" unit="회" value={r.bowel.urineAccidents} onChange={(v) => set("bowel", { urineAccidents: v })} />
-        <label className="flex min-h-12 items-center gap-3 text-base">
-          <input
-            type="checkbox"
-            className="h-6 w-6 accent-[var(--accent)]"
-            checked={r.bowel.diaperChanges !== null}
-            onChange={(e) => set("bowel", { diaperChanges: e.target.checked ? 0 : null })}
-          />
-          기저귀 사용 (교환 횟수로 적기)
-        </label>
-        {r.bowel.diaperChanges !== null && (
-          <NumberRow label="기저귀 교환" unit="회" value={r.bowel.diaperChanges} onChange={(v) => set("bowel", { diaperChanges: v ?? 0 })} />
-        )}
-      </Section>
-
-      <Section title="특이사항" said={said?.notes ?? undefined} missing={!r.notes}>
-        <textarea
-          className="min-h-24 w-full rounded-xl border border-border p-3 text-lg font-bold"
-          value={r.notes ?? ""}
-          placeholder="혈압, 복약, 아픈 곳처럼 보호자가 알아야 할 것"
-          onChange={(e) => update({ ...r, notes: e.target.value || null })}
-        />
-      </Section>
-
+      {steps.slice(0, confirmed + 1).map((st, i) => (
+        <Section key={st.title} id={`step-${i}`} {...st} open={open.has(i)} onToggle={() => toggle(i)}>
+          {st.body}
+          {i === confirmed && (
+            <Button onClick={() => next(i)}>{i === steps.length - 1 ? "다 확인했어요" : "확인했어요, 다음"}</Button>
+          )}
+        </Section>
+      ))}
       </>
       )}
 

@@ -87,7 +87,7 @@ export function RecordScreen({ visitId, clientName, initialTranscript }: { visit
 
       <div className="rounded-xl bg-(--neutral-soft) px-4 py-3">
         <p className="text-base font-bold text-muted">이렇게 말해 보세요</p>
-        <p className="text-lg">한 일(세면·식사도움·이동), 걸린 시간(말벗 30분), 대소변 실수 횟수, 지난번과 달라진 점</p>
+        <p className="text-lg">한 일(세면·식사도움·이동), 대소변 실수 횟수, 지난번과 달라진 점. 말벗·인지활동은 몇 분 했는지 꼭 말해 주세요(예: 딸 얘기 들어드림 20분).</p>
       </div>
 
       <div className="flex flex-col items-center gap-2">

@@ -23,6 +23,7 @@ function Section({
   id,
   title,
   time,
+  summary,
   hint,
   missing,
   said,
@@ -33,6 +34,7 @@ function Section({
   id: string;
   title: string;
   time?: string;
+  summary?: string;
   hint?: string;
   missing?: boolean;
   said?: string;
@@ -52,6 +54,7 @@ function Section({
           </span>
         </span>
       </button>
+      {!open && summary && <p className="-mt-2 truncate text-base text-muted">{summary}</p>}
       {open && (
         <>
               {hint && <p className="-mt-2 text-base text-muted">{hint}</p>}
@@ -202,7 +205,15 @@ export function ReviewScreen({
     setTimeout(() => document.getElementById(`step-${i + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
-  const steps: { title: string; time?: string; hint?: string; missing?: boolean; said?: string; body: ReactNode }[] = [
+  // 시간이 없는 섹션은 접혔을 때 짧은 요약을 보여 준다
+  const changeWord = (v: Change | null) => (v ? CHANGE_LABELS.find(([c]) => c === v)![1] : "—");
+  const times = (v: number | null) => (v === null ? "—" : `${v}회`);
+  const changeSummary = `신체 ${changeWord(r.change.physical)} · 식사 ${changeWord(r.change.meal)} · 인지 ${changeWord(r.change.cognitive)}`;
+  const bowelSummary =
+    `대변 실수 ${times(r.bowel.stoolAccidents)} · 소변 실수 ${times(r.bowel.urineAccidents)}` +
+    (r.bowel.diaperChanges !== null ? ` · 기저귀 ${r.bowel.diaperChanges}회` : "");
+
+  const steps: { title: string; time?: string; summary?: string; hint?: string; missing?: boolean; said?: string; body: ReactNode }[] = [
     {
       title: "서비스 시간", time: `${visitTime.start}~${visitTime.end}`,
       body: (
@@ -266,7 +277,7 @@ export function ReviewScreen({
       ),
     },
     {
-      title: "변화상태", hint: "지난 방문과 비교해 골라 주세요.", said: said?.change ?? undefined, missing: changeMissing,
+      title: "변화상태", hint: "지난 방문과 비교해 골라 주세요.", said: said?.change ?? undefined, missing: changeMissing, summary: changeSummary,
       body: (
         <>
           <ChangeRow label="신체기능" value={r.change.physical} onChange={(v) => set("change", { physical: v })} />
@@ -276,7 +287,7 @@ export function ReviewScreen({
       ),
     },
     {
-      title: "배변 변화", said: said?.bowel ?? undefined, missing: bowelMissing,
+      title: "배변 변화", said: said?.bowel ?? undefined, missing: bowelMissing, summary: bowelSummary,
       body: (
         <>
           <NumberRow label="대변 실수" unit="회" value={r.bowel.stoolAccidents} onChange={(v) => set("bowel", { stoolAccidents: v })} />
@@ -297,7 +308,7 @@ export function ReviewScreen({
       ),
     },
     {
-      title: "특이사항", said: said?.notes ?? undefined, missing: !r.notes,
+      title: "특이사항", said: said?.notes ?? undefined, missing: !r.notes, summary: r.notes ?? undefined,
       body: (
         <>
           <textarea

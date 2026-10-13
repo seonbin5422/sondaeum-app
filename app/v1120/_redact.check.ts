@@ -60,3 +60,15 @@ assert.equal(notesLost(noQuote, checkAiRecord(noQuote, "약 잘 드셨고")), tr
 const withQuote = { notes: "약은 잘 드셨어요.", quotes: { notes: ["약 잘 드셨고"] } };
 assert.equal(notesLost(withQuote, checkAiRecord(withQuote, "약 잘 드셨고")), false);
 assert.equal(notesLost({ notes: null }, checkAiRecord({ notes: null }, "")), false);
+
+// 인지 근거에 시간이 없으면 옮겨 온 시간이라 비운다 (식사도움 30분 → 말벗 30분 중복)
+const moved = "떠 드렸고 삼십 분 걸렸어요 딸 얘기 들어드렸습니다";
+const movedAi = { cognitive: { emotional: 30 }, quotes: { cognitive: ["딸 얘기 들어드렸습니다"] } };
+assert.equal(checkAiRecord(movedAi, moved).record.cognitive.emotional, null);
+assert.equal(checkAiRecord(movedAi, moved).quotes.cognitive, "딸 얘기 들어드렸습니다"); // 근거는 남아 "확인 필요"로 뜸
+const timed = { cognitive: { emotional: 30 }, quotes: { cognitive: ["한 삼십 분 정도 옛날 사진 보면서 얘기 나눴어요"] } };
+assert.equal(checkAiRecord(timed, "한 삼십 분 정도 옛날 사진 보면서 얘기 나눴어요").record.cognitive.emotional, 30);
+assert.equal(extractRecord("이십 분 아니 삼십 분 옛날 사진 보면서 이야기 나눴어요").record.cognitive.emotional, 30);
+const photo = "한 삼십 분 정도 옛날 사진 보면서 얘기 나눴어요";
+const photoAi = checkAiRecord({ cognitive: { emotional: 30 }, quotes: { cognitive: [photo] } }, photo);
+assert.equal(fillGaps(photoAi, extractRecord(photo)).record.cognitive.stimulation, null); // 같은 30분을 인지자극에 또 넣지 않음

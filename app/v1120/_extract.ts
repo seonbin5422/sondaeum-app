@@ -14,12 +14,17 @@ function sentences(text: string) {
     .filter(Boolean);
 }
 
-// "30분", "한 시간", "1시간 반" → 분
-function minutesIn(s: string): number | null {
+const KO_DIGIT: Record<string, number> = { 일: 1, 이: 2, 삼: 3, 사: 4, 오: 5, 육: 6, 칠: 7, 팔: 8, 구: 9 };
+
+// "30분", "한 시간", "1시간 반", "삼십 분", "십오 분" → 분
+export function minutesIn(s: string): number | null {
   const m = s.match(/(\d+)\s*분/);
   if (m) return Number(m[1]);
   const h = s.match(/(\d+|한|두|세)\s*시간(\s*반)?/);
   if (h) return (Number(h[1]) || KO_NUM[h[1]] || 0) * 60 + (h[2] ? 30 : 0);
+  // 말하다 고친 "이십 분 아니 삼십 분"은 마지막 값
+  const ko = [...s.matchAll(/([이삼사오육칠팔구]?)십\s*([일이삼사오육칠팔구]?)\s*분/g)].at(-1);
+  if (ko) return (KO_DIGIT[ko[1]] || 1) * 10 + (KO_DIGIT[ko[2]] || 0);
   return null;
 }
 

@@ -1,7 +1,7 @@
 import Groq from "groq-sdk";
 import { cleanEnv } from "@/lib/env";
 import type { CareRecord, Change } from "./_types";
-import type { SaidQuotes } from "./_extract";
+import { minutesIn, type SaidQuotes } from "./_extract";
 
 // C-13 정리: 개인정보를 지운 녹음 글(_redact.ts)로 AI가 급여제공기록지(D-24) 칸을 채운다 (LAW-1·2).
 // AI가 실패하면 _actions.ts가 _extract.ts(낱말 찾기) 결과를 쓴다.
@@ -20,7 +20,7 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
 칸 설명:
 - physical(신체활동지원): personalHygiene=세면·양치·머리 감기·면도·옷 갈아입기·몸단장, bathing=목욕·샤워, mealAssist=식사도움, repositioning=체위변경, mobility=이동도움·산책 부축·휠체어, toileting=화장실 이용 도움. 신체활동을 하나라도 말했으면 한 것은 true, 말하지 않은 것은 false. 하나도 말하지 않았으면 모두 null. minutes=신체활동에 걸린 시간(분).
 - physicalNote: 신체활동으로 한 일을 가족이 읽기 쉽게 1~2문장. 없으면 null.
-- cognitive(인지·정서, 각각 분): stimulation=인지자극활동(사진·퍼즐·노래·그림), dailyLiving=일상생활 함께하기(같이 요리·정리), behaviorManagement=인지행동변화 관리(배회·불안 돌봄), emotional=의사소통·말벗·격려. 했다고 말했지만 시간을 말하지 않았으면 그 칸은 null로 두되, quotes.cognitive에는 그 문장을 넣습니다(요양보호사가 확인 화면에서 시간을 채웁니다).
+- cognitive(인지·정서, 각각 분): stimulation=인지자극활동(사진·퍼즐·노래·그림), dailyLiving=일상생활 함께하기(같이 요리·정리), behaviorManagement=인지행동변화 관리(배회·불안 돌봄), emotional=의사소통·말벗·격려. 노래 같이 부르기·사진 보며 얘기 나누기처럼 함께 한 활동에 시간을 말했으면 notes에만 쓰지 말고 이 칸에 넣습니다. 했다고 말했지만 시간을 말하지 않았으면 그 칸은 null로 두되, quotes.cognitive에는 그 문장을 넣습니다(요양보호사가 확인 화면에서 시간을 채웁니다).
 - household(가사·일상생활지원): mealPrepCleaningLaundry=식사준비·청소·세탁·설거지, personalActivity=외출 동행·장보기. 하나라도 말했으면 한 것 true, 말하지 않은 것 false. 하나도 없으면 모두 null. minutes=가사에 걸린 시간(분).
 - change(지난 방문과 비교한 변화): physical=신체기능, meal=식사기능, cognitive=인지기능. 좋아졌다="improved", 비슷하다="same", 나빠졌다·줄었다="worse". '지난번엔 알아보셨는데 오늘은 못 알아보셨어요'처럼 지난번과 다르다고 말한 것도 변화입니다. 비교를 말하지 않았으면 null.
 - bowel: stoolAccidents=대변 실수 횟수, urineAccidents=소변 실수 횟수, diaperChanges=기저귀 교환 횟수. "실수 없었다"는 0. 말하지 않았으면 null.
@@ -92,6 +92,10 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
     said[k] = hits.length ? hits.join(" ") : null;
     if (!hits.length) empty[k]();
   }
+  // 인지·정서 근거 문장에 시간이 없으면 그 분은 다른 활동 시간을 옮겨 온 것이다(식사도움 30분이 말벗 30분으로) → 비워서 "확인 필요"로
+  if (said.cognitive && minutesIn(said.cognitive) === null) {
+    record.cognitive = { stimulation: null, dailyLiving: null, behaviorManagement: null, emotional: null };
+  }
   return { record, quotes: said };
 }
 
@@ -138,6 +142,8 @@ export function fillGaps(ai: { record: CareRecord; quotes: SaidQuotes }, old: { 
   for (const [g, q] of Object.entries(groups) as [keyof typeof groups, Section][]) {
     const mine = record[g] as Record<string, unknown>;
     const theirs = old.record[g] as Record<string, unknown>;
+    // 인지·정서는 한 활동 시간이 여러 칸에 들어가기 쉽다(사진 보며 얘기 30분 → 인지자극 30·말벗 30). AI가 한 칸이라도 채웠으면 메우지 않는다
+    if (g === "cognitive" && Object.values(mine).some((v) => v !== null)) continue;
     let used = false;
     for (const k of Object.keys(mine)) {
       if (mine[k] === null && typeof theirs[k] === "number") {

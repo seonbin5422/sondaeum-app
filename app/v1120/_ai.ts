@@ -95,7 +95,11 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
   return { record, quotes: said };
 }
 
-export async function fillRecord(redacted: string) {
+// AI가 특이사항을 쓰고 근거 문장을 빠뜨리면 checkAiRecord가 특이사항을 통째로 지운다 → 그때만 한 번 더 묻는다
+export const notesLost = (raw: unknown, checked: { record: CareRecord }) =>
+  !!str((raw as { notes?: unknown } | null)?.notes) && checked.record.notes === null;
+
+async function askAi(redacted: string) {
   // 키가 없을 때 파일을 불러오기만 해도 죽지 않게 부를 때 만든다
   const groq = new Groq({ apiKey: cleanEnv(process.env.GROQ_API_KEY) });
   const completion = await groq.chat.completions.create({
@@ -110,7 +114,19 @@ export async function fillRecord(redacted: string) {
   });
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("AI 정리 응답이 비어 있어요.");
-  return checkAiRecord(JSON.parse(raw), redacted);
+  return JSON.parse(raw) as unknown;
+}
+
+export async function fillRecord(redacted: string) {
+  const raw = await askAi(redacted);
+  const first = checkAiRecord(raw, redacted);
+  if (!notesLost(raw, first)) return first;
+  // 다시 묻는 것도 실패하면(무료 한도 등) 첫 결과를 쓴다. SEC-3 호출 수는 한 번으로 센다
+  try {
+    return checkAiRecord(await askAi(redacted), redacted);
+  } catch {
+    return first;
+  }
 }
 
 // AI가 비운 숫자 칸(시간·횟수)만 낱말 찾기(_extract.ts) 결과로 메운다. 숫자는 말한 그대로라 낱말 찾기도 잘 맞는다.

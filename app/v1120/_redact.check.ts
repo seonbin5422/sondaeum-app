@@ -1,7 +1,7 @@
 // 실행: npx tsx app/v1120/_redact.check.ts (AI 호출 없이 개인정보 지우기와 AI 결과 거르기만 확인)
 import assert from "node:assert/strict";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
-import { checkAiRecord, fillGaps } from "./_ai";
+import { checkAiRecord, fillGaps, notesLost } from "./_ai";
 import { extractRecord } from "./_extract";
 
 const people = { client: "홍길순", guardian: "김영희", caregiver: "이순자", phones: ["010-9876-5432"] };
@@ -53,3 +53,10 @@ assert.ok(gapped.quotes.bowel?.includes("기저귀"));
 const meal = "반찬 만들어 드리고 청소했어요.";
 assert.equal(fillGaps(checkAiRecord({ quotes: {} }, meal), extractRecord(meal)).record.physical.mealAssist, null); // 체크는 안 메움
 console.log("redact + ai check ok");
+
+// 특이사항을 썼는데 근거가 없어 지워졌을 때만 다시 묻는다
+const noQuote = { notes: "약은 잘 드셨어요.", quotes: { notes: [] } };
+assert.equal(notesLost(noQuote, checkAiRecord(noQuote, "약 잘 드셨고")), true);
+const withQuote = { notes: "약은 잘 드셨어요.", quotes: { notes: ["약 잘 드셨고"] } };
+assert.equal(notesLost(withQuote, checkAiRecord(withQuote, "약 잘 드셨고")), false);
+assert.equal(notesLost({ notes: null }, checkAiRecord({ notes: null }, "")), false);

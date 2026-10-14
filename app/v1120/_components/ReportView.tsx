@@ -122,7 +122,7 @@ export function ReportSections({ record: r, order = "base" }: { record: CareReco
   );
   const notes = r.notes ? (
     <Section key="notes" title="특이사항">
-      <p className="text-lg font-bold">{r.notes}</p>
+      <p className="text-lg font-bold">{r.guardianNotes ?? r.notes}</p>
     </Section>
   ) : null;
 

@@ -102,6 +102,16 @@ function NumberRow({ label, unit, value, onChange }: { label: string; unit: stri
   );
 }
 
+// 특이사항 끝에 터치로 붙이는 전달 문장 [버튼, 기록지 문장, 보호자용 문장]
+const REPORTS = [
+  ["보호자에게 전달함", "보호자에게 전달함.", "보호자님께 알려 드렸어요."],
+  ["기관에 보고함", "기관에 보고함.", "센터에도 알렸어요."],
+  ["알리지 않음", "경과 관찰함.", "계속 지켜볼게요."],
+] as const;
+// 이미 전달·보고를 말했거나 위 버튼을 눌렀으면 다시 묻지 않는다
+const REPORTED = /전달|보고|알림|알렸|연락|경과 관찰/;
+const join = (a: string | null | undefined, b: string) => (a ? `${a.trim()} ${b}` : b);
+
 const CHANGE_LABELS: [Change, string][] = [
   ["improved", "호전"],
   ["same", "유지"],
@@ -165,6 +175,17 @@ export function ReviewScreen({
     saveTimer.current = setTimeout(() => saveRecord(id, next).then(() => setSaveError(""), () => setSaveError("저장하지 못했어요. 인터넷 연결을 확인해 주세요.")), 600);
   }
 
+  // 방금 고친 값이 저장되기 전에 녹음 화면으로 가면 사라지므로 먼저 저장한다
+  async function talkMore() {
+    clearTimeout(saveTimer.current);
+    try {
+      await saveRecord(id, r);
+      router.push(`/v1120/visit/${id}/record`);
+    } catch {
+      setSaveError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+    }
+  }
+
   async function toConfirm() {
     clearTimeout(saveTimer.current);
     try {
@@ -195,12 +216,8 @@ export function ReviewScreen({
     });
   function next(i: number) {
     setConfirmed(i + 1);
-    setOpen((o) => {
-      const n = new Set(o);
-      n.delete(i);
-      n.add(i + 1);
-      return n;
-    });
+    // 확인한 섹션도 펼친 채로 두어 전체를 이어서 볼 수 있게 한다. 접기는 섹션 머리를 눌러서
+    setOpen((o) => new Set(o).add(i + 1));
     // 새로 나온 섹션이 아래 버튼에 가리지 않게
     setTimeout(() => document.getElementById(`step-${i + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
@@ -315,8 +332,37 @@ export function ReviewScreen({
             className="min-h-24 w-full rounded-xl border border-border p-3 text-lg font-bold"
             value={r.notes ?? ""}
             placeholder="혈압, 복약, 아픈 곳처럼 보호자가 알아야 할 것"
-            onChange={(e) => update({ ...r, notes: e.target.value || null })}
+            // 직접 고치면 보호자용 글은 옛 내용이 되므로 지우고, 보호자 보고서도 고친 글을 보여 준다
+            onChange={(e) => update({ ...r, notes: e.target.value || null, guardianNotes: null })}
           />
+          {!r.notes && (
+            <Button variant="secondary" onClick={() => update({ ...r, notes: "특이사항 없음.", guardianNotes: "특별한 일은 없었어요.", notesNoAction: false })}>
+              특이사항 없음
+            </Button>
+          )}
+          {r.notes && r.notesNoAction && (
+            <div className="flex flex-col gap-2 rounded-xl bg-accent-soft p-3 text-accent-soft-foreground">
+              <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>
+              <Button variant="secondary" onClick={talkMore}>
+                🎤 더 말하기
+              </Button>
+            </div>
+          )}
+          {r.notes && r.notes !== "특이사항 없음." && !REPORTED.test(r.notes) && (
+            <div className="flex flex-col gap-2">
+              <p className="text-base font-bold">누구에게 알렸나요?</p>
+              <div className="flex flex-wrap gap-2">
+                {REPORTS.map(([label, sheet, guardian]) => (
+                  <Toggle
+                    key={label}
+                    label={label}
+                    on={false}
+                    onChange={() => update({ ...r, notes: join(r.notes, sheet), guardianNotes: r.guardianNotes && join(r.guardianNotes, guardian) })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </>
       ),
     },
@@ -382,6 +428,9 @@ export function ReviewScreen({
         <p className="text-lg font-bold">AI가 급여제공기록지에 맞춰 적었어요</p>
         <p className="text-base">&quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. 비워 두었으니 채워 주세요.</p>
       </div>
+      <Button variant="secondary" onClick={talkMore}>
+        🎤 빠진 내용 더 말하기
+      </Button>
 
       {steps.slice(0, confirmed + 1).map((st, i) => (
         <Section key={st.title} id={`step-${i}`} {...st} open={open.has(i)} onToggle={() => toggle(i)}>

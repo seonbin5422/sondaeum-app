@@ -138,6 +138,7 @@ export async function myVisit(visitId: string) {
     transcript: v.transcript ? safeDecryptText(v.transcript, "") : "",
     record: json<CareRecord>(v.report?.careRecord),
     quotes: json<SaidQuotes>(v.report?.aiRawJson),
+    edited: v.report?.wasEdited ?? false,
     shareToken: v.report?.shareToken ?? null,
     sentAt: v.report?.sentAt ?? null,
     time: serviceTimeOf(v.client.scheduleLabel, v.startedAt ?? v.createdAt),

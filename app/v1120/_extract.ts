@@ -9,7 +9,7 @@ const KO_NUM: Record<string, number> = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯:
 
 function sentences(text: string) {
   return text
-    .split(/(?<=[.!?])\s+|(?<=요)\s+|\n+/)
+    .split(/(?<=[.!?])\s+|(?<=요|니다|었다|았다|했다)\s+|\n+/)
     .map((s) => s.trim())
     .filter(Boolean);
 }
@@ -36,6 +36,12 @@ function countIn(s: string): number | null {
   const k = s.match(/(한|두|세|네|다섯)\s*(번|회|차례)/);
   if (k) return KO_NUM[k[1]];
   return null;
+}
+
+// 한 문장에 활동이 둘이면("세수 5분 … 노래 10분") 그 낱말 뒤에 나온 시간을 먼저 본다
+function minutesNear(s: string, re: RegExp): number | null {
+  const at = s.search(re);
+  return (at > 0 ? minutesIn(s.slice(at)) : null) ?? minutesIn(s);
 }
 
 const pick = (ss: string[], re: RegExp) => ss.filter((s) => re.test(s));
@@ -84,7 +90,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const cogMin = (re: RegExp) => {
     const hit = pick(ss, re).filter((s) => re === RE.emotional || !RE.emotional.test(s));
     if (!hit.length) return null;
-    return hit.map(minutesIn).find((m) => m !== null) ?? null;
+    return hit.map((s) => minutesNear(s, re)).find((m) => m !== null) ?? null;
   };
 
   // 가사
@@ -150,4 +156,21 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   };
 
   return { record, quotes };
+}
+
+// 새로 정리한 값은 기존 값이 빈 칸(null)에만 넣는다. 글 칸(특이사항)은 직접 고친 적이 없을 때만 새 정리로 바꾼다
+// shortcut: 직접 고친 뒤 더 말하면 새 특이사항은 자동으로 붙지 않고 "내가 한 말"로만 보인다, 고친 칸을 칸마다 기록하게 되면 그 칸만 지킨다
+export function keepFilled(old: CareRecord, next: CareRecord, edited: boolean): CareRecord {
+  const merged = structuredClone(next);
+  for (const g of ["physical", "cognitive", "household", "change", "bowel"] as const) {
+    const o = old[g] as Record<string, unknown>;
+    const m = merged[g] as Record<string, unknown>;
+    for (const k of Object.keys(m)) if (o[k] !== null && o[k] !== undefined) m[k] = o[k];
+  }
+  if (edited) {
+    merged.notes = old.notes ?? next.notes;
+    merged.guardianNotes = old.notes ? old.guardianNotes : next.guardianNotes;
+    merged.physicalNote = old.physicalNote ?? next.physicalNote;
+  }
+  return merged;
 }

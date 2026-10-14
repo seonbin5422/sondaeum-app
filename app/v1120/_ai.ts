@@ -16,9 +16,10 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
 4. 시간은 그 활동에 걸렸다고 말한 시간만 씁니다. '두 시간마다'는 간격이라 시간이 아니고, 다른 활동의 시간을 옮겨 넣지 않습니다.
 5. 말하다 고치면 마지막에 말한 값을 씁니다(예: '이십 분인가 아니 삼십 분'→30).
 6. quotes에는 각 칸의 근거가 된 입력 문장을 입력에 있는 글자 그대로 복사합니다(고치거나 줄이지 않음). 근거가 없으면 빈 배열. 어떤 칸(notes 포함)을 채웠으면 그 칸의 quotes는 비우지 않습니다.
-7. notes는 관찰한 것 → 요양보호사가 한 대응 → 어르신 반응 순서로 씁니다. 대응·반응을 말하지 않았으면 지어내지 않습니다.
+7. notes는 관찰한 것 → 요양보호사가 한 도움·조치 → 누구에게 알렸는지(보호자·간호사·기관) 순서로 씁니다. 도움·전달을 말하지 않았으면 지어내지 않습니다(예: '보호자에게 전달함'은 전달했다고 말했을 때만).
 8. notes에 '고집이 세다'·'예민하다'·'까다롭다' 같은 평가하는 말을 쓰지 않습니다. 말한 행동만 씁니다(예: '까다로우셔서 목욕 안 하신다고 하셔서' → '목욕을 하지 않겠다고 하셨어요').
-9. 말이 서로 맞지 않으면 둘 다 notes에 씁니다(예: '약 드셨다고 하셨는데 약통에 그대로' → '약을 드셨다고 하셨지만 약통에 약이 그대로 있었어요').
+9. 말이 서로 맞지 않으면 둘 다 notes에 쓰고 어느 쪽이 맞는지 결론 내지 않습니다(예: '약 드셨다고 하셨는데 약통에 그대로' → '아침 약 드셨다고 하셨으나 약통에 약이 그대로 있음.', '복용 안 함'처럼 단정하지 않음).
+10. '빨갛게 된 데 없었어요'처럼 확인했더니 이상이 없었다는 말도 확인한 사항이라 notes에 씁니다(예: '엉덩이 피부 발적 없음 확인.').
 
 칸 설명:
 - physical(신체활동지원): personalHygiene=세면·양치·머리 감기·면도·옷 갈아입기·몸단장, bathing=목욕·샤워, mealAssist=식사도움, repositioning=체위변경, mobility=이동도움·산책 부축·휠체어, toileting=화장실 이용 도움. 신체활동을 하나라도 말했으면 한 것은 true, 말하지 않은 것은 false. 하나도 말하지 않았으면 모두 null. minutes=신체활동에 걸린 시간(분).
@@ -27,10 +28,17 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
 - household(가사·일상생활지원): mealPrepCleaningLaundry=식사준비·청소·세탁·설거지, personalActivity=외출 동행·장보기. 하나라도 말했으면 한 것 true, 말하지 않은 것 false. 하나도 없으면 모두 null. minutes=가사에 걸린 시간(분).
 - change(지난 방문과 비교한 변화): physical=신체기능, meal=식사기능, cognitive=인지기능. 좋아졌다="improved", 비슷하다="same", 나빠졌다·줄었다="worse". '지난번엔 알아보셨는데 오늘은 못 알아보셨어요'처럼 지난번과 다르다고 말한 것도 변화입니다. 비교를 말하지 않았으면 null.
 - bowel: stoolAccidents=대변 실수 횟수, urineAccidents=소변 실수 횟수, diaperChanges=기저귀 교환 횟수. "실수 없었다"는 0. 말하지 않았으면 null.
-- notes(특이사항): 혈압·복약·통증·낙상·어지럼·병원·기분, 식사량과 음식 반응(예: '한 숟갈 드심', '짜다고 안 드심'), 반복해서 하신 말처럼 위 칸에 들어가지 않는 관찰. 한 문장이 다른 칸의 근거여도 이런 관찰이 있으면 notes에도 씁니다.
+- notes(특이사항, 급여제공기록지 칸): 급여 제공 중 확인한 사항과 조치사항입니다. 혈압·복약·통증·낙상·어지럼·병원·기분, 식사량과 음식 반응(예: '한 숟갈 드심', '짜다고 안 드심'), 반복해서 하신 말처럼 위 칸에 들어가지 않는 관찰. 한 문장이 다른 칸의 근거여도 이런 관찰이 있으면 notes에도 씁니다.
 - 한 활동의 시간은 가장 맞는 칸 하나에만 넣습니다(예: '사진 보며 말벗 30분'은 emotional에만). '삼십 분'·'한 시간 반'처럼 말한 시간도 분 숫자로 바꿉니다. 군말과 반복을 빼고 한 가지 사실을 한 문장으로, 최대 5문장. 숫자는 들은 그대로. 없으면 null.
-- physicalNote와 notes는 모든 문장을 '~했어요'·'~셨어요'처럼 끝내고('~습니다' 금지) 사람은 '어르신'이라고 부릅니다.
-  예: '음 혈압이 어 135에 85? 무릎이 아프다고 무릎이 계속' → '혈압은 135/85였어요. 무릎이 계속 아프다고 하셨어요.'`;
+- notes는 기록지 문체로 씁니다: '~함'·'~음'·'~섭취'처럼 짧게 끝내고 주어는 뺍니다. notes에는 '~요'로 끝나는 문장이 하나도 없어야 합니다. '상태 안 좋음'·'세면 도움 줌'처럼 뭉뚱그리지 말고, 말한 수치·양·부위·횟수·좌우·장소·준비물을 그대로 넣어 구체적으로 씁니다. 말하지 않은 좌우·횟수·수치는 예시를 따라 붙이지 않습니다(예: '무릎 아프다고' → '무릎 통증 호소함', '우측'을 붙이면 지어낸 것. '기침 좀' → '기침 보임', '몇 회'를 붙이지 않음). '드셨고'·'드렸음'처럼 말을 그대로 옮기지 말고 '섭취'·'도움'·'진행함'처럼 기록지 말로 바꿉니다. 객관적 사실만 쓰고, 요양보호사가 진단하거나 치료한 것처럼 쓰지 않습니다(예: '감기 기운 있음'이 아니라 '기침 2회, 이마가 뜨겁다고 하심').
+  예: '어 점심은 반 공기? 드시다가 기침을 두 번 하셔서 천천히 드시라고 옆에서 도와드렸고 따님한테 전화로 말씀드렸어요' → '점심 식사 1/2 공기 섭취. 식사 중 기침 2회 보여 천천히 드시도록 옆에서 도움. 보호자에게 전화로 전달함.'
+  예: '오른쪽 무릎 아프다 하셔서 걸으실 때 부축했어요' → '우측 무릎 통증 호소하여 이동 시 부축함.'
+  자주 쓰는 문장 예(문체만 참고하고 내용은 말한 것만): '일반식 2/3 섭취. 소화 상태 양호하며 식후 따뜻한 물 복용 도움.' / '체위 변경 2시간 간격으로 시행(좌측→우측). 엉덩이 피부 발적 없음 확인.' / '오전 중 산책 후 말벗 서비스 20분 진행. 기분 양호하시며 옛날 이야기 나누심.'
+  예: '약 드셨다고 하셨는데 약통 보니까 그대로 있더라고요' → '아침 약 드셨다고 하셨으나 약통에 약이 그대로 있음.' ('복용 안 함'·'안 드신 것 확인'은 틀림)
+- notesNoAction: notes에 관찰(통증·기침·식사량 감소·혈압 이상 등)만 있고 그에 대해 요양보호사가 한 도움·조치를 말하지 않았으면 true. 조치가 있거나, 조치가 필요 없는 일상 사실만 있거나, notes가 null이면 false.
+- guardianNotes: notes의 문장을 하나도 빼거나 더하지 않고 한 문장씩 그대로 옮기며 말투만 바꿉니다(혈압·전달 문장도 빠짐없이). 섭취·호소·발적·우측 같은 기록지 말은 '드셨어요'·'아프다고 하셨어요'·'빨갛게 된 곳'·'오른쪽'처럼 쉬운 말로 바꿉니다. notes가 null이면 null.
+- physicalNote와 guardianNotes는 모든 문장을 '~했어요'·'~셨어요'처럼 끝내고('~습니다' 금지) 사람은 '어르신'이라고 부릅니다.
+  예: notes '점심 식사 1/2 공기 섭취. 식사 중 기침 2회 보여 천천히 드시도록 옆에서 도움. 보호자에게 전화로 전달함.' → guardianNotes '점심을 반 공기 드셨어요. 드시다가 기침을 2번 하셔서 천천히 드시도록 옆에서 도와드렸어요. 보호자님께 전화로 알려 드렸어요.'`;
 
 const n = { type: ["number", "null"] };
 const b = { type: ["boolean", "null"] };
@@ -47,6 +55,8 @@ const SCHEMA = obj({
   change: obj({ physical: ch, meal: ch, cognitive: ch }),
   bowel: obj({ stoolAccidents: n, urineAccidents: n, diaperChanges: n }),
   notes: s,
+  guardianNotes: s,
+  notesNoAction: { type: "boolean" },
   quotes: obj({ physical: quotes, cognitive: quotes, household: quotes, change: quotes, bowel: quotes, notes: quotes }),
 });
 
@@ -74,6 +84,8 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
     change: { physical: change(cg.physical), meal: change(cg.meal), cognitive: change(cg.cognitive) },
     bowel: { stoolAccidents: int(bw.stoolAccidents, 50), urineAccidents: int(bw.urineAccidents, 50), diaperChanges: int(bw.diaperChanges, 50) },
     notes: str(r.notes),
+    guardianNotes: str(r.guardianNotes),
+    notesNoAction: r.notesNoAction === true,
   };
   for (const group of [record.physical, record.household] as Record<string, boolean | number | null>[]) {
     const checks = Object.keys(group).filter((k) => k !== "minutes");
@@ -88,7 +100,7 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
     household: () => { record.household = { mealPrepCleaningLaundry: null, personalActivity: null, minutes: null }; },
     change: () => { record.change = { physical: null, meal: null, cognitive: null }; },
     bowel: () => { record.bowel = { stoolAccidents: null, urineAccidents: null, diaperChanges: null }; },
-    notes: () => { record.notes = null; },
+    notes: () => { record.notes = null; record.guardianNotes = null; record.notesNoAction = false; },
   };
   for (const k of Object.keys(empty) as Section[]) {
     const hits = found(k);

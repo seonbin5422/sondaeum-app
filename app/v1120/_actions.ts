@@ -6,7 +6,7 @@ import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText } from "@/lib/crypto";
 import { CARE_GRADES, type CareRecord } from "./_types";
-import { extractRecord } from "./_extract";
+import { extractRecord, keepFilled } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
@@ -165,7 +165,7 @@ async function fillVisitRecord(transcript: string, clientId: string, caregiverId
     const roles = (t: string | null) => (t ? toRoleWords(t) : t);
     const names = (t: string | null) => (t ? restoreNames(t, people) : t);
     return {
-      record: { ...record, physicalNote: roles(record.physicalNote), notes: roles(record.notes) },
+      record: { ...record, physicalNote: roles(record.physicalNote), notes: roles(record.notes), guardianNotes: roles(record.guardianNotes ?? null) },
       quotes: Object.fromEntries(Object.entries(quotes).map(([k, t]) => [k, names(t)])) as typeof quotes,
     };
   } catch (err) {
@@ -182,7 +182,10 @@ export async function summarizeVisit(visitId: string) {
   if (v.status === "SUMMARIZING" || v.status === "DRAFT_READY") return;
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SUMMARIZING" } });
   try {
-    const { record, quotes } = await fillVisitRecord(v.transcript ? decryptText(v.transcript) : "", v.clientId, v.caregiverId);
+    const filled = await fillVisitRecord(v.transcript ? decryptText(v.transcript) : "", v.clientId, v.caregiverId);
+    // "더 말하기"로 다시 정리할 때는 이미 있던 값(직접 고친 값 포함)을 지키고 빈 칸만 새로 채운다
+    const record = v.report?.careRecord ? keepFilled(JSON.parse(decryptText(v.report.careRecord)), filled.record, v.report.wasEdited) : filled.record;
+    const quotes = filled.quotes;
     const fields = { careRecord: encryptText(JSON.stringify(record)), aiRawJson: encryptText(JSON.stringify(quotes)) };
     await prisma.report.upsert({
       where: { visitId },

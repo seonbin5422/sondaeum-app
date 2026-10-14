@@ -34,7 +34,9 @@ export type CareRecord = {
     urineAccidents: number | null;
     diaperChanges: number | null;
   };
-  notes: string | null;
+  notes: string | null; // 기록지·진료 참고용 요약에 쓰는 기록체("~함")
+  guardianNotes?: string | null;
+  notesNoAction?: boolean; // AI 판단: 특이사항에 관찰만 있고 요양보호사가 한 도움·조치가 없음 → 기록 확인에서 더 말하도록 안내 // 같은 내용을 보호자 보고서용 '~요'체로. 없거나 특이사항을 직접 고치면 notes를 보여 준다
 };
 
 export type VisitStatus = "NOT_STARTED" | "RECORDING" | "RECORDED" | "SUMMARIZING" | "DRAFT_READY" | "SENT";

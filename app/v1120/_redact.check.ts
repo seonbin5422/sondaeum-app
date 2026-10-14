@@ -73,3 +73,17 @@ const photo = "한 삼십 분 정도 옛날 사진 보면서 얘기 나눴어요
 const photoAi = checkAiRecord({ cognitive: { emotional: 30 }, quotes: { cognitive: [photo] } }, photo);
 assert.equal(fillGaps(photoAi, extractRecord(photo)).record.cognitive.stimulation, null); // 같은 30분을 인지자극에 또 넣지 않음
 assert.equal(checkAiRecord({ notes: "물도 안 드셨어요.-요 약은 드셨어요.-요", quotes: { notes: ["물"] } }, "물").record.notes, "물도 안 드셨어요. 약은 드셨어요.");
+
+// 특이사항: 기록지용(기록체)과 보호자용('~요'체)을 따로 받고, 근거가 없으면 둘 다 비운다
+const cough = "점심 반 공기 드시다 기침 두 번 하셔서 천천히 드시게 도와드렸어요";
+const twoNotes = { notes: "점심 식사 1/2 공기 섭취. 식사 중 기침 2회 보여 천천히 드시도록 도움.", guardianNotes: "점심을 반 공기 드셨어요.", quotes: { notes: [cough] } };
+assert.equal(checkAiRecord(twoNotes, cough).record.guardianNotes, "점심을 반 공기 드셨어요.");
+assert.equal(checkAiRecord({ ...twoNotes, quotes: { notes: [] } }, cough).record.guardianNotes, null);
+assert.equal(checkAiRecord({ ...twoNotes, notesNoAction: true }, cough).record.notesNoAction, true);
+assert.equal(checkAiRecord({ ...twoNotes, notesNoAction: true, quotes: { notes: [] } }, cough).record.notesNoAction, false); // 특이사항이 비면 안내도 없음
+
+// 녹음 중 미리 보기: "~습니다"로 이어 말해도 활동마다 자기 시간을 잡는다
+const sung = extractRecord("세수했고요 세수 5분 모아 드렸습니다 함께 노래 부르는 시간을 10분 가졌습니다").record;
+assert.equal(sung.cognitive.stimulation, 10);
+assert.equal(sung.physical.minutes, 5);
+assert.equal(extractRecord("세수 5분 하고 노래 10분 불렀어요").record.cognitive.stimulation, 10);

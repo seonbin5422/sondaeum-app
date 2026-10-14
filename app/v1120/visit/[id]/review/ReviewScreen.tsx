@@ -3,7 +3,8 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button, LinkButton, Screen, TopBar } from "../../../_components/ui";
-import { saveRecord } from "../../../_actions";
+import { addToNotes, saveRecord } from "../../../_actions";
+import { useSpeech } from "../../../_components/useSpeech";
 import type { SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
 import type { CareRecord, Change } from "../../../_types";
@@ -165,6 +166,35 @@ export function ReviewScreen({
   const [tab, setTab] = useState<"check" | "sheet">("check");
   const [saveError, setSaveError] = useState("");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // 특이사항 칸에서 바로 말로 더하기: 다 말하면 AI가 특이사항을 다시 정리해 그 자리에서 바뀐다
+  const heard = useRef("");
+  const [heardText, setHeardText] = useState("");
+  const [adding, setAdding] = useState(false);
+  const speech = useSpeech((t) => {
+    heard.current = `${heard.current} ${t}`.trim();
+    setHeardText(heard.current);
+  });
+  async function finishTalk() {
+    speech.stop();
+    setAdding(true);
+    // shortcut: 끝낸 직후 마지막 문장이 늦게 확정될 수 있어 1초 기다린다, useSpeech가 끝남을 알려 주게 되면 그걸로 바꾼다
+    await new Promise((ok) => setTimeout(ok, 1000));
+    const text = heard.current;
+    if (text) {
+      clearTimeout(saveTimer.current);
+      try {
+        await saveRecord(id, r); // 방금 고친 값이 먼저 저장돼야 서버가 덮어쓰지 않는다
+        setR(await addToNotes(id, text));
+        heard.current = "";
+        setHeardText("");
+        setSaveError("");
+      } catch {
+        setSaveError("특이사항에 넣지 못했어요. 인터넷 연결을 확인하고 다시 말해 주세요.");
+      }
+    }
+    setAdding(false);
+  }
   // LAW-7: 학대가 의심되는 말은 보고서에 자동으로 싣지 않고 요양보호사에게 신고 안내
   const flagged = /때리|때렸|맞았|멍이|욕을|가두|굶겨/.test(transcript);
 
@@ -340,14 +370,23 @@ export function ReviewScreen({
               특이사항 없음
             </Button>
           )}
-          {r.notes && r.notesNoAction && (
-            <div className="flex flex-col gap-2 rounded-xl bg-accent-soft p-3 text-accent-soft-foreground">
-              <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>
-              <Button variant="secondary" onClick={talkMore}>
-                🎤 더 말하기
+          <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction ? "bg-accent-soft text-accent-soft-foreground" : "bg-(--neutral-soft)"}`}>
+            {r.notesNoAction && <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>}
+            {(speech.recording || heardText) && (
+              <p className="text-lg">
+                {heardText} <span className="text-muted">{speech.interim}</span>
+                {speech.recording && <span className="text-base text-muted"> 듣는 중…</span>}
+              </p>
+            )}
+            {adding ? (
+              <p className="text-base font-bold">특이사항에 넣는 중이에요…</p>
+            ) : (
+              <Button variant="secondary" onClick={speech.recording ? finishTalk : speech.start} disabled={speech.supported === false}>
+                {speech.recording ? "● 다 말했어요" : "🎤 말로 더하기"}
               </Button>
-            </div>
-          )}
+            )}
+            {speech.error && <p className="text-base font-bold text-(--danger)">{speech.error}</p>}
+          </div>
           {r.notes && r.notes !== "특이사항 없음." && !REPORTED.test(r.notes) && (
             <div className="flex flex-col gap-2">
               <p className="text-base font-bold">누구에게 알렸나요?</p>

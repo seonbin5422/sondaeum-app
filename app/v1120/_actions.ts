@@ -167,6 +167,7 @@ async function fillVisitRecord(transcript: string, clientId: string, caregiverId
     return {
       record: { ...record, physicalNote: roles(record.physicalNote), notes: roles(record.notes), guardianNotes: roles(record.guardianNotes ?? null) },
       quotes: Object.fromEntries(Object.entries(quotes).map(([k, t]) => [k, names(t)])) as typeof quotes,
+      byAi: true,
     };
   } catch (err) {
     console.error("AI 정리 실패, 낱말 찾기로 채움", err);
@@ -198,6 +199,31 @@ export async function summarizeVisit(visitId: string) {
     await prisma.visit.update({ where: { id: visitId }, data: { status: "RECORDED" } });
     throw err;
   }
+}
+
+// C-14 특이사항 칸에서 빠진 도움·조치를 그 자리에서 말로 더한다: 지금 특이사항 + 새로 한 말을 AI가 다시 정리한다.
+// 새로 한 말은 녹음 글 끝에도 붙여 둔다(나중에 다시 정리해도 남도록)
+export async function addToNotes(visitId: string, spoken: string): Promise<CareRecord> {
+  const v = await ownVisitOrThrow(visitId);
+  if (!v.report?.careRecord) throw new Error("정리된 기록이 없어요.");
+  const text = spoken.trim();
+  if (!text) throw new Error("말한 내용이 없어요.");
+  const old = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
+  const joined = `${old.notes ?? ""} ${text}`.trim();
+  const filled = await fillVisitRecord(joined, v.clientId, v.caregiverId);
+  const record: CareRecord =
+    "byAi" in filled && filled.record.notes
+      ? { ...old, notes: filled.record.notes, guardianNotes: filled.record.guardianNotes, notesNoAction: filled.record.notesNoAction }
+      : { ...old, notes: joined, guardianNotes: null, notesNoAction: false }; // AI가 없거나 실패하면 한 말을 그대로 붙인다
+  const transcript = `${v.transcript ? decryptText(v.transcript) : ""} ${text}`.trim();
+  await prisma.$transaction([
+    prisma.visit.update({ where: { id: visitId }, data: { transcript: encryptText(transcript) } }),
+    prisma.report.update({
+      where: { visitId },
+      data: { careRecord: encryptText(JSON.stringify(record)), notes: encryptText(record.notes ?? ""), wasEdited: true },
+    }),
+  ]);
+  return record;
 }
 
 // C-14 기록 확인에서 고친 값 저장

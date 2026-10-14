@@ -22,10 +22,10 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
 10. '빨갛게 된 데 없었어요'처럼 확인했더니 이상이 없었다는 말도 확인한 사항이라 notes에 씁니다(예: '엉덩이 피부 발적 없음 확인.').
 
 칸 설명:
-- physical(신체활동지원): personalHygiene=세면·양치·머리 감기·면도·옷 갈아입기·몸단장, bathing=목욕·샤워, mealAssist=식사도움, repositioning=체위변경, mobility=이동도움·산책 부축·휠체어, toileting=화장실 이용 도움. 신체활동을 하나라도 말했으면 한 것은 true, 말하지 않은 것은 false. 하나도 말하지 않았으면 모두 null. minutes=신체활동에 걸린 시간(분).
+- physical(신체활동지원): personalHygiene=세면·양치·머리 감기·면도·옷 갈아입기·몸단장, bathing=목욕·샤워, mealAssist=식사도움, repositioning=체위변경, mobility=이동도움·산책 부축·휠체어, toileting=화장실 이용 도움. 신체활동을 하나라도 말했으면 한 것은 true, 말하지 않은 것은 false. 하나도 말하지 않았으면 모두 null. minutes=신체활동에 걸린 시간(분). 활동마다 시간을 말했으면 모두 더합니다.
 - physicalNote: 신체활동으로 한 일을 가족이 읽기 쉽게 1~2문장. 없으면 null.
 - cognitive(인지·정서, 각각 분): stimulation=인지자극활동(사진·퍼즐·노래·그림), dailyLiving=일상생활 함께하기(같이 요리·정리), behaviorManagement=인지행동변화 관리(배회·불안 돌봄), emotional=의사소통·말벗·격려. 노래 같이 부르기·사진 보며 얘기 나누기처럼 함께 한 활동에 시간을 말했으면 notes에만 쓰지 말고 이 칸에 넣습니다. 했다고 말했지만 시간을 말하지 않았으면 그 칸은 null로 두되, quotes.cognitive에는 그 문장을 넣습니다(요양보호사가 확인 화면에서 시간을 채웁니다).
-- household(가사·일상생활지원): mealPrepCleaningLaundry=식사준비·청소·세탁·설거지, personalActivity=외출 동행·장보기. 하나라도 말했으면 한 것 true, 말하지 않은 것 false. 하나도 없으면 모두 null. minutes=가사에 걸린 시간(분).
+- household(가사·일상생활지원): mealPrepCleaningLaundry=식사준비·청소·세탁·설거지, personalActivity=외출 동행·장보기. 하나라도 말했으면 한 것 true, 말하지 않은 것 false. 하나도 없으면 모두 null. minutes=가사에 걸린 시간(분). 활동마다 시간을 말했으면 모두 더합니다(예: '식사준비 30분 도와드리고 외출동행 15분'→45).
 - change(지난 방문과 비교한 변화): physical=신체기능, meal=식사기능, cognitive=인지기능. 좋아졌다="improved", 비슷하다="same", 나빠졌다·줄었다="worse". '지난번엔 알아보셨는데 오늘은 못 알아보셨어요'처럼 지난번과 다르다고 말한 것도 변화입니다. 비교를 말하지 않았으면 null.
 - bowel: stoolAccidents=대변 실수 횟수, urineAccidents=소변 실수 횟수, diaperChanges=기저귀 교환 횟수. "실수 없었다"는 0. 말하지 않았으면 null.
 - notes(특이사항, 급여제공기록지 칸): 급여 제공 중 확인한 사항과 조치사항입니다. 혈압·복약·통증·낙상·어지럼·병원·기분, 식사량과 음식 반응(예: '한 숟갈 드심', '짜다고 안 드심'), 반복해서 하신 말처럼 위 칸에 들어가지 않는 관찰. 한 문장이 다른 칸의 근거여도 이런 관찰이 있으면 notes에도 씁니다.
@@ -36,6 +36,7 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
   자주 쓰는 문장 예(문체만 참고하고 내용은 말한 것만): '일반식 2/3 섭취. 소화 상태 양호하며 식후 따뜻한 물 복용 도움.' / '체위 변경 2시간 간격으로 시행(좌측→우측). 엉덩이 피부 발적 없음 확인.' / '오전 중 산책 후 말벗 서비스 20분 진행. 기분 양호하시며 옛날 이야기 나누심.'
   예: '약 드셨다고 하셨는데 약통 보니까 그대로 있더라고요' → '아침 약 드셨다고 하셨으나 약통에 약이 그대로 있음.' ('복용 안 함'·'안 드신 것 확인'은 틀림)
 - notesNoAction: notes에 관찰(통증·기침·식사량 감소·혈압 이상 등)만 있고 그에 대해 요양보호사가 한 도움·조치를 말하지 않았으면 true. 조치가 있거나, 조치가 필요 없는 일상 사실만 있거나, notes가 null이면 false.
+- notesAsk: notesNoAction이 true일 때만, 조치가 빠진 관찰을 짚어 요양보호사에게 묻는 한 문장. '~에 어떻게 도와드렸나요? (예: …)' 꼴로, 괄호 안에 그 관찰에 맞는 조치 예 2~3개(쉬시게 함·찜질·보호자에게 알림 등). 관찰이 여럿이면 모두 짚습니다. 관찰은 말한 그대로 짚고('혈압 160/95' O, '혈압이 높았는데' X) 조치 예는 요양보호사가 할 수 있는 일만 씁니다(약 드리기·처치·진단 X). 예: '무릎이 아프다고 하셨을 때 어떻게 도와드렸나요? (예: 쉬시게 함, 찜질, 보호자에게 알림)' / '기침 2회, 혈압 160/95일 때 어떻게 도와드렸나요? (예: 쉬시게 함, 다시 재기, 보호자에게 알림)'. notesNoAction이 false면 null.
 - guardianNotes: notes의 문장을 하나도 빼거나 더하지 않고 한 문장씩 그대로 옮기며 말투만 바꿉니다(혈압·전달 문장도 빠짐없이). 섭취·호소·발적·우측 같은 기록지 말은 '드셨어요'·'아프다고 하셨어요'·'빨갛게 된 곳'·'오른쪽'처럼 쉬운 말로 바꿉니다. notes가 null이면 null.
 - guardianNotes에서 누가 한 일인지 바뀌면 안 됩니다. 요양보호사가 해 드린 일은 '~해 드렸어요'·'~드렸어요', 어르신이 하신 일은 '~하셨어요'로 씁니다(예: '따뜻한 물 제공 및 등 두드림함' → '따뜻한 물을 드리고 등을 두드려 드렸어요', '따뜻한 물 드시고 등 두드리셨어요'는 틀림).
 - physicalNote와 guardianNotes는 모든 문장을 '~했어요'·'~셨어요'처럼 끝내고('~습니다' 금지) 사람은 '어르신'이라고 부릅니다.
@@ -58,6 +59,7 @@ const SCHEMA = obj({
   notes: s,
   guardianNotes: s,
   notesNoAction: { type: "boolean" },
+  notesAsk: s,
   quotes: obj({ physical: quotes, cognitive: quotes, household: quotes, change: quotes, bowel: quotes, notes: quotes }),
 });
 
@@ -87,6 +89,7 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
     notes: str(r.notes),
     guardianNotes: str(r.guardianNotes),
     notesNoAction: r.notesNoAction === true,
+    notesAsk: r.notesNoAction === true ? str(r.notesAsk) : null,
   };
   for (const group of [record.physical, record.household] as Record<string, boolean | number | null>[]) {
     const checks = Object.keys(group).filter((k) => k !== "minutes");
@@ -101,7 +104,7 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
     household: () => { record.household = { mealPrepCleaningLaundry: null, personalActivity: null, minutes: null }; },
     change: () => { record.change = { physical: null, meal: null, cognitive: null }; },
     bowel: () => { record.bowel = { stoolAccidents: null, urineAccidents: null, diaperChanges: null }; },
-    notes: () => { record.notes = null; record.guardianNotes = null; record.notesNoAction = false; },
+    notes: () => { record.notes = null; record.guardianNotes = null; record.notesNoAction = false; record.notesAsk = null; },
   };
   for (const k of Object.keys(empty) as Section[]) {
     const hits = found(k);

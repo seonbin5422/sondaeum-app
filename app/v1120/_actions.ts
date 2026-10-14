@@ -126,7 +126,8 @@ export async function startVisit(clientId: string) {
   const visit =
     existing ??
     (await prisma.visit.create({ data: { caregiverId: caregiver.id, clientId, status: "RECORDING", startedAt: new Date() } }));
-  const next = { DRAFT_READY: "review", RECORDED: "processing", SUMMARIZING: "processing" }[visit.status as string] ?? "record";
+  // 임시저장 뒤 다시 들어온 기록 확인은 resume=1: 뒤로가 홈으로, "더 말하기"로 녹음에 이어 감
+  const next = { DRAFT_READY: "review?resume=1", RECORDED: "processing", SUMMARIZING: "processing" }[visit.status as string] ?? "record";
   redirect(`/v1120/visit/${visit.id}/${next}`);
 }
 
@@ -213,8 +214,8 @@ export async function addToNotes(visitId: string, spoken: string): Promise<CareR
   const filled = await fillVisitRecord(joined, v.clientId, v.caregiverId);
   const record: CareRecord =
     "byAi" in filled && filled.record.notes
-      ? { ...old, notes: filled.record.notes, guardianNotes: filled.record.guardianNotes, notesNoAction: filled.record.notesNoAction }
-      : { ...old, notes: joined, guardianNotes: null, notesNoAction: false }; // AI가 없거나 실패하면 한 말을 그대로 붙인다
+      ? { ...old, notes: filled.record.notes, guardianNotes: filled.record.guardianNotes, notesNoAction: filled.record.notesNoAction, notesAsk: filled.record.notesAsk }
+      : { ...old, notes: joined, guardianNotes: null, notesNoAction: false, notesAsk: null }; // AI가 없거나 실패하면 한 말을 그대로 붙인다
   const transcript = `${v.transcript ? decryptText(v.transcript) : ""} ${text}`.trim();
   await prisma.$transaction([
     prisma.visit.update({ where: { id: visitId }, data: { transcript: encryptText(transcript) } }),

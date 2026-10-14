@@ -81,6 +81,8 @@ assert.equal(checkAiRecord(twoNotes, cough).record.guardianNotes, "점심을 반
 assert.equal(checkAiRecord({ ...twoNotes, quotes: { notes: [] } }, cough).record.guardianNotes, null);
 assert.equal(checkAiRecord({ ...twoNotes, notesNoAction: true }, cough).record.notesNoAction, true);
 assert.equal(checkAiRecord({ ...twoNotes, notesNoAction: true, quotes: { notes: [] } }, cough).record.notesNoAction, false); // 특이사항이 비면 안내도 없음
+assert.equal(checkAiRecord({ ...twoNotes, notesNoAction: true, notesAsk: "기침에 어떻게 도와드렸나요?" }, cough).record.notesAsk, "기침에 어떻게 도와드렸나요?");
+assert.equal(checkAiRecord({ ...twoNotes, notesAsk: "기침에 어떻게 도와드렸나요?" }, cough).record.notesAsk, null); // 조치가 있으면 묻지 않음
 
 // 녹음 중 미리 보기: "~습니다"로 이어 말해도 활동마다 자기 시간을 잡는다
 const sung = extractRecord("세수했고요 세수 5분 모아 드렸습니다 함께 노래 부르는 시간을 10분 가졌습니다").record;

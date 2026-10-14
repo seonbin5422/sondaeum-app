@@ -97,6 +97,8 @@ export function RecordScreen({
 
   async function finish() {
     if (speech.recording) speech.stop();
+    // 글로 쓴 뒤 0.8초 안에 누르면 늦게 저장된 글이 상태를 다시 "녹음 중"으로 돌린다. finishRecording이 같은 글을 저장한다
+    clearTimeout(typingTimer.current);
     setFinishing(true);
     try {
       await finishRecording(visitId, transcript);

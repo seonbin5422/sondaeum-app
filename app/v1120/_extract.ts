@@ -44,6 +44,13 @@ function minutesNear(s: string, re: RegExp): number | null {
   return (at > 0 ? minutesIn(s.slice(at)) : null) ?? minutesIn(s);
 }
 
+// 묶음 칸(신체활동·가사)의 시간은 활동마다 말한 시간을 더한다("식사준비 30분 도와드리고 외출동행 15분" → 45)
+// shortcut: "~고"·쉼표로만 활동을 나눈다, "식사준비랑 외출 합쳐서 45분"처럼 합계를 말하면 그대로 45
+export function minutesSum(ss: string[]): number | null {
+  const parts = ss.flatMap((s) => s.split(/고\s+|,\s*/)).map(minutesIn).filter((m) => m !== null);
+  return parts.length ? parts.reduce((a, b) => a + b, 0) : null;
+}
+
 const pick = (ss: string[], re: RegExp) => ss.filter((s) => re.test(s));
 const join = (ss: string[]) => (ss.length ? ss.join(" ") : null);
 
@@ -83,7 +90,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const phys = Object.fromEntries(
     Object.entries(physMatch).map(([k, re]) => [k, anyPhys ? physSentences.some((s) => re.test(s)) : null]),
   ) as Omit<CareRecord["physical"], "minutes">;
-  const physMinutes = physSentences.map(minutesIn).find((m) => m !== null) ?? null;
+  const physMinutes = minutesSum(physSentences);
 
   // 인지·정서: 항목별 분. 말했지만 시간이 없으면 null(확인 필요).
   // 한 문장에 말벗과 다른 활동이 같이 있으면 시간은 말벗(의사소통·말벗·격려)에만 넣는다
@@ -131,7 +138,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
     household: {
       mealPrepCleaningLaundry: anyHh ? hhSentences.length > 0 : null,
       personalActivity: anyHh ? outing.length > 0 : null,
-      minutes: [...hhSentences, ...outing].map(minutesIn).find((m) => m !== null) ?? null,
+      minutes: minutesSum([...new Set([...hhSentences, ...outing])]),
     },
     change: {
       physical: changeOf(/걸으|걸어|걷|다리|무릎|움직|기운|몸/),

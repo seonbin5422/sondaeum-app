@@ -152,6 +152,7 @@ export function ReviewScreen({
   visitTime,
   clientName,
   caregiverName,
+  resumed,
 }: {
   id: string;
   initialRecord: CareRecord;
@@ -160,6 +161,7 @@ export function ReviewScreen({
   visitTime: VisitTime;
   clientName: string;
   caregiverName: string;
+  resumed: boolean; // 임시저장 뒤 홈에서 다시 들어옴
 }) {
   const router = useRouter();
   const [r, setR] = useState<CareRecord>(initialRecord);
@@ -220,7 +222,7 @@ export function ReviewScreen({
     clearTimeout(saveTimer.current);
     try {
       await saveRecord(id, r);
-      router.push(`/v1120/visit/${id}/confirm`);
+      router.push(`/v1120/visit/${id}/confirm${resumed ? "?resume=1" : ""}`);
     } catch {
       setSaveError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
     }
@@ -366,12 +368,19 @@ export function ReviewScreen({
             onChange={(e) => update({ ...r, notes: e.target.value || null, guardianNotes: null })}
           />
           {!r.notes && (
-            <Button variant="secondary" onClick={() => update({ ...r, notes: "특이사항 없음.", guardianNotes: "특별한 일은 없었어요.", notesNoAction: false })}>
+            <Button variant="secondary" onClick={() => update({ ...r, notes: "특이사항 없음.", guardianNotes: "특별한 일은 없었어요.", notesNoAction: false, notesAsk: null })}>
               특이사항 없음
             </Button>
           )}
+          {/* 말로 더하기는 조치가 빠졌을 때만. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
+          {(r.notesNoAction || speech.recording || adding || heardText) && (
           <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction ? "bg-accent-soft text-accent-soft-foreground" : "bg-(--neutral-soft)"}`}>
-            {r.notesNoAction && <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>}
+            {r.notesNoAction && (
+              <>
+                <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>
+                {r.notesAsk && <p className="text-lg">{r.notesAsk}</p>}
+              </>
+            )}
             {(speech.recording || heardText) && (
               <p className="text-lg">
                 {heardText} <span className="text-muted">{speech.interim}</span>
@@ -387,6 +396,7 @@ export function ReviewScreen({
             )}
             {speech.error && <p className="text-base font-bold text-(--danger)">{speech.error}</p>}
           </div>
+          )}
           {r.notes && r.notes !== "특이사항 없음." && !REPORTED.test(r.notes) && (
             <div className="flex flex-col gap-2">
               <p className="text-base font-bold">누구에게 알렸나요?</p>
@@ -419,7 +429,8 @@ export function ReviewScreen({
         </Button>
       }
     >
-      <TopBar backHref={`/v1120/visit/${id}/record`} title="기록 확인" />
+      {/* 방금 녹음하고 왔으면 뒤로가 곧 "더 말하기"라 버튼을 따로 두지 않는다 */}
+      <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title="기록 확인" />
       {saveError && <p className="text-base font-bold text-(--danger)">{saveError}</p>}
 
       <div role="tablist" className="grid grid-cols-2 rounded-xl bg-(--neutral-soft) p-1">
@@ -467,9 +478,11 @@ export function ReviewScreen({
         <p className="text-lg font-bold">AI가 급여제공기록지에 맞춰 적었어요</p>
         <p className="text-base">&quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. 비워 두었으니 채워 주세요.</p>
       </div>
-      <Button variant="secondary" onClick={talkMore}>
-        🎤 빠진 내용 더 말하기
-      </Button>
+      {resumed && (
+        <Button variant="secondary" onClick={talkMore}>
+          🎤 빠진 내용 더 말하기
+        </Button>
+      )}
 
       {steps.slice(0, confirmed + 1).map((st, i) => (
         <Section key={st.title} id={`step-${i}`} {...st} open={open.has(i)} onToggle={() => toggle(i)}>

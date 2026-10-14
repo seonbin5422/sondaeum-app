@@ -21,7 +21,7 @@
 | C-11 | 수급자 영구 삭제 확인 | `/client/[id]/permanent-delete-confirm` | `app/client/[id]/permanent-delete-confirm/page.tsx` | | |
 | C-12 | 기록 (음성·텍스트·파일) | `/visit/[id]/record` | `RecordScreen.tsx` | STB-3, STB-4, DIF-6 | [시안](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-465) · [와이어](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-86) · [와이어: 녹음 중](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=275-2) |
 | C-13 | AI 처리중 | `/visit/[id]/processing` | `ProcessingScreen.tsx` | STB-2 | |
-| C-14 | 요양노트 검토 | `/visit/[id]/review` | `ReviewForm.tsx`, `ReportSection` | STB-1, DIF-2, DIF-3 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-171) · [하나씩 확인 (D-41)](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=376-2) |
+| C-14 | 요양노트 검토 | `/visit/[id]/review` | `ReviewForm.tsx`, `ReportSection` | STB-1, DIF-2, DIF-3 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-171) · [하나씩 확인 (D-41)](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=376-2) | · [다시 들어옴·더 말하기 (D-42)](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=378-2) · [특이사항 조치 빠짐 (D-43)](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=378-142)
 | C-15 | 전송 확인 | `/visit/[id]/confirm` | `app/visit/[id]/confirm/page.tsx` | STB-1 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-308) |
 | C-16 | 공유하기 (링크·카카오톡) | `/visit/[id]/sent` | `SentActions`, `CopyLinkButton`, `ShareLinkButton` | DIF-5 | [Figma](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=263-334) |
 | C-17 | **기관 서류 초안** (신규) | `/visit/[id]/review` 안 탭 | 신규 | DIF-3, LAW-4, LAW-9 | |

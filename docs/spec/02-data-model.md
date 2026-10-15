@@ -101,7 +101,7 @@ type CareRecord = {
     repositioning: boolean | null;   // 체위변경
     mobility: boolean | null;        // 이동 도움
     toileting: boolean | null;       // 화장실 이용하기
-    minutes: number | null;          // 제공시간 (분)
+    minutes: number | null;          // 제공시간 (분). 활동마다 말한 시간을 더한 합계 (D-42)
   };
   physicalNote: string | null;       // 한 일을 한두 문장으로 (G-01 신체활동 카드 아래 문장)
 
@@ -117,7 +117,7 @@ type CareRecord = {
   household: {
     mealPrepCleaningLaundry: boolean | null; // 식사준비, 청소 및 주변정리 정돈, 세탁 등
     personalActivity: boolean | null;        // 개인활동지원 (외출 시 동행 등)
-    minutes: number | null;                  // 제공시간 (분)
+    minutes: number | null;                  // 제공시간 (분). 활동마다 말한 시간을 더한 합계 (D-42)
   };
 
   // 5. 변화상태: 요양보호사가 직접 고름, AI는 채우지 않음
@@ -134,8 +134,11 @@ type CareRecord = {
     diaperChanges: number | null;    // 기저귀 교환 (기저귀를 쓰는 분만)
   };
 
-  // 7. 특이사항: 혈압·복약도 여기에
-  notes: string | null;
+  // 7. 특이사항: 혈압·복약도 여기에 (D-43)
+  notes: string | null;              // 기록지·진료 참고용 요약에 쓰는 기록체("~함"). 관찰 → 도움·조치 → 전달 순서
+  guardianNotes?: string | null;     // notes와 같은 문장을 보호자용 '~요'체로. 특이사항을 직접 고치면 null → notes를 보여 줌
+  notesNoAction?: boolean;           // AI 판단: 관찰만 있고 요양보호사가 한 도움·조치가 없음 → C-14에서 더 말하도록 안내
+  notesAsk?: string | null;          // notesNoAction일 때 무엇을 더 말할지 묻는 한 문장 (예: "무릎이 아프다고 하셨을 때 어떻게 도와드렸나요? (예: 쉬시게 함, 찜질, 보호자에게 알림)")
 };
 ```
 
@@ -163,7 +166,7 @@ type GuardianReportProps = {
 | 가사·일상생활 지원 | `household` | `true`인 항목만 "✓ 식사준비·청소·세탁"처럼, 아래에 "제공시간 40분"(0분도 표시) |
 | 지난 방문과 비교 | `change` | `improved`·`same`·`worse` → "좋아졌어요"·"비슷해요"·"나빠졌어요". `null`인 줄은 숨김 |
 | 배변 변화 | `bowel` | `0`은 "없음", 1 이상은 "1번". `null`인 줄은 숨김 |
-| 특이사항 | `notes` | 그대로. 비어 있으면 카드 숨김 |
+| 특이사항 | `guardianNotes` (없으면 `notes`) | 그대로. 비어 있으면 카드 숨김 |
 
 - "지난 방문과 비교"는 변화상태(6번) 값을 보여 주는 것이라, 지난 방문 기록을 따로 불러오지 않는다.
 - 체크 항목은 한 것만 보여 주고, 시간(분)은 0분도 보여 준다 (D-24 261009.ver). 구조는 서식 원문(별지 제12호, 2025.12.12 개정)과 같다: 신체활동·가사는 체크 + 합계 제공시간, 인지·정서는 항목별 분, 배변 변화는 변화상태 안.

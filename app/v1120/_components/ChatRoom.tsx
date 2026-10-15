@@ -23,15 +23,11 @@ export function ChatRoom({
   me,
   initial,
   otherName,
-  reportsHref,
-  documentsHref,
 }: {
   clientId: string;
   me: "caregiver" | "guardian";
   initial: ChatMessage[];
   otherName: string;
-  reportsHref: string;
-  documentsHref: string;
 }) {
   const [messages, setMessages] = useState(initial);
   const [text, setText] = useState("");
@@ -49,15 +45,6 @@ export function ChatRoom({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <div className="grid grid-cols-2 gap-2">
-        <Link href={reportsHref} className="flex min-h-12 items-center justify-center rounded-xl border border-border text-base font-bold">
-          보고서 모아보기
-        </Link>
-        <Link href={documentsHref} className="flex min-h-12 items-center justify-center rounded-xl border border-border text-base font-bold">
-          서류 만들기
-        </Link>
-      </div>
-
       <ol className="flex flex-1 flex-col gap-3">
         {messages.length === 0 && <li className="py-10 text-center text-lg text-muted">아직 주고받은 말이 없어요. 방문 보고서를 보내면 여기에 올라와요.</li>}
         {messages.map((m, i) => {
@@ -87,8 +74,9 @@ export function ChatRoom({
         })}
       </ol>
 
+      {/* 보호자 대화는 하단 메뉴바 위에 입력칸을 둔다 */}
       <form
-        className="sticky bottom-0 flex gap-2 bg-white py-3"
+        className={`sticky flex gap-2 bg-white py-3 ${me === "guardian" ? "bottom-[65px]" : "bottom-0"}`}
         onSubmit={(e) => {
           e.preventDefault();
           send();

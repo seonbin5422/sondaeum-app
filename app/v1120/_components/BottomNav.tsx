@@ -12,13 +12,24 @@ const TABS = [
   { href: "/v1120/me", label: "내 정보", icon: "☰", match: (p: string) => p.startsWith("/v1120/me") },
 ];
 
-export function BottomNav() {
+// 보호자 메뉴바 (D-44). 보호자는 로그인 없이 수급자별 링크로 들어온다
+function guardianTabs(token: string) {
+  const home = `/v1120/c/${token}`;
+  return [
+    { href: home, label: "홈", icon: "⌂", match: (p: string) => p === home || p.startsWith(`${home}/documents`) || p.startsWith(`${home}/reports`) },
+    { href: `${home}/chat`, label: "대화", icon: "✉", match: (p: string) => p.startsWith(`${home}/chat`) },
+    { href: `${home}/me`, label: "내 정보", icon: "☰", match: (p: string) => p.startsWith(`${home}/me`) },
+  ];
+}
+
+export function BottomNav({ guardianToken }: { guardianToken?: string }) {
   const pathname = usePathname();
   const unread = useTotalUnread();
+  const tabs = guardianToken ? guardianTabs(guardianToken) : TABS;
   return (
     <nav aria-label="메뉴" className="border-t border-(--line) bg-white">
-      <ul className="mx-auto grid max-w-md grid-cols-4">
-        {TABS.map((t) => {
+      <ul className={`mx-auto grid max-w-md ${guardianToken ? "grid-cols-3" : "grid-cols-4"}`}>
+        {tabs.map((t) => {
           const active = t.match(pathname);
           return (
             <li key={t.href}>
@@ -33,7 +44,7 @@ export function BottomNav() {
                   {t.icon}
                 </span>
                 {t.label}
-                {t.label === "대화" && unread > 0 && (
+                {!guardianToken && t.label === "대화" && unread > 0 && (
                   <span className="absolute right-[22%] top-1.5 rounded-full bg-(--danger) px-1.5 text-sm font-bold leading-5 text-white">
                     {unread}
                   </span>

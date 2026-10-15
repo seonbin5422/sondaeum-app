@@ -12,7 +12,7 @@ export default async function GuardianDocumentsPage({ params }: PageProps<"/v112
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
       <Link href={`/v1120/c/${token}`} className="inline-flex min-h-12 w-fit items-center rounded-xl border border-border px-4 text-base font-bold">
-        ← 대화방으로
+        ← 홈으로
       </Link>
       <header>
         <p className="text-lg text-muted">{c.name} 어르신</p>

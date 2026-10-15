@@ -1,41 +1,58 @@
 import { notFound } from "next/navigation";
-import { caregiverName, chatByClient, chatTokenToClient, findClient } from "../../_mock";
-import { ChatRoom } from "../../_components/ChatRoom";
+import { caregiverName, chatTokenToClient, findClient } from "../../_mock";
+import { Avatar, Chip, LinkButton, Screen } from "../../_components/ui";
 
-// G-02 보호자 대화방 (로그인 없이 수급자별 전용 링크, 만료 기한 있음). 예: /v1120/c/hong-demo
-export default async function GuardianChatPage({ params }: PageProps<"/v1120/c/[token]">) {
+// G-04 보호자 홈 (D-44). 어르신 정보는 보기만, 고칠 내용은 대화로 요양보호사에게 말한다
+export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[token]">) {
   const { token } = await params;
-  if (token.startsWith("new-")) {
-    // 미리보기: 방금 등록한 수급자의 빈 대화방
-    const [name, guardian] = token.slice(4).split("~").map(decodeURIComponent);
-    return (
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-6">
-        <header>
-          <p className="text-base text-muted">안녕하세요, {guardian} 보호자님</p>
-          <h1 className="text-2xl font-bold">{name} 어르신 대화방</h1>
-          <p className="text-base text-muted">{caregiverName} 요양보호사와 이야기해요</p>
-        </header>
-        <ChatRoom clientId="new" me="guardian" initial={[]} otherName={`${caregiverName} 요양보호사`} reportsHref={`/v1120/c/${token}/reports`} documentsHref={`/v1120/c/${token}/documents`} />
-      </main>
-    );
-  }
   const c = findClient(chatTokenToClient[token] ?? "");
   if (!c) notFound();
+
+  const rows: [string, string | null][] = [
+    ["장기요양등급", c.careGrade],
+    ["알레르기", c.allergies],
+    ["병력", c.medicalHistory],
+    ["복용 중인 약", c.medicationNotes],
+  ];
+
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-6">
-      <header>
-        <p className="text-base text-muted">안녕하세요, {c.guardianName} 보호자님</p>
-        <h1 className="text-2xl font-bold">{c.name} 어르신 대화방</h1>
-        <p className="text-base text-muted">{caregiverName} 요양보호사와 이야기해요</p>
+    <Screen nav guardianToken={token}>
+      <p className="text-lg text-muted">안녕하세요, {c.guardianName} 보호자님</p>
+      <header className="flex items-center gap-4">
+        <Avatar name={c.name} />
+        <div className="flex flex-col items-start gap-1">
+          <h1 className="text-2xl font-bold">{c.name} 어르신</h1>
+          <p className="text-lg text-muted">{[c.age && `${c.age}세`, c.gender].filter(Boolean).join(" · ")}</p>
+        </div>
       </header>
-      <ChatRoom
-        clientId={c.id}
-        me="guardian"
-        initial={chatByClient[c.id] ?? []}
-        otherName={`${caregiverName} 요양보호사`}
-        reportsHref={`/v1120/c/${token}/reports`}
-        documentsHref={`/v1120/c/${token}/documents`}
-      />
-    </main>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xl font-bold">방문 일정</h2>
+        <div className="flex flex-col items-start gap-2 rounded-[15px] border border-(--line) p-4">
+          <Chip>{c.scheduleLabel}</Chip>
+          <p className="text-lg">{caregiverName} 요양보호사가 방문해요</p>
+        </div>
+      </section>
+
+      <div className="flex flex-col gap-3">
+        <LinkButton href={`/v1120/c/${token}/reports`}>보고서 모아보기</LinkButton>
+        <LinkButton href={`/v1120/c/${token}/documents`} variant="secondary">
+          서류 만들기
+        </LinkButton>
+      </div>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xl font-bold">어르신 정보</h2>
+        <dl className="flex flex-col divide-y divide-(--line) rounded-[15px] border border-(--line) px-4">
+          {rows.map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-4 py-3 text-lg">
+              <dt className="shrink-0 text-muted">{k}</dt>
+              <dd className={`text-right font-bold ${v ? "" : "font-normal text-muted"}`}>{v ?? "없음"}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-base text-muted">바뀐 내용이 있으면 대화에서 요양보호사에게 알려 주세요.</p>
+      </section>
+    </Screen>
   );
 }

@@ -24,8 +24,6 @@ export default async function ChatRoomPage({ params }: PageProps<"/v1120/chats/[
         me="caregiver"
         initial={chatByClient[clientId] ?? []}
         otherName={`${c.guardianName} 보호자`}
-        reportsHref={`/v1120/chats/${clientId}/reports`}
-        documentsHref={`/v1120/client/${clientId}/documents`}
       />
     </Screen>
   );

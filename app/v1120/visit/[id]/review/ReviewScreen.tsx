@@ -89,7 +89,7 @@ function NumberRow({ label, unit, value, onChange }: { label: string; unit: stri
       <span className="flex items-center gap-2">
         <input
           inputMode="numeric"
-          className={`h-12 w-20 rounded-xl border text-center text-lg font-bold ${value === null ? "border-accent" : "border-border"}`}
+          className={`h-12 w-20 rounded-xl border text-center text-xl font-bold ${value === null ? "border-accent" : "border-border"}`}
           placeholder="—"
           value={value ?? ""}
           onChange={(e) => {

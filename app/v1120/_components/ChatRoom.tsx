@@ -53,21 +53,21 @@ export function ChatRoom({
           const showDay = i === 0 || d !== day(messages[i - 1].at);
           return (
             <li key={m.id} className="flex flex-col gap-3">
-              {showDay && <p className="self-center rounded-full bg-(--neutral-soft) px-3 py-0.5 text-sm text-muted">{d}</p>}
+              {showDay && <p className="self-center rounded-full bg-(--neutral-soft) px-3 py-0.5 text-base text-muted">{d}</p>}
               <div className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
                 {m.report ? (
                   <Link
                     href={`/v1120/g/${m.report.shareToken}`}
                     className="flex w-64 flex-col gap-1 rounded-2xl border border-accent bg-accent-soft p-4 text-accent-soft-foreground"
                   >
-                    <span className="text-sm font-bold">방문 보고서</span>
+                    <span className="text-base font-bold">방문 보고서</span>
                     <span className="text-lg font-bold text-foreground">{m.report.title}</span>
                     <span className="text-base underline underline-offset-4">눌러서 보기 ›</span>
                   </Link>
                 ) : (
                   <p className={`max-w-[75%] rounded-2xl px-4 py-2 text-lg ${mine ? "bg-accent" : "bg-(--neutral-soft)"}`}>{m.text}</p>
                 )}
-                <span className="shrink-0 text-sm text-muted">{time(m.at)}</span>
+                <span className="shrink-0 text-base text-muted">{time(m.at)}</span>
               </div>
             </li>
           );

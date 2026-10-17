@@ -46,7 +46,7 @@ export function CareSheet({
   return (
     <article className="flex flex-col gap-3 rounded-md border border-border bg-white p-4 print:border-0 print:p-0">
       <header className="flex flex-col gap-0.5">
-        <p className="text-sm text-muted">장기요양급여 제공기록지(방문요양) 형식 · 공식 사본 아님</p>
+        <p className="text-base text-muted">장기요양급여 제공기록지(방문요양) 형식 · 공식 사본 아님</p>
         <h2 className="text-xl font-bold">{date}</h2>
         <p className="text-base">
           수급자 {clientName} · 요양보호사 {caregiverName} · 서비스 시간 {time}

@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react
 import type { VisitStatus } from "../_types";
 import { BottomNav } from "./BottomNav";
 
-// 1120.ver 공용 컴포넌트. 기준: 본문 18px, 터치 48px 이상, 아이콘만 있는 버튼 없음, 비활성 버튼에는 이유 한 줄.
+// 1120.ver 공용 컴포넌트. 기준: 본문 18px, 가장 작은 글자 16px, 터치 48px 이상, 아이콘만 있는 버튼 없음, 비활성 버튼에는 이유 한 줄.
 
 type Variant = "primary" | "secondary" | "danger";
 

@@ -141,7 +141,7 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
               ))}
             </tbody>
           </table>
-          <p className="text-sm text-muted">▲ 좋아졌어요 ● 비슷해요 ▼ 나빠졌어요 · 최근 방문 {recent.length}번</p>
+          <p className="text-base text-muted">▲ 좋아졌어요 ● 비슷해요 ▼ 나빠졌어요 · 최근 방문 {recent.length}번</p>
         </section>
 
         <section className="flex flex-col gap-2 border-t border-(--line) pt-3">
@@ -196,7 +196,7 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
         <section className="flex flex-col gap-1 border-t border-(--line) pt-3">
           <h2 className="text-lg font-bold">5. 기간 요약</h2>
           <p className="text-base">{periodSummary(visits)}</p>
-          <p className="text-sm text-muted">위 기록의 횟수를 센 요약이에요.</p>
+          <p className="text-base text-muted">위 기록의 횟수를 센 요약이에요.</p>
         </section>
 
         <footer className="rounded-md bg-(--neutral-soft) px-3 py-2 text-base text-muted">

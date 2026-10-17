@@ -45,7 +45,7 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
                 </span>
                 {t.label}
                 {!guardianToken && t.label === "대화" && unread > 0 && (
-                  <span className="absolute right-[22%] top-1.5 rounded-full bg-(--danger) px-1.5 text-sm font-bold leading-5 text-white">
+                  <span className="absolute right-[22%] top-1.5 rounded-full bg-(--danger) px-1.5 text-base font-bold leading-6 text-white">
                     {unread}
                   </span>
                 )}

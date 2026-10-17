@@ -84,7 +84,7 @@ export function ScheduleSheet({ clients }: { clients: ClientProfile[] }) {
                   >
                     <span className="text-lg">{d.getDate()}</span>
                     {visitsOn(clients, d).length > 0 && (
-                      <span className="text-sm font-bold text-accent-soft-foreground">{visitsOn(clients, d).length}건</span>
+                      <span className="text-base font-bold text-accent-soft-foreground">{visitsOn(clients, d).length}건</span>
                     )}
                   </button>
                 ) : (

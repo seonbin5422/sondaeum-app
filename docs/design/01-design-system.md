@@ -5,7 +5,7 @@
 | 위치 | 내용 |
 | --- | --- |
 | Figma 로컬 변수 "손다음" (유일한 컬렉션, 페인트 스타일은 쓰지 않음) | 색 18·간격·모서리·글자 크기·줄 간격 |
-| Figma 텍스트 스타일 `Type/…` | 글자 7종 (Pretendard Variable) |
+| Figma 텍스트 스타일 `Type/…` | 글자 6종 (Pretendard Variable) |
 | `app/globals.css` | 공통 토큰 (`:root` 변수 → Tailwind v4 `@theme inline`) |
 | `app/v1120/tokens.css` | 1120 화면 토큰. `.v1120` 안에서 공통 토큰을 덮어쓴다 |
 | `app/v1120/_components/ui.tsx` | 1120 공용 컴포넌트 |
@@ -75,19 +75,18 @@ WCAG 기준(본문 4.5:1, 18px 굵은 글자 3:1)으로 계산한 값이다.
 
 ## 글자
 
-글꼴은 Pretendard Variable(`next/font/local`, 대체 Apple SD Gothic Neo). 1120 화면의 기본 글자는 18px, 줄 간격 1.6이다 (`.v1120`).
+글꼴은 Pretendard Variable(`next/font/local`, 대체 Apple SD Gothic Neo). 1120 화면의 기본 글자는 18px, 줄 간격 1.6이다 (`.v1120`). **가장 작은 글자는 16px**이다 (10/18 결정). 시각·날짜 같은 덧붙임 정보도 16px 아래로 쓰지 않는다.
 
 | Figma 텍스트 스타일 | 크기 / 줄 간격 | 코드 | 쓰는 곳 | 1120 사용 |
 | --- | --- | --- | --- | --- |
 | `Type/Bold/24px` | 24 / 32 | `text-2xl font-bold` | 홈 인사, 화면 큰 제목, 아바타 글자 | 23회 |
 | `Type/Bold/20px` | 20 / 28 | `text-xl font-bold` | 화면 제목 | 18회 |
 | `Type/Bold/18px` · `Type/Regular/18px` | 18 / 28 | `text-lg` | 본문, 버튼, 입력칸·이름표, 카드 제목 | 122회 |
-| `Type/Bold/16px` · `Type/Regular/16px` | 16 / 24 | `text-base` | 보조 설명, 상태 배지, 칩, 오류 문구 | 129회 |
-| `Type/Regular/14px` | 14 / 20 | `text-sm` | 시각·날짜 같은 덧붙임 정보만 | 8회 |
+| `Type/Bold/16px` · `Type/Regular/16px` | 16 / 24 | `text-base` | 보조 설명, 상태 배지, 칩, 오류 문구, 시각·날짜 (최소 크기) | 137회 |
 
 - 굵기는 Bold와 Regular 두 가지만 쓴다 (SemiBold 없음).
 - 30px(`type/size/30`, 줄 간격 36)은 변수만 있고 텍스트 스타일은 없다. 코드에는 `text-3xl` 1곳.
-- 14px은 대화 시각, 날짜 줄, 서류 설명 한 줄, 메뉴 안 읽은 수 같은 덧붙임 정보에만 남아 있다. 고령 사용자 기준(18px)과 어긋나므로 16px로 올릴지 디자인 QA에서 정한다.
+- 14px(`text-sm`, Figma `Type/Regular/14px`·`type/size/14`)은 10/18에 없앴다. `text-sm`·`text-xs`를 쓰지 않는다.
 
 ## 간격
 
@@ -168,7 +167,7 @@ DIF-1 페르소나 평가([03-ux-persona-review.md](03-ux-persona-review.md))의
 
 | 항목 | 기준 | 1120 현재 |
 | --- | --- | --- |
-| 본문 글자 | 18px 이상 | 기본 18px. 16px은 보조 설명·배지, 14px은 덧붙임 정보 8곳 (위 "글자") |
+| 본문 글자 | 18px 이상, 가장 작은 글자 16px | 기본 18px, 보조 설명·배지·시각은 16px. 16px보다 작은 글자 없음 |
 | 터치 영역 | 48×48px 이상, 주 동작은 64px 높이 | 주 버튼 64px, 입력칸 56px, 작은 버튼·뒤로 48px |
 | 글자 대비 | 4.5:1 이상 | 충족 (위 "글자 대비"). 연한 바탕 위는 `text/brand`·`text/success`·`text/danger` |
 | 한 화면의 주 동작 | 1개 | 하단 고정 주 버튼 하나 |
@@ -178,9 +177,8 @@ DIF-1 페르소나 평가([03-ux-persona-review.md](03-ux-persona-review.md))의
 
 ## 남은 정리
 
-1. 14px 8곳을 16px로 올릴지 정하기 (디자인 QA, 10/23).
-2. `rounded-[15px]`를 토큰 클래스로, `.v1120`의 `--muted`·`--border` 등 덮어쓰기를 1120 머지 때 `globals.css`로 옮기기.
-3. Figma 변수 이름(`brand/primary`, `text/brand` …)과 코드 토큰 이름(`accent`, `accent-soft-foreground` …)을 맞출지 정하기. 지금은 위 "색" 표가 대응표다.
+1. `rounded-[15px]`를 토큰 클래스로, `.v1120`의 `--muted`·`--border` 등 덮어쓰기를 1120 머지 때 `globals.css`로 옮기기.
+2. Figma 변수 이름(`brand/primary`, `text/brand` …)과 코드 토큰 이름(`accent`, `accent-soft-foreground` …)을 맞출지 정하기. 지금은 위 "색" 표가 대응표다.
 
 ## 바꿀 때
 

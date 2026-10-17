@@ -76,7 +76,7 @@ export function SentScreen({
           </p>
           <p className="text-base">{formatSent(sharedAt)}</p>
           {copied && <p className="text-base text-muted">이 브라우저에서는 카카오톡을 바로 열 수 없어요. 카카오톡을 열어 보호자님께 붙여 넣어 주세요.</p>}
-          <a href={`/v1120/g/${shareToken}`} className="mt-2 text-base font-bold underline underline-offset-4">
+          <a href={`/v1120/g/${shareToken}`} className="mt-1 inline-flex min-h-12 w-fit items-center text-base font-bold underline underline-offset-4">
             보호자님이 보는 화면 열어 보기
           </a>
         </section>

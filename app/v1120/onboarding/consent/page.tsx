@@ -59,7 +59,7 @@ export default function ConsentPage() {
           </li>
         ))}
       </ul>
-      <Link href="/v1120/privacy" className="text-lg font-bold underline underline-offset-4">
+      <Link href="/v1120/privacy" className="inline-flex min-h-12 w-fit items-center text-lg font-bold underline underline-offset-4">
         개인정보 처리방침 전체 보기
       </Link>
       <form action="/api/caregivers/onboard" method="post" onSubmit={submit}>

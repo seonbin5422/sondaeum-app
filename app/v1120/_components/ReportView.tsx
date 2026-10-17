@@ -23,7 +23,7 @@ function Row({ label, value, dim = false }: { label: string; value: string; dim?
   return (
     <div className={`flex items-center justify-between text-lg ${dim ? "text-muted" : ""}`}>
       <span>{label}</span>
-      <span className="font-bold">{value}</span>
+      <span className="text-xl font-bold">{value}</span>
     </div>
   );
 }

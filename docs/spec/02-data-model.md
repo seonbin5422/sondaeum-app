@@ -1,6 +1,6 @@
 # 02. 데이터 모델
 
-모델은 5개(`Caregiver`, `Client`, `Visit`, `Report`, `AiUsage`)다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
+모델은 5개(`Caregiver`, `Client`, `Visit`, `Report`, `AiUsage`)다. 대화방(DIF-5) 모델 3개는 아래 "대화방" 절에 초안으로 있다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
 
 ## 관계
 
@@ -228,6 +228,87 @@ type PeriodSummaryProps = {
 - 제공한 돌봄(체크·제공시간) 요약을 맨 뒤에 넣을지 뺄지 (기획)
 - 기간 안에 `careRecord`가 없는 옛 보고서가 섞이면 특이사항만 보여 줄지 (개발 1)
 
+## 대화방 (DIF-5, D-45 초안)
+
+수급자마다 대화방 하나에서 요양보호사와 보호자가 말을 주고받고, 보낸 방문 보고서가 카드로 올라온다 (D-25). 대화방은 대화만 한다 (D-44). 화면(C-18·G-02, `app/v1120/_components/ChatRoom.tsx`)은 이미 아래 화면 값으로 임시 데이터(`app/v1120/_mock.ts`의 `chatByClient`)를 쓰고 있다. 개발 1은 DB 모델과 액션을, 개발 2는 보호자 카카오 로그인·암호화·링크 만료(LAW-11)를 맞춘다.
+
+### 저장 모양
+
+```prisma
+model Guardian {               // 보호자 계정 (D-44: 처음 한 번 카카오 로그인)
+  id        String   @id @default(cuid())
+  kakaoId   String   @unique
+  createdAt DateTime @default(now())
+  rooms     ChatRoom[]
+}
+
+model ChatRoom {               // 수급자당 하나
+  id               String    @id @default(cuid())
+  clientId         String    @unique
+  guardianId       String?   // 초대를 받아 카카오 로그인한 보호자. 비어 있으면 아직 안 들어옴
+  inviteToken      String    @unique @default(cuid()) // 초대 링크 /c/[inviteToken]
+  inviteExpiresAt  DateTime? // LAW-11·STB-5. "초대 다시 보내기"(D-33)는 새 토큰 + 새 만료
+  guardianJoinedAt DateTime? // 보호자 첫 입장 = 초대 수락 (D-33)
+  messages         Message[]
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  roomId    String
+  sender    String    // "CAREGIVER" | "GUARDIAN"
+  body      String?   // 글, 암호화 (LAW-11). 보고서 카드면 null
+  reportId  String?   // 보고서 카드면 Report.id
+  createdAt DateTime  @default(now())
+  readAt    DateTime? // 상대가 읽은 시각. 안 읽은 수 = 상대가 보낸 것 중 readAt 없음
+  @@index([roomId, createdAt])
+}
+```
+
+- 대화방은 수급자를 등록할 때 같이 만든다. 그래야 등록 직후 초대 화면(C-23)에 링크가 있다.
+- 보호자 이름·관계·전화번호는 지금처럼 `Client`에 둔다(요양보호사가 등록, D-31·D-33). `Guardian`은 로그인 계정만 맡는다.
+- 보고서 카드는 `sendReport`(→ `SENT`)가 같은 트랜잭션에서 `Message`를 하나 만든다.
+
+### 화면이 받는 값
+
+```ts
+type ChatMessage = {
+  id: string;
+  from: "caregiver" | "guardian"; // Message.sender를 소문자로
+  at: string;                     // ISO, Message.createdAt
+  text?: string;                  // 복호화한 body
+  report?: { shareToken: string; title: string }; // 보고서 카드
+};
+```
+
+| 화면 | 값 | 규칙 |
+| --- | --- | --- |
+| 대화방 C-18·G-02 | `ChatMessage[]` 오래된 순 | 내 말은 오른쪽. 날짜가 바뀌면 날짜 줄 |
+| 보고서 카드 | `report.title`, `report.shareToken` | 제목은 "10월 7일 방문 보고서"(방문한 날). 누르면 `/g/[shareToken]` (G-01) |
+| 대화 목록·홈 C-03·하단 메뉴 | 수급자별 안 읽은 수, 마지막 메시지 | 카드면 "📄 10월 7일 방문 보고서" |
+| 수급자 정보·대화방의 "초대 다시 보내기" | `guardianJoinedAt`이 비었는지 | 지금 `ClientProfile.guardianJoined`(임시로 늘 `false`)를 이 값으로 |
+
+**카드 id 맞추기**: 지금 코드의 카드는 `report.visitId`로 `/v1120/g/[visitId]`를 여는데, 실제 G-01은 `Report.shareToken`으로 연다. DB는 `Message.reportId`로 보고서를 가리키고, 화면에는 링크용 `shareToken`과 `title`만 넘긴다. 코드의 `ChatMessage` 타입은 연결할 때 이 모양으로 바꾼다.
+
+### 액션 (개발 1, 1120 서버 액션 방식)
+
+| 액션 | 누가 | 하는 일 |
+| --- | --- | --- |
+| `sendMessage(clientId, text)` | 둘 다 | 내 방인지 확인(요양보호사 = 담당 수급자, 보호자 = `guardianId`) → 암호화해 저장 → `ChatMessage` 돌려줌 |
+| `messagesSince(clientId, afterId?)` | 둘 다 | `afterId` 뒤 메시지만. 대화방을 열어 둔 동안 5초마다 부른다 (폴링, D-34) |
+| `markRead(clientId)` | 둘 다 | 대화방을 열 때 상대가 보낸 메시지의 `readAt`을 채움 |
+| `unreadCounts()` | 요양보호사 | `{ [clientId]: number }`. 홈·대화 목록·하단 메뉴 숫자 (지금 `app/v1120/_unread.ts`의 임시 값 대신) |
+| `reissueInvite(clientId)` | 요양보호사 | 새 `inviteToken`·`inviteExpiresAt` (D-33 초대 다시 보내기) |
+
+보호자 쪽 흐름: 초대 링크 `/c/[inviteToken]` → 카카오 로그인(개발 2) → `guardianId`·`guardianJoinedAt` 채움 → 그 뒤로는 로그인 세션으로 들어온다(토큰이 만료돼도 대화 가능).
+
+### 정할 것
+
+- 보호자가 여러 명(딸·아들)일 때. 이 초안은 대화방당 보호자 한 명 (기획)
+- 초대 링크 만료 기간 (개발 2, LAW-11)
+- 폴링 간격 5초가 무료 플랜 호출 수에 괜찮은지, 화면을 떠나면 멈추기 (개발 1)
+- 지난 메시지를 한 번에 다 불러올지, 최근 50개씩 끊을지 (개발 1)
+- 웹 푸시 알림(개발 2, 11/13)이 `Message`를 만들 때 같이 보낼지
+
 ## 방문 상태 전이
 
 ```
@@ -253,7 +334,7 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | --- | --- |
 | SEC-2 | `Client.caregiverId`를 필수로 바꾸기 (기존 데이터는 시드 요양보호사로 채움). 칸은 D-35에서 선택 칸으로 추가됨 |
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
-| DIF-5 | `ChatRoom` (clientId unique, 보호자 입장 토큰, 토큰 만료 시각, 보호자 첫 입장 시각 = 초대 수락 여부 D-33), `Message` (roomId, 보낸 사람 종류, 내용(암호화), 보고서 카드면 reportId, 읽음 시각) |
+| DIF-5 | `Guardian`·`ChatRoom`·`Message`. 위 "대화방" 절 (D-45 초안) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29) |
 | STB-5 | `Report.shareExpiresAt` |
 | LAW-3 | 동의 기록: `Caregiver.consentedAt`·`consentItems`로 넣음 (10/13, D-40) |

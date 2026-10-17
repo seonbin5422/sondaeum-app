@@ -31,6 +31,8 @@
 | `text/primary` | `#222222` | 본문 글자, 주 버튼(`brand/primary`) 위 글자 | `foreground` · `accent-foreground` (`#212427`) |
 | `text/secondary` | `#5c5c5c` | 보조 글자, 입력칸 안내 글자 | `muted` |
 | `text/brand` | `#8a5c12` | `background/brand` 위 글자 | `accent-soft-foreground` |
+| `text/success` | `#0559d2` | `status/success-soft` 위 글자 (기록 확인 토글 등) | 없음 (새로 만듦) |
+| `text/danger` | `#ba0c09` | `status/danger-soft` 위 글자 | 없음 (새로 만듦) |
 | `background/primary` | `#ffffff` | 화면·카드 바탕 | `background` · `card` |
 | `background/secondary` | `#f4f4f4` | 회색 바탕 (보조 버튼, 시작 전 배지) | `neutral-soft` |
 | `background/brand` | `#fff4e3` | 귤색 안내 상자, 선택된 카드, 아바타 | `accent-soft` |
@@ -46,6 +48,7 @@
 
 - 주 버튼 위 글자는 따로 두지 않고 `text/primary`를 쓴다 (전 `accent-foreground` `#212427`은 `#222222`와 거의 같아 뺌).
 - `status/danger`·`danger-soft`는 `status/success`·`success-soft`와 명도·채도를 같게 맞춘 빨강이다 (OKLCH L 0.573·C 0.235, 연한 쪽 L 0.949·C 0.025). 둘을 나란히 놓아도 한쪽만 튀지 않는다.
+- 연한 바탕(`*-soft`) 위 글자는 `text/brand`처럼 같은 색의 진한 글자를 쓴다: `text/success`·`text/danger`(둘 다 OKLCH L 0.50·C 0.20). `status/danger`·`success`는 흰 바탕 글자와 버튼·테두리·아이콘에 쓴다.
 - 카카오 로그인 버튼(`#FEE500` / `#191919`)은 카카오 브랜드 규정 색이라 변수로 두지 않는다.
 
 ### 글자 대비
@@ -62,8 +65,9 @@ WCAG 기준(본문 4.5:1, 18px 굵은 글자 3:1)으로 계산한 값이다.
 | `text/brand` / `background/brand` | 5.3:1 | 충족 |
 | `status/danger` / 흰 바탕 (오류 문구), 흰 글자 / `status/danger` (위험 버튼) | 5.0:1 | 충족 |
 | `status/success` / 흰 바탕, 흰 글자 / `status/success` | 4.6:1 | 충족 |
-| `status/danger` / `status/danger-soft` | 4.2:1 | 18px 굵은 글자만 |
-| `status/success` / `status/success-soft` (기록 확인 토글) | 4.0:1 | 18px 굵은 글자만 |
+| `text/danger` / `status/danger-soft` | 5.7:1 | 충족 |
+| `text/success` / `status/success-soft` (기록 확인 토글) | 5.4:1 | 충족 |
+| `status/danger` · `status/success` / 각자 `-soft` 바탕 | 4.2:1 · 4.0:1 | 미달이라 글자에는 쓰지 않는다 (위 `text/danger`·`text/success`) |
 | `border/default` / 흰 바탕 (테두리) | 3.4:1 | 테두리 기준 3:1 충족, 글자로는 쓰지 않음 |
 | 흰 글자 / `status/record` | 3.2:1 | 미달이라 녹음 버튼 글자는 버튼 밖에 둔다 |
 
@@ -165,7 +169,7 @@ DIF-1 페르소나 평가([03-ux-persona-review.md](03-ux-persona-review.md))의
 | --- | --- | --- |
 | 본문 글자 | 18px 이상 | **미충족.** 16px(`text-base`)이 52회로 가장 많고, 14px도 25회. 버튼·입력칸·보고서 본문은 18px |
 | 터치 영역 | 48×48px 이상, 주 동작은 64px 높이 | 주 버튼 64px, 입력칸 56px은 충족. 뒤로 가기 38px, 요일 버튼 44px은 미달 |
-| 글자 대비 | 4.5:1 이상 | 10/18 Figma 색은 본문·주 버튼·오류·완료 문구 모두 충족. 연한 바탕 위 `danger`·`success` 글자는 18px 굵게만 (위 "글자 대비"). 코드 반영 전 |
+| 글자 대비 | 4.5:1 이상 | 10/18 Figma 색은 본문·주 버튼·오류·완료 문구 모두 충족. 연한 바탕 위 글자는 `text/danger`·`text/success`를 쓴다. 코드 반영 전 |
 | 한 화면의 주 동작 | 1개 | 화면별 점검 필요 |
 | 용어 | 현장 용어 그대로 (수급자, 급여제공기록지), 영어·개발 용어 없음 | "PWA", "링크" 등 점검 필요 |
 | 오류 회복 | 모든 단계에서 뒤로 가기, 입력 내용 유지 | STB-3 전까지 미충족 |
@@ -176,7 +180,7 @@ DIF-1 페르소나 평가([03-ux-persona-review.md](03-ux-persona-review.md))의
 DIF-1 개선안을 만들 때 아래부터 본다. 고칠 항목은 `DIF-1-<번호>`로 [../prd/02-requirements.md](../prd/02-requirements.md)에 올린다.
 
 1. 16px·14px 글자를 18px 기준에 맞추기. 칩·배지처럼 보조 정보만 14px을 허용할지 정한다.
-2. 10/18 Figma 색을 1120 코드 토큰에 반영하기: `danger`·`danger-soft`·`success`·`success-soft` 값, 주 버튼 글자를 `foreground`로. 코드 토큰 이름(`accent-*`)을 Figma 이름(`brand`·`text/brand` 등)으로 바꿀지 정한다.
+2. 10/18 Figma 색을 1120 코드 토큰에 반영하기: `danger`·`danger-soft`·`success`·`success-soft` 값, 주 버튼 글자를 `foreground`로, 연한 바탕 위 글자에 `text-success`·`text-danger` 토큰 추가 (기록 확인 토글 `ReviewScreen`). 코드 토큰 이름(`accent-*`)을 Figma 이름(`brand`·`text/brand` 등)으로 바꿀지 정한다.
 3. 뒤로 가기 버튼(38px)과 요일 버튼(44px)을 48px 이상으로.
 4. 토큰 밖 색(gray·amber·red·black/40·카카오)을 토큰으로 옮기기: `neutral-soft`, `warning`, `warning-soft`, `record-soft`, `record-dark`, `overlay`, `kakao`.
 5. 모서리를 15px(`radius-card`)과 원으로 통일하고, `rounded-[15px]` 대신 토큰 클래스 쓰기.

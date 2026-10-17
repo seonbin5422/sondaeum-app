@@ -59,7 +59,7 @@ export function SentScreen({
       <h1 className="text-xl font-bold">보호자에게 보내기</h1>
 
       <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">
-        <p className="flex items-center gap-2 text-lg font-bold text-(--success)">
+        <p className="flex items-center gap-2 text-lg font-bold text-(--text-success)">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--success) text-base text-white">1</span>
           기록 저장 완료
         </p>
@@ -70,7 +70,7 @@ export function SentScreen({
 
       {sharedAt ? (
         <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">
-          <p className="flex items-center gap-2 text-lg font-bold text-(--success)">
+          <p className="flex items-center gap-2 text-lg font-bold text-(--text-success)">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--success) text-base text-white">2</span>
             {guardianName} 보호자님께 {copied ? "보낼 링크를 복사했어요" : "보냈어요"}
           </p>

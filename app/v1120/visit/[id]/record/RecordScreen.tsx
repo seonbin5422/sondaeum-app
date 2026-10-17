@@ -204,7 +204,7 @@ export function RecordScreen({
           return (
             <li key={sec.title} className={`rounded-xl border p-3 ${done ? "border-(--success) bg-(--success-soft)" : "border-border"}`}>
               <p className="flex items-center gap-2 text-lg font-bold">
-                <span className={done ? "text-(--success)" : "text-muted"}>{done ? "✓" : `${i + 1}`}</span>
+                <span className={done ? "text-(--text-success)" : "text-muted"}>{done ? "✓" : `${i + 1}`}</span>
                 {sec.title}
               </p>
               {done ? (

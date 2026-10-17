@@ -124,7 +124,7 @@ const statusStyles: Record<VisitStatus, { label: string; className: string }> = 
   RECORDED: { label: "녹음 완료", className: "bg-accent-soft text-accent-soft-foreground" },
   SUMMARIZING: { label: "AI 정리 중", className: "bg-accent-soft text-accent-soft-foreground" },
   DRAFT_READY: { label: "확인 필요", className: "bg-accent-soft text-accent-soft-foreground" },
-  SENT: { label: "보냄 완료", className: "bg-(--success-soft) text-(--success)" },
+  SENT: { label: "보냄 완료", className: "bg-(--success-soft) text-(--text-success)" },
 };
 
 export function StatusBadge({ status }: { status: VisitStatus }) {
@@ -135,7 +135,7 @@ export function StatusBadge({ status }: { status: VisitStatus }) {
 export function Chip({ children, tone = "schedule" }: { children: ReactNode; tone?: "schedule" | "done" | "outline" }) {
   const tones = {
     schedule: "bg-chip-schedule text-foreground",
-    done: "bg-(--success-soft) text-(--success)",
+    done: "bg-(--success-soft) text-(--text-success)",
     outline: "border border-border bg-white text-foreground",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-base font-medium ${tones[tone]}`}>{children}</span>;

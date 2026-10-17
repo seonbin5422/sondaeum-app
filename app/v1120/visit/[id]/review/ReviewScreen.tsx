@@ -74,7 +74,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       aria-pressed={on}
       onClick={() => onChange(!on)}
       className={`min-h-12 rounded-xl px-3 text-base font-bold ${
-        on ? "bg-(--success-soft) text-(--success) ring-1 ring-(--success)" : "border border-border bg-white"
+        on ? "bg-(--success-soft) text-(--text-success) ring-1 ring-(--success)" : "border border-border bg-white"
       }`}
     >
       {on ? `✓ ${label}` : label}
@@ -453,7 +453,7 @@ export function ReviewScreen({
       </div>
 
       {flagged && (
-        <div className="flex flex-col gap-1 rounded-xl bg-(--danger-soft) px-4 py-3 text-(--danger)">
+        <div className="flex flex-col gap-1 rounded-xl bg-(--danger-soft) px-4 py-3 text-(--text-danger)">
           <p className="text-lg font-bold">보호자 보고서에 싣지 않은 말이 있어요</p>
           <p className="text-base text-foreground">
             학대가 의심되는 말은 자동으로 보내지 않아요. 걱정되면 기관에 먼저 알리고, 노인보호전문기관(1577-1389)에 신고할 수 있어요.

@@ -26,7 +26,7 @@ export function PrintActions({ canShare }: { canShare: boolean }) {
           type="button"
           onClick={() => setShared(true)}
           disabled={shared}
-          className="flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold disabled:border-transparent disabled:bg-(--success-soft) disabled:text-(--success)"
+          className="flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold disabled:border-transparent disabled:bg-(--success-soft) disabled:text-(--text-success)"
         >
           {shared ? "✓ 대화방에 올렸어요" : "대화방에 올리기"}
         </button>

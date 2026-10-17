@@ -5,9 +5,9 @@ import type { CareRecord, Change } from "../_types";
 // order="base"는 main 기준(급여제공기록지 순서), "improved"는 PR #9 개선안(특이사항·비교를 맨 위로, 머지 보류).
 
 const changeText: Record<Change, { label: string; className: string }> = {
-  improved: { label: "좋아졌어요", className: "bg-(--success-soft) text-(--success)" },
+  improved: { label: "좋아졌어요", className: "bg-(--success-soft) text-(--text-success)" },
   same: { label: "비슷해요", className: "bg-(--neutral-soft) text-foreground" },
-  worse: { label: "나빠졌어요", className: "bg-(--danger-soft) text-(--danger)" },
+  worse: { label: "나빠졌어요", className: "bg-(--danger-soft) text-(--text-danger)" },
 };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -32,7 +32,7 @@ function Done({ items }: { items: string[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {items.map((t) => (
-        <span key={t} className="rounded-full bg-(--success-soft) px-3 py-1 text-base font-bold text-(--success)">
+        <span key={t} className="rounded-full bg-(--success-soft) px-3 py-1 text-base font-bold text-(--text-success)">
           ✓ {t}
         </span>
       ))}

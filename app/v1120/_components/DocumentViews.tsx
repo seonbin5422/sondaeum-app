@@ -99,7 +99,7 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
           {worse.length === 0 && <p className="text-base text-muted">기간 중 나빠진 기록이 없어요.</p>}
           {worse.map((w) => (
             <p key={w.date + w.k} className="flex items-center gap-2 text-base font-bold">
-              <span className="rounded-full bg-(--danger-soft) px-3 py-0.5 text-(--danger)">▼ 나빠졌어요</span>
+              <span className="rounded-full bg-(--danger-soft) px-3 py-0.5 text-(--text-danger)">▼ 나빠졌어요</span>
               {Number(w.date.slice(5, 7))}월 {Number(w.date.slice(8))}일 · {w.k}
             </p>
           ))}

@@ -59,7 +59,7 @@ export function InviteScreen({
     <Screen bottom={<LinkButton href={doneHref} variant="secondary">{sent ? "다 됐어요" : "나중에 하기"}</LinkButton>}>
       <TopBar backHref={doneHref} />
       {justRegistered && (
-        <p className="flex items-center gap-2 rounded-xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--success)">
+        <p className="flex items-center gap-2 rounded-xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--text-success)">
           ✓ {clientName} 정보를 등록했어요
         </p>
       )}
@@ -87,7 +87,7 @@ export function InviteScreen({
       {sent ? (
         <p
           className={`rounded-xl px-4 py-3 text-lg font-bold ${
-            sent === "noshare" ? "bg-accent-soft text-accent-soft-foreground" : "bg-(--success-soft) text-(--success)"
+            sent === "noshare" ? "bg-accent-soft text-accent-soft-foreground" : "bg-(--success-soft) text-(--text-success)"
           }`}
         >
           {sent === "noshare"

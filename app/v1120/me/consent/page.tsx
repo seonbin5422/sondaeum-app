@@ -20,7 +20,7 @@ export default async function MyConsentPage() {
             <p className="flex items-center justify-between gap-3 text-lg font-bold">
               {i.title}
               {(!me.consentedAt || agreed.has(i.key)) && (
-                <span className="shrink-0 rounded-full bg-(--success-soft) px-3 py-0.5 text-base text-(--success)">✓ 동의함</span>
+                <span className="shrink-0 rounded-full bg-(--success-soft) px-3 py-0.5 text-base text-(--text-success)">✓ 동의함</span>
               )}
             </p>
             <p className="text-base text-muted">{i.body}</p>

@@ -4,7 +4,7 @@
 
 | 위치 | 내용 |
 | --- | --- |
-| Figma 로컬 변수 "손다음" | 색 18·간격·모서리·글자 크기·줄 간격 |
+| Figma 로컬 변수 "손다음" (유일한 컬렉션, 페인트 스타일은 쓰지 않음) | 색 18·간격·모서리·글자 크기·줄 간격 |
 | Figma 텍스트 스타일 `Type/…` | 글자 7종 (Pretendard Variable) |
 | `app/globals.css` | 공통 토큰 (`:root` 변수 → Tailwind v4 `@theme inline`) |
 | `app/v1120/tokens.css` | 1120 화면 토큰. `.v1120` 안에서 공통 토큰을 덮어쓴다 |
@@ -114,7 +114,7 @@ Figma 변수 `spacing/*`: 2 · 4 · 6 · 8 · 12 · 16 · 20 · 24 · 32 (px). �
 | `radius/16` | 16px | `rounded-2xl` | 바텀시트 | 2회 |
 | `radius/6` | 6px | `rounded-md` | 작은 표시 | 4회 |
 
-- 그림자: 카드 `shadow-card` `0 4px 15px rgba(0,0,0,0.12)`. Figma 효과 스타일 `gradation`은 같은 모양이지만 투명도가 15%라 다르다 (어느 쪽으로 맞출지 정할 것).
+- 그림자: 카드 `shadow-card` `0 4px 15px rgba(0,0,0,0.12)` = Figma 효과 스타일 `gradation`.
 - `rounded-[15px]` 대신 토큰 클래스(`rounded-card`)로 바꾸는 건 남은 정리다.
 
 ## 컴포넌트 (`app/v1120/_components/ui.tsx`)
@@ -179,10 +179,8 @@ DIF-1 페르소나 평가([03-ux-persona-review.md](03-ux-persona-review.md))의
 ## 남은 정리
 
 1. 14px 8곳을 16px로 올릴지 정하기 (디자인 QA, 10/23).
-2. 카드 그림자 투명도 12%(코드)와 15%(Figma `gradation`) 중 하나로 맞추기.
-3. `rounded-[15px]`를 토큰 클래스로, `.v1120`의 `--muted`·`--border` 등 덮어쓰기를 1120 머지 때 `globals.css`로 옮기기.
-4. Figma 변수 이름(`brand/primary`, `text/brand` …)과 코드 토큰 이름(`accent`, `accent-soft-foreground` …)을 맞출지 정하기. 지금은 위 "색" 표가 대응표다.
-5. 옛 Figma 페인트 스타일 `accent/primary`·`background/*`와 옛 변수 컬렉션의 `sondaeum`을 지울지 정하기.
+2. `rounded-[15px]`를 토큰 클래스로, `.v1120`의 `--muted`·`--border` 등 덮어쓰기를 1120 머지 때 `globals.css`로 옮기기.
+3. Figma 변수 이름(`brand/primary`, `text/brand` …)과 코드 토큰 이름(`accent`, `accent-soft-foreground` …)을 맞출지 정하기. 지금은 위 "색" 표가 대응표다.
 
 ## 바꿀 때
 

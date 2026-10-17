@@ -133,16 +133,16 @@ export function historyOf(clientId: string) {
 
 export const chatByClient: Record<string, ChatMessage[]> = {
   "c-hong": [
-    { id: "m1", from: "caregiver", at: "2026-10-05T12:05:00+09:00", report: { visitId: "h-2026-10-05", title: "10월 5일 방문 보고서" } },
+    { id: "m1", from: "caregiver", at: "2026-10-05T12:05:00+09:00", report: { shareToken: "h-2026-10-05", title: "10월 5일 방문 보고서" } },
     { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?" },
     { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요." },
-    { id: "m4", from: "caregiver", at: "2026-10-07T12:02:00+09:00", report: { visitId: "h-2026-10-07", title: "10월 7일 방문 보고서" } },
+    { id: "m4", from: "caregiver", at: "2026-10-07T12:02:00+09:00", report: { shareToken: "h-2026-10-07", title: "10월 7일 방문 보고서" } },
     { id: "m5", from: "guardian", at: "2026-10-07T20:41:00+09:00", text: "식사를 반만 드셨네요. 내일 반찬을 좀 보낼게요." },
     { id: "m6", from: "guardian", at: "2026-10-07T20:42:00+09:00", text: "감사합니다." },
   ],
   "c-kim": [],
   "c-lee": [
-    { id: "l1", from: "caregiver", at: "2026-10-08T17:05:00+09:00", report: { visitId: "v-lee", title: "10월 8일 방문 보고서" } },
+    { id: "l1", from: "caregiver", at: "2026-10-08T17:05:00+09:00", report: { shareToken: "v-lee", title: "10월 8일 방문 보고서" } },
     { id: "l2", from: "guardian", at: "2026-10-08T21:00:00+09:00", text: "저녁은 잘 드셨나요?" },
   ],
 };

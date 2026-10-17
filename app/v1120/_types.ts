@@ -99,5 +99,5 @@ export type ChatMessage = {
   from: "caregiver" | "guardian";
   at: string; // ISO
   text?: string;
-  report?: { visitId: string; title: string };
+  report?: { shareToken: string; title: string }; // 보고서 카드. DB는 Message.reportId, 링크는 /g/[shareToken] (D-45)
 };

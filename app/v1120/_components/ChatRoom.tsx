@@ -57,7 +57,7 @@ export function ChatRoom({
               <div className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
                 {m.report ? (
                   <Link
-                    href={`/v1120/g/${m.report.visitId}`}
+                    href={`/v1120/g/${m.report.shareToken}`}
                     className="flex w-64 flex-col gap-1 rounded-2xl border border-accent bg-accent-soft p-4 text-accent-soft-foreground"
                   >
                     <span className="text-sm font-bold">방문 보고서</span>

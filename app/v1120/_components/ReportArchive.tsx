@@ -9,7 +9,7 @@ export function ReportArchive({ clientId }: { clientId: string }) {
       {reports.length === 0 && <li className="p-4 text-lg text-muted">아직 올라온 보고서가 없어요.</li>}
       {reports.map((m) => (
         <li key={m.id}>
-          <Link href={`/v1120/g/${m.report!.visitId}`} className="flex min-h-16 items-center justify-between px-4 py-2">
+          <Link href={`/v1120/g/${m.report!.shareToken}`} className="flex min-h-16 items-center justify-between px-4 py-2">
             <span className="flex flex-col">
               <span className="text-lg font-bold">{m.report!.title}</span>
               <span className="text-base text-muted">방문 보고서</span>

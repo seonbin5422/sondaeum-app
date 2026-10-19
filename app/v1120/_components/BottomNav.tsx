@@ -49,7 +49,7 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
                     {unread}
                   </span>
                 )}
-                {active && <span className="absolute inset-x-6 top-0 h-1 rounded-b bg-accent" />}
+                {active && <span className="absolute inset-x-6 top-0 h-1 rounded-b bg-accent-soft-foreground" />}
               </Link>
             </li>
           );

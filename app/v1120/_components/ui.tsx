@@ -158,7 +158,7 @@ export function Field({
     <label className="flex flex-col gap-2">
       <span className="text-lg font-bold">{label}</span>
       <input
-        className="h-14 rounded-[15px] border border-border px-4 text-lg placeholder:text-muted focus:border-accent focus:outline-none"
+        className="h-14 rounded-[15px] border border-border px-4 text-lg placeholder:text-muted focus:border-accent-soft-foreground focus:outline-none"
         {...props}
       />
       {hint && <span className="text-base text-muted">{hint}</span>}

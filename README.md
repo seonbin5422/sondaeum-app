@@ -98,3 +98,7 @@ npx next dev --experimental-https \
 확인했습니다. 개인정보 암호화와 AI 필터링도 적용 및 검증 완료 상태입니다.
 
 기획·디자인·개발 문서는 [`docs/`](docs/README.md)에 있습니다. 요구사항은 `docs/prd/02-requirements.md`, 역할과 할 일은 `docs/prd/06-roles.md`, 일정은 `docs/prd/05-roadmap.md`를 보세요.
+
+## 오픈소스 고지
+
+앱에 들어가는 오픈소스 패키지와 저작물의 라이선스는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있습니다. 패키지를 바꾸면 `node scripts/gen-notices.mjs`로 다시 만듭니다.

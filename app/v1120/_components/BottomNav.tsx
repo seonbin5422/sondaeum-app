@@ -40,7 +40,8 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
                   active ? "text-foreground" : "text-muted"
                 }`}
               >
-                <span aria-hidden className={`text-2xl leading-none ${active ? "text-accent-dark" : ""}`}>
+                {/* 선택된 메뉴는 아이콘 뒤를 브랜드색 알약으로 채운다 (막대만으로는 흰 바탕에서 잘 안 보임) */}
+                <span aria-hidden className={`rounded-full px-4 py-0.5 text-2xl leading-none ${active ? "bg-accent text-foreground" : ""}`}>
                   {t.icon}
                 </span>
                 {t.label}
@@ -49,7 +50,6 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
                     {unread}
                   </span>
                 )}
-                {active && <span className="absolute inset-x-6 top-0 h-1 rounded-b bg-accent-soft-foreground" />}
               </Link>
             </li>
           );

@@ -28,11 +28,11 @@
 
 | Figma 변수 | 값 | 쓰는 곳 | 코드 토큰 |
 | --- | --- | --- | --- |
-| `brand/primary` | `#ffb133` | 주 버튼, 선택 테두리, 강조. 브라우저 테마색 | `accent` |
-| `brand/secondary` | `#e69a1f` | 주 버튼 눌림, 하단 메뉴 선택 아이콘 | `accent-dark` |
+| `brand/primary` | `#ffb133` | 주 버튼·체크 표시 바탕, 강조. 브라우저 테마색. 바탕으로만 쓴다 | `accent` |
+| `brand/secondary` | `#e69a1f` | 주 버튼 눌림, 하단 메뉴 선택 아이콘(글자 이름이 같이 있음) | `accent-dark` |
 | `text/primary` | `#222222` | 본문 글자, 주 버튼(`brand/primary`) 위 글자 | `foreground` · `accent-foreground` |
 | `text/secondary` | `#5c5c5c` | 보조 글자, 입력칸 안내 글자 | `--muted` |
-| `text/brand` | `#8a5c12` | `background/brand` 위 글자 | `accent-soft-foreground` |
+| `text/brand` | `#8a5c12` | `background/brand` 위 글자, 상태를 알리는 선(입력칸 포커스, 확인 필요 입력칸, 하단 메뉴 선택 막대, 선택한 라디오) | `accent-soft-foreground` |
 | `text/success` | `#0559d2` | `status/success-soft` 위 글자 (기록 확인 토글 등) | `--text-success` |
 | `text/danger` | `#ba0c09` | `status/danger-soft` 위 글자 | `--text-danger` |
 | `background/primary` | `#ffffff` | 화면·카드 바탕 | `background` · `card` |
@@ -51,6 +51,7 @@
 - 주 버튼 위 글자는 따로 두지 않고 `text/primary`를 쓴다 (전 `accent-foreground` `#212427`은 `#222222`와 거의 같아 뺌).
 - `status/danger`·`danger-soft`는 `status/success`·`success-soft`와 명도·채도를 같게 맞춘 빨강이다 (OKLCH L 0.573·C 0.235, 연한 쪽 L 0.949·C 0.025). 둘을 나란히 놓아도 한쪽만 튀지 않는다.
 - 연한 바탕(`*-soft`) 위 글자는 `text/brand`처럼 같은 색의 진한 글자를 쓴다: `text/success`·`text/danger`(둘 다 OKLCH L 0.50·C 0.20). `status/danger`·`success`는 흰 바탕 글자와 버튼·테두리·아이콘에 쓴다.
+- 귤색(`brand/primary` 1.8:1, `brand/secondary` 2.3:1)은 흰 바탕과 대비가 낮아 바탕으로만 쓴다. 귤색 바탕 위 글자는 `text/primary`(8.8:1). 포커스·선택·확인 필요처럼 상태를 알리는 테두리·막대는 `text/brand`(흰 바탕 5.8:1)로 그린다 (10/20). 글자가 함께 있는 카드 테두리·강조 링·로딩 표시는 꾸밈이라 귤색 그대로 둔다.
 - 카카오 로그인 버튼(`#FEE500` / `#191919`)은 카카오 브랜드 규정 색이라 변수로 두지 않는다.
 
 ### 글자 대비
@@ -72,6 +73,9 @@ WCAG 기준(본문 4.5:1, 18px 굵은 글자 3:1)으로 계산한 값이다.
 | `status/danger` · `status/success` / 각자 `-soft` 바탕 | 4.2:1 · 4.0:1 | 미달이라 글자에는 쓰지 않는다 (위 `text/danger`·`text/success`) |
 | `border/default` / 흰 바탕 (테두리) | 3.4:1 | 테두리 기준 3:1 충족, 글자로는 쓰지 않음 |
 | 흰 글자 / `status/record` | 3.2:1 | 미달이라 녹음 버튼 글자는 버튼 밖에 둔다 |
+| `brand/primary` / 흰 바탕 (테두리·막대) | 1.8:1 | 미달이라 상태를 알리는 선에는 쓰지 않는다 |
+| `brand/secondary` / 흰 바탕 | 2.3:1 | 미달, 글자·상태 선에는 쓰지 않는다 |
+| `text/brand` / 흰 바탕 (포커스·선택·확인 필요 테두리) | 5.8:1 | 충족 |
 
 ## 글자
 

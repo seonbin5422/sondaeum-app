@@ -1,4 +1,5 @@
-import type { CareRecord, Change } from "../_types";
+import type { CareRecord, Change, Signatures } from "../_types";
+import { SignatureSection } from "./SignatureBox";
 
 // 급여제공기록지(별지 제12호) 형식으로 하루 기록을 보여 준다. C-17 기관 서류 탭과 서류 만들기 결과가 같이 쓴다.
 // 기관이 발급하는 공식 사본이 아니다 (D-29 초안).
@@ -33,6 +34,8 @@ export function CareSheet({
   clientName,
   caregiverName,
   signature = true,
+  visitId,
+  signatures,
 }: {
   record: CareRecord;
   date: string;
@@ -40,6 +43,8 @@ export function CareSheet({
   clientName: string;
   caregiverName: string;
   signature?: boolean;
+  visitId?: string; // 있으면 서명을 저장한다 (요양보호사 쪽)
+  signatures?: Signatures;
 }) {
   const min = (n: number | null) => (n === null ? "확인 필요" : `${n}분`);
   const cnt = (n: number | null) => (n === null ? "확인 필요" : `${n}회`);
@@ -90,11 +95,7 @@ export function CareSheet({
       {signature && (
         <section className="flex flex-col gap-2 break-inside-avoid">
           <h3 className="bg-(--neutral-soft) px-2 py-1 text-base font-bold">확인 서명 (LAW-9)</h3>
-          <div className="grid grid-cols-2 gap-2 text-base">
-            <div className="flex h-16 items-end rounded border border-dashed border-border p-2 text-muted">수급자 또는 보호자</div>
-            <div className="flex h-16 items-end rounded border border-dashed border-border p-2 text-muted">요양보호사 {caregiverName}</div>
-          </div>
-          <div className="rounded border border-dashed border-border p-2 text-base text-muted">서명 불가 사유:</div>
+          <SignatureSection visitId={visitId} initial={signatures} caregiverName={caregiverName} />
         </section>
       )}
     </article>

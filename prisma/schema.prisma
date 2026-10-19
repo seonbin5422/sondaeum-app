@@ -96,6 +96,8 @@ model Report {
   aiRawJson  String?
   // D-24·DIF-2: 급여제공기록지 모양(CareRecord) JSON, 암호화. 1120 화면은 이 칸을 쓴다
   careRecord String?
+  // LAW-9: 급여제공기록지 서명(수급자·보호자, 요양보호사 선 좌표와 서명 불가 사유) JSON, 암호화
+  signatures String?
   wasEdited  Boolean   @default(false)
   shareToken String    @unique @default(cuid())
   sentAt     DateTime?

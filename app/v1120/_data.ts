@@ -7,7 +7,8 @@ import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, safeDecryptText } from "@/lib/crypto";
-import type { CareGrade, CareRecord, ClientProfile, HistoryVisit } from "./_types";
+import type { CareGrade, CareRecord, ClientProfile, HistoryVisit, Signatures } from "./_types";
+import { cleanSignatures } from "./_signatures";
 import type { SaidQuotes } from "./_extract";
 
 // 1120.ver 화면이 DB에서 읽는 곳. 수급자는 로그인한 요양보호사 것만 보인다 (SEC-2).
@@ -188,6 +189,17 @@ export async function myHistory(clientId: string): Promise<HistoryVisit[]> {
       status: v.status,
       record,
       shareToken: v.status === "SENT" ? v.report?.shareToken : undefined,
+      signatures: readSignatures(v.report?.signatures),
     };
   });
+}
+
+// 저장된 서명을 풀어 읽는다. 풀 수 없으면 빈 서명칸으로 보여 준다
+function readSignatures(enc: string | null | undefined): Signatures | undefined {
+  if (!enc) return undefined;
+  try {
+    return cleanSignatures(JSON.parse(decryptText(enc)));
+  } catch {
+    return undefined;
+  }
 }

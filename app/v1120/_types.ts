@@ -92,7 +92,12 @@ export type HistoryVisit = {
   status: VisitStatus;
   record: CareRecord;
   shareToken?: string; // 보낸 기록의 보호자 링크 (/v1120/g/[token])
+  signatures?: Signatures; // 급여제공기록지 서명 (LAW-9). 요양보호사 쪽에서만 읽고 저장한다
 };
+
+// 서명 한 획 = 점 목록. 좌표는 서명칸 크기와 상관없는 0~400 · 0~120 값 (SignatureBox의 W·H)
+export type Stroke = [number, number][];
+export type Signatures = { recipient: Stroke[]; caregiver: Stroke[]; reason: string };
 
 export type ChatMessage = {
   id: string;

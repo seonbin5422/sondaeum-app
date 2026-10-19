@@ -229,6 +229,8 @@ export function CareSheetView({ client: c, history, caregiverName, from, to, bac
             time={`${v.start}~${v.end}`}
             clientName={c.name}
             caregiverName={caregiverName}
+            visitId={role === "caregiver" ? v.visitId : undefined}
+            signatures={v.signatures}
           />
         </div>
       ))}

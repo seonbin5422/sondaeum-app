@@ -11,6 +11,7 @@ import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
 import { kstTodayRange, requireCaregiver } from "./_data";
+import { cleanSignatures, isEmptySignatures } from "./_signatures";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
 
@@ -234,6 +235,17 @@ export async function saveRecord(visitId: string, record: CareRecord) {
   await prisma.report.update({
     where: { visitId },
     data: { careRecord: encryptText(JSON.stringify(record)), notes: encryptText(record.notes ?? ""), wasEdited: true },
+  });
+}
+
+// 급여제공기록지 서명 저장 (LAW-9). 서명은 기록 내용이 아니라서 보낸 뒤에도 받을 수 있다. 개인정보라 암호화해 둔다
+export async function saveSignatures(visitId: string, value: unknown) {
+  const v = await ownVisitOrThrow(visitId, { editable: false });
+  if (!v.report) throw new Error("정리된 기록이 없어요.");
+  const s = cleanSignatures(value);
+  await prisma.report.update({
+    where: { visitId },
+    data: { signatures: isEmptySignatures(s) ? null : encryptText(JSON.stringify(s)) },
   });
 }
 

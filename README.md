@@ -101,4 +101,4 @@ npx next dev --experimental-https \
 
 ## 오픈소스 고지
 
-앱에 들어가는 오픈소스 패키지와 저작물의 라이선스는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있다. 패키지를 바꾸면 `node scripts/gen-notices.mjs`로 다시 만든다.
+앱에 들어가는 오픈소스 패키지와 저작물의 라이선스는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 있습니다. 패키지를 바꾸면 `node scripts/gen-notices.mjs`로 다시 만듭니다.

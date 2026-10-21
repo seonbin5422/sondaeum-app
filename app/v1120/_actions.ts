@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText } from "@/lib/crypto";
-import { CARE_GRADES, type CareRecord } from "./_types";
+import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
 import { extractRecord, keepFilled } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
@@ -36,7 +36,10 @@ export async function saveClient(form: FormData) {
   const id = text(form, "id");
   const name = text(form, "name");
   const careRegistrationNumber = text(form, "careRegistrationNumber");
-  const guardianName = text(form, "guardianName");
+  const guardianRelation = text(form, "guardianRelation") ?? "기타";
+  // 받을 사람이 없는 수급자(D-49)는 이름·번호를 비운다. guardianName이 필수 칸이라 빈 글자로 둔다
+  const noContact = guardianRelation === NO_CONTACT;
+  const guardianName = noContact ? "" : text(form, "guardianName");
   const days = form
     .getAll("days")
     .map(Number)
@@ -45,7 +48,7 @@ export async function saveClient(form: FormData) {
   const start = text(form, "start");
   const end = text(form, "end");
   // 화면에서 막지만 서버에서도 한 번 더 확인 (D-31 필수 항목)
-  if (!name || !careRegistrationNumber || !guardianName || days.length === 0 || !start || !end) {
+  if (!name || !careRegistrationNumber || (!guardianName && !noContact) || days.length === 0 || !start || !end) {
     throw new Error("필수 항목을 모두 적어 주세요.");
   }
   const grade = text(form, "careGrade");
@@ -54,9 +57,9 @@ export async function saveClient(form: FormData) {
   const data = {
     name,
     careRegistrationNumber,
-    guardianName,
-    guardianRelation: text(form, "guardianRelation") ?? "기타",
-    guardianPhone: text(form, "guardianPhone"),
+    guardianName: guardianName ?? "",
+    guardianRelation,
+    guardianPhone: noContact ? null : text(form, "guardianPhone"),
     careGrade: grade && (CARE_GRADES as readonly string[]).includes(grade) ? grade : null,
     // lib/schedule.ts가 읽는 모양: "월,수,금 09:00-11:00"
     scheduleLabel: `${days.map((d) => WEEKDAY_LABELS[d]).join(",")} ${start}-${end}`,
@@ -74,8 +77,8 @@ export async function saveClient(form: FormData) {
     redirect(`/v1120/client/${id}`);
   }
   const created = await prisma.client.create({ data: { ...data, caregiverId: caregiver.id } });
-  // 새로 등록하면 바로 보호자 대화방 초대 화면으로 (D-33)
-  redirect(`/v1120/client/${created.id}/invite?new=1`);
+  // 새로 등록하면 바로 보호자 대화방 초대 화면으로 (D-33). 받을 사람이 없으면 초대할 사람도 없다
+  redirect(noContact ? `/v1120/client/${created.id}` : `/v1120/client/${created.id}/invite?new=1`);
 }
 
 // C-10 삭제: 목록에서 숨기고 "삭제한 수급자"에서 되살릴 수 있다

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { decryptText } from "@/lib/crypto";
 import { serviceTimeOf } from "../../_data";
-import type { CareRecord, GuardianReportProps } from "../../_types";
+import { contactTitle, type CareRecord, type GuardianReportProps } from "../../_types";
 import { GuardianReport } from "./GuardianReport";
 
 // G-01 보호자 보고서. 로그인 없이 링크(shareToken)로 연다. 보낸 기록만, 지운 수급자는 안 보인다.
@@ -16,6 +16,7 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
   const time = serviceTimeOf(visit.client.scheduleLabel, visit.startedAt ?? visit.createdAt);
   return {
     guardianName: visit.client.guardianName,
+    guardianTitle: contactTitle(visit.client.guardianRelation),
     clientName: visit.client.name,
     caregiverName: visit.caregiver.name,
     startedAt: time.startedAt,

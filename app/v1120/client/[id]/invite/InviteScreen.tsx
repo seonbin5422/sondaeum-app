@@ -7,6 +7,7 @@ export function InviteScreen({
   justRegistered = false,
   clientName,
   guardianName,
+  guardianTitle,
   guardianPhone,
   caregiverName,
   chatPath,
@@ -15,6 +16,7 @@ export function InviteScreen({
   justRegistered?: boolean;
   clientName: string;
   guardianName: string;
+  guardianTitle: string; // contactTitle: 보호자·사회복지사·담당자·후견인
   guardianPhone: string | null;
   caregiverName: string;
   chatPath: string;
@@ -30,7 +32,7 @@ export function InviteScreen({
   }, [chatPath]);
 
   // 보호자가 읽는 글이라 "어르신"을 쓴다 (D-31)
-  const message = `[손다음] 안녕하세요, ${guardianName} 보호자님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서와 대화, 서류 만들기는 이 대화방에서 할 수 있어요. 따로 가입하지 않아도 돼요.`;
+  const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서와 대화, 서류 만들기는 이 대화방에서 할 수 있어요. 따로 가입하지 않아도 돼요.`;
 
   async function kakao() {
     try {
@@ -64,20 +66,20 @@ export function InviteScreen({
         </p>
       )}
       <header>
-        <h1 className="text-2xl font-bold">보호자님을 대화방에 초대할까요?</h1>
+        <h1 className="text-2xl font-bold">{guardianTitle}님을 대화방에 초대할까요?</h1>
         <p className="text-lg text-muted">
-          {guardianName} 보호자님{guardianPhone ? ` · ${guardianPhone}` : ""}
+          {guardianName} {guardianTitle}님{guardianPhone ? ` · ${guardianPhone}` : ""}
         </p>
       </header>
 
       <ul className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
         <li>· 방문 보고서가 대화방에 자동으로 올라가요</li>
-        <li>· 보호자님이 궁금한 점을 바로 물어볼 수 있어요</li>
-        <li>· 보호자님도 대화방에서 서류를 만들 수 있어요</li>
+        <li>· {guardianTitle}님이 궁금한 점을 바로 물어볼 수 있어요</li>
+        <li>· {guardianTitle}님도 대화방에서 서류를 만들 수 있어요</li>
       </ul>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-lg font-bold">보호자님께 가는 글</h2>
+        <h2 className="text-lg font-bold">{guardianTitle}님께 가는 글</h2>
         <div className="rounded-[15px] border border-border p-4 text-lg">
           {message}
           <p className="mt-2 text-base font-bold text-accent-soft-foreground">＋ 대화방 링크</p>
@@ -91,8 +93,8 @@ export function InviteScreen({
           }`}
         >
           {sent === "noshare"
-            ? "이 브라우저에서는 카카오톡을 바로 열 수 없어요. 보낼 글과 링크를 복사했으니 카카오톡을 열어 보호자님께 붙여 넣어 주세요."
-            : `✓ ${guardianName} 보호자님께 ${sent === "copy" ? "보낼 글과 링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 주세요." : sent === "sms" ? "보낼 문자를 열었어요. 문자 앱에서 보내기를 눌러 주세요." : "초대를 보냈어요"}`}
+            ? `이 브라우저에서는 카카오톡을 바로 열 수 없어요. 보낼 글과 링크를 복사했으니 카카오톡을 열어 ${guardianTitle}님께 붙여 넣어 주세요.`
+            : `✓ ${guardianName} ${guardianTitle}님께 ${sent === "copy" ? "보낼 글과 링크를 복사했어요. 카카오톡이나 문자에 붙여 넣어 주세요." : sent === "sms" ? "보낼 문자를 열었어요. 문자 앱에서 보내기를 눌러 주세요." : "초대를 보냈어요"}`}
         </p>
       ) : (
         <div className="flex flex-col gap-3">
@@ -113,7 +115,7 @@ export function InviteScreen({
             </a>
           ) : (
             <div className="flex flex-col gap-2">
-              <p className="text-center text-base text-muted">보호자 전화번호가 없어 문자는 보낼 수 없어요. 수급자 정보에서 적어 주세요.</p>
+              <p className="text-center text-base text-muted">받을 사람 전화번호가 없어 문자는 보낼 수 없어요. 수급자 정보에서 적어 주세요.</p>
               <span className="flex h-14 w-full items-center justify-center rounded-[15px] bg-(--neutral-soft) text-lg font-bold text-muted">문자로 보내기</span>
             </div>
           )}

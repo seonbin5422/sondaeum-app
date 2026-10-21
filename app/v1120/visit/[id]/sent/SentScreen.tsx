@@ -15,12 +15,16 @@ export function SentScreen({
   shareToken,
   clientName,
   guardianName,
+  guardianTitle,
+  noContact,
   date,
 }: {
   visitId: string;
   shareToken: string;
   clientName: string;
   guardianName: string;
+  guardianTitle: string;
+  noContact: boolean; // 보고서 받을 사람이 없는 수급자 (D-49)
   date: string;
 }) {
   const [sharedAt, setSharedAt] = useState<Date | null>(null);
@@ -75,7 +79,7 @@ export function SentScreen({
 
   return (
     <Screen bottom={<LinkButton href="/v1120" variant="secondary">홈으로</LinkButton>}>
-      <h1 className="text-xl font-bold">보호자에게 보내기</h1>
+      <h1 className="text-xl font-bold">{noContact ? "기록 저장" : `${guardianTitle}님께 보내기`}</h1>
 
       <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">
         <p className="flex items-center gap-2 text-lg font-bold text-(--text-success)">
@@ -87,16 +91,21 @@ export function SentScreen({
         </p>
       </section>
 
-      {sharedAt ? (
+      {noContact ? (
+        <section className="flex flex-col gap-1 rounded-[15px] bg-(--neutral-soft) p-5">
+          <p className="text-lg font-bold">보고서를 받을 분이 없어요</p>
+          <p className="text-base">기록은 수급자의 방문 기록과 서류에 남아요. 받을 분이 생기면 수급자 정보 수정에서 적어 주세요.</p>
+        </section>
+      ) : sharedAt ? (
         <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">
           <p className="flex items-center gap-2 text-lg font-bold text-(--text-success)">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--success) text-base text-white">2</span>
-            {guardianName} 보호자님께 {copied ? "보낼 링크를 복사했어요" : "보냈어요"}
+            {guardianName} {guardianTitle}님께 {copied ? "보낼 링크를 복사했어요" : "보냈어요"}
           </p>
           <p className="text-base">{formatSent(sharedAt)}</p>
-          {copied && <p className="text-base text-muted">이 브라우저에서는 카카오톡을 바로 열 수 없어요. 카카오톡을 열어 보호자님께 붙여 넣어 주세요.</p>}
+          {copied && <p className="text-base text-muted">이 브라우저에서는 카카오톡을 바로 열 수 없어요. 카카오톡을 열어 {guardianTitle}님께 붙여 넣어 주세요.</p>}
           <a href={`/v1120/g/${shareToken}`} className="mt-1 inline-flex min-h-12 w-fit items-center text-base font-bold underline underline-offset-4">
-            보호자님이 보는 화면 열어 보기
+            {guardianTitle}님이 보는 화면 열어 보기
           </a>
           <button
             type="button"
@@ -110,9 +119,9 @@ export function SentScreen({
         <section className="flex flex-col gap-3 rounded-[15px] p-5 ring-2 ring-accent">
           <p className="flex items-center gap-2 text-lg font-bold">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-base">2</span>
-            보호자님께 보내기
+            {guardianTitle}님께 보내기
           </p>
-          <p className="text-base">아직 보호자님께 가지 않았어요. 아래 버튼을 눌러 카카오톡으로 보내 주세요.</p>
+          <p className="text-base">아직 {guardianTitle}님께 가지 않았어요. 아래 버튼을 눌러 카카오톡으로 보내 주세요.</p>
           <button
             type="button"
             onClick={shareKakao}

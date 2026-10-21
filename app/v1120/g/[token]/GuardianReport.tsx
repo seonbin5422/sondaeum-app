@@ -36,7 +36,7 @@ export function GuardianReport({ token, order, sent }: { token: string; order: "
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
       <BackButton fallback={chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />
       <header className="flex flex-col gap-1">
-        <p className="text-base text-muted">안녕하세요, {head.guardianName} 보호자님</p>
+        <p className="text-base text-muted">안녕하세요, {head.guardianName} {head.guardianTitle ?? "보호자"}님</p>
         <h1 className="text-2xl font-bold">{head.clientName} 어르신 방문 보고서</h1>
         <p className="text-lg text-muted">{formatVisit(head.startedAt, head.endedAt)}</p>
       </header>

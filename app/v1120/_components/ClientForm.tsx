@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CARE_GRADES, type ClientProfile } from "../_types";
+import { CARE_GRADES, FAMILY_RELATIONS, NO_CONTACT, STAFF_RELATIONS, type ClientProfile } from "../_types";
 import { saveClient } from "../_actions";
 import { Button, Field } from "./ui";
 
 // C-07 등록 · C-08 수정 공용 폼. 저장은 서버 액션 saveClient.
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const RELATIONS = ["딸", "아들", "배우자", "직접 입력"];
 
 export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; submitLabel: string }) {
   const [name, setName] = useState(initial?.name ?? "");
@@ -17,13 +16,14 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
   const [days, setDays] = useState<number[]>(initial?.scheduleDays ?? []);
   const [grade, setGrade] = useState<string | null>(initial?.careGrade ?? null);
   const [careNo, setCareNo] = useState(initial?.careRegistrationNumber ?? "");
+  const noContact = relation === NO_CONTACT;
 
   const missing = !name
     ? "수급자 이름을 적어 주세요"
     : !careNo.trim()
       ? "장기요양인정번호를 적어 주세요"
-      : !guardian
-        ? "보호자 성함을 적어 주세요"
+      : !guardian && !noContact
+        ? "보고서를 받을 사람 성함을 적어 주세요"
         : days.length === 0
           ? "방문 요일을 골라 주세요"
           : null;
@@ -89,33 +89,42 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         <Field label="끝 시간" name="end" type="time" required defaultValue={initial?.scheduleLabel.match(/–(\d\d:\d\d)/)?.[1] ?? "11:00"} />
       </div>
 
-      <Field label="보호자 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-lg font-bold">보호자와 수급자의 관계</legend>
-        <div className="flex flex-wrap gap-2">
-          {RELATIONS.map((r) => (
-            <button
-              key={r}
-              type="button"
-              aria-pressed={relation === r}
-              onClick={() => setRelation(r)}
-              className={`min-h-12 rounded-xl px-4 text-base font-bold ${relation === r ? "bg-accent" : "border border-border"}`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        <legend className="mb-1 text-lg font-bold">보고서를 받을 사람</legend>
+        <p className="mb-2 text-base text-muted">가족이 없으시면 기관 사회복지사나 주민센터 담당자를 골라 주세요.</p>
+        {[FAMILY_RELATIONS, [...STAFF_RELATIONS, NO_CONTACT]].map((group, i) => (
+          <div key={i} className="flex flex-wrap gap-2">
+            {group.map((r) => (
+              <button
+                key={r}
+                type="button"
+                aria-pressed={relation === r}
+                onClick={() => setRelation(r)}
+                className={`min-h-12 rounded-xl px-4 text-base font-bold ${relation === r ? "bg-accent" : "border border-border"}`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        ))}
       </fieldset>
 
-      <Field
-        label="보호자 전화번호"
-        name="guardianPhone"
-        inputMode="tel"
-        value={guardianPhone}
-        onChange={(e) => setGuardianPhone(e.target.value)}
-        placeholder="예: 010-0000-0000"
-        hint="등록하면 이 번호로 보호자님을 대화방에 초대할 수 있어요."
-      />
+      {noContact ? (
+        <p className="rounded-xl bg-(--neutral-soft) px-4 py-3 text-base">보고서를 보내지 않고 방문 기록과 서류로만 남겨요. 받을 사람이 생기면 정보 수정에서 바꿀 수 있어요.</p>
+      ) : (
+        <>
+          <Field label="받을 사람 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
+          <Field
+            label="받을 사람 전화번호"
+            name="guardianPhone"
+            inputMode="tel"
+            value={guardianPhone}
+            onChange={(e) => setGuardianPhone(e.target.value)}
+            placeholder="예: 010-0000-0000"
+            hint="등록하면 이 번호로 대화방에 초대할 수 있어요."
+          />
+        </>
+      )}
 
       <Field label="알레르기" name="allergies" defaultValue={initial?.allergies ?? ""} placeholder="없으면 비워 두세요" />
       <Field label="병력" name="medicalHistory" defaultValue={initial?.medicalHistory ?? ""} placeholder="예: 고혈압" />

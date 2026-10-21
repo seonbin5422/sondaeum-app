@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { myClient, myHistory } from "../../_data";
 import { Avatar, Chip, LinkButton, Screen, TopBar } from "../../_components/ui";
+import { contactTitle, NO_CONTACT } from "../../_types";
 
 // C-05 수급자 정보 (기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면)
 export default async function ClientPage({ params }: PageProps<"/v1120/client/[id]">) {
@@ -9,6 +10,8 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
   const c = await myClient(id);
   if (!c) notFound();
   const last = (await myHistory(id)).find((v) => v.status === "SENT");
+  const noContact = c.guardianRelation === NO_CONTACT;
+  const title = contactTitle(c.guardianRelation);
 
   const rows: [string, string | null][] = [
     ["알레르기", c.allergies],
@@ -16,8 +19,8 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
     ["복용 중인 약", c.medicationNotes],
     ["장기요양인정번호", c.careRegistrationNumber],
     ["수급자 전화번호", c.phone],
-    ["보호자", `${c.guardianName} (${c.guardianRelation})`],
-    ["보호자 전화번호", c.guardianPhone],
+    ["보고서 받는 사람", noContact ? null : `${c.guardianName} (${c.guardianRelation})`],
+    ...(noContact ? [] : ([["받는 사람 전화번호", c.guardianPhone]] as [string, string | null][])),
   ];
 
   return (
@@ -41,11 +44,11 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
         </div>
       )}
 
-      {!c.guardianJoined && (
+      {!c.guardianJoined && !noContact && (
         <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
-          <p className="text-lg font-bold">{c.guardianName} 보호자님이 아직 대화방에 들어오지 않았어요</p>
+          <p className="text-lg font-bold">{c.guardianName} {title}님이 아직 대화방에 들어오지 않았어요</p>
           <LinkButton href={`/v1120/client/${c.id}/invite`} className="!h-14">
-            보호자 대화방 초대하기
+            {title}님 대화방에 초대하기
           </LinkButton>
         </div>
       )}
@@ -67,9 +70,11 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
           <LinkButton href={`/v1120/client/${c.id}/documents`} variant="secondary">
             서류 만들기
           </LinkButton>
-          <LinkButton href={`/v1120/chats/${c.id}`} variant="secondary">
-            보호자와 대화
-          </LinkButton>
+          {!noContact && (
+            <LinkButton href={`/v1120/chats/${c.id}`} variant="secondary">
+              대화방
+            </LinkButton>
+          )}
         </div>
       </div>
 

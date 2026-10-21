@@ -9,7 +9,8 @@ import { sendReport } from "../../../_actions";
 import type { CareRecord } from "../../../_types";
 
 // C-15 보낼 내용 보기 (와이어 263:308). 빠진 항목이 있으면 먼저 아래 시트로 알려 주고, 주 버튼은 "돌아가서 채울게요".
-export function ConfirmScreen({ id, record, reviewHref }: { id: string; record: CareRecord; reviewHref: string }) {
+// recipient: 받는 분 호칭(보호자님 등), 받을 분이 없으면 null (D-49)
+export function ConfirmScreen({ id, record, reviewHref, recipient }: { id: string; record: CareRecord; reviewHref: string; recipient: string | null }) {
   const router = useRouter();
   const missing = missingItems(record);
   const [sheetOpen, setSheetOpen] = useState(missing.length > 0);
@@ -19,20 +20,20 @@ export function ConfirmScreen({ id, record, reviewHref }: { id: string; record: 
       <Screen
         bottom={
           <>
-            <p className="text-center text-base text-muted">보낸 뒤에는 고칠 수 없어요.</p>
+            <p className="text-center text-base text-muted">{recipient ? "보낸" : "저장한"} 뒤에는 고칠 수 없어요.</p>
             <form action={sendReport.bind(null, id)} className="flex">
               <button
                 type="submit"
                 className="flex h-16 w-full items-center justify-center rounded-[15px] bg-accent text-lg font-bold text-accent-foreground active:bg-accent-dark"
               >
-                저장하고 보내기
+                {recipient ? "저장하고 보내기" : "저장하기"}
               </button>
             </form>
           </>
         }
       >
         <TopBar backHref={reviewHref} title="보낼 내용 보기" />
-        <p className="text-lg text-muted">보호자님께는 이렇게 보여요.</p>
+        <p className="text-lg text-muted">{recipient ? `${recipient}께는 이렇게 보여요.` : "이렇게 저장돼요."}</p>
         <ReportSections record={record} />
       </Screen>
 

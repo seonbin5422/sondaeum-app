@@ -53,6 +53,7 @@ export type TodayVisit = {
 
 export type GuardianReportProps = {
   guardianName: string;
+  guardianTitle?: string; // contactTitle, 없으면 "보호자"
   clientName: string;
   caregiverName: string;
   startedAt: string;
@@ -60,7 +61,17 @@ export type GuardianReportProps = {
   record: CareRecord;
 };
 
-export const CARE_GRADES = ["1등급", "2등급", "3등급", "4등급", "5등급", "인지지원등급"] as const;
+// 연락받는 사람(보호자)과 수급자의 관계. 가족이 없는 어르신은 기관·공공 담당자가 받고, 아무도 없으면 "없음" (D-49)
+export const FAMILY_RELATIONS = ["딸", "아들", "배우자", "이웃·친척", "기타"] as const;
+export const STAFF_RELATIONS = ["기관 사회복지사", "주민센터 담당자", "후견인"] as const;
+export const NO_CONTACT = "없음";
+
+// 이름 뒤에 붙이는 호칭: "김○○ 보호자님", "박○○ 사회복지사님"
+export function contactTitle(relation: string) {
+  return ({ "기관 사회복지사": "사회복지사", "주민센터 담당자": "담당자", 후견인: "후견인" } as Record<string, string>)[relation] ?? "보호자";
+}
+
+export const CARE_GRADES =["1등급", "2등급", "3등급", "4등급", "5등급", "인지지원등급"] as const;
 export type CareGrade = (typeof CARE_GRADES)[number];
 
 export type ClientProfile = {

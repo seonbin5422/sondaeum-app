@@ -29,6 +29,10 @@ export default async function LoginPage() {
         <a href={authorizeUrl} className="flex h-16 items-center justify-center rounded-[15px] bg-[#FEE500] text-lg font-bold text-[#191919]">
           카카오로 시작하기
         </a>
+        {/* 로그아웃해도 카카오 로그인은 브라우저에 남아 같은 계정으로 들어간다. 계정을 바꿀 땐 카카오가 다시 묻게 한다 */}
+        <a href="/api/auth/kakao/start?to=v1120&switch=1" className="flex min-h-12 items-center justify-center text-base font-bold underline underline-offset-4">
+          다른 카카오 계정으로 로그인
+        </a>
         <form action="/api/auth/demo" method="post" className="flex">
           <button type="submit" className="flex h-16 flex-1 items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold">
             먼저 둘러보기

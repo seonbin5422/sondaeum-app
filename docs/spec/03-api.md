@@ -8,7 +8,7 @@ API는 모두 `app/api/` 아래 Route Handler다. **지금은 요양보호사 AP
 
 | 메서드 | 경로 | 하는 일 | 세션 |
 | --- | --- | --- | --- |
-| GET | `/api/auth/kakao/start` | 카카오 로그인 시작. 무작위 `state`(`<화면>.<무작위>`, `?to=v1120`이면 로그인 뒤 1120 화면)를 httpOnly 쿠키 `kakao_login_state`(10분)에 두고 카카오로 보냄 (SEC-4) | 해당 없음 |
+| GET | `/api/auth/kakao/start` | 카카오 로그인 시작. 무작위 `state`(`<화면>.<무작위>`, `?to=v1120`이면 로그인 뒤 1120 화면, `?switch=1`이면 `prompt=login`으로 카카오가 계정을 다시 물음)를 httpOnly 쿠키 `kakao_login_state`(10분)에 두고 카카오로 보냄 (SEC-4) | 해당 없음 |
 | GET | `/api/auth/kakao/callback` | 카카오 로그인 완료, 세션 쿠키 발급 (프로필 수정 재인증도 처리). 토큰 교환 전에 `state`를 쿠키와 대조하고(한 번만 씀) 다르면 `/login` (SEC-4) | 해당 없음 |
 | POST | `/api/auth/logout` | 세션 쿠키 삭제 | 해당 없음 |
 

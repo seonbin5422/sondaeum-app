@@ -29,7 +29,7 @@ export function ChatRoom({
   me: "caregiver" | "guardian";
   initial: ChatMessage[];
   otherName: string;
-  reportsOnly?: boolean; // 보낸 말이 저장되지 않으니 입력칸을 숨긴다 (실데이터 대화방)
+  reportsOnly?: boolean; // 보낸 말이 저장되지 않으니 입력칸을 막고 준비 중이라고 알린다 (실데이터 대화방)
 }) {
   const [messages, setMessages] = useState(initial);
   const [text, setText] = useState("");
@@ -77,25 +77,24 @@ export function ChatRoom({
       </ol>
 
       {/* 보호자 대화는 하단 메뉴바 위에 입력칸을 둔다 */}
-      {!reportsOnly && (
-        <form
-          className={`sticky flex gap-2 bg-white py-3 ${me === "guardian" ? "bottom-[65px]" : "bottom-0"}`}
-          onSubmit={(e) => {
-            e.preventDefault();
-            send();
-          }}
-        >
-          <input
-            className="h-14 flex-1 rounded-[15px] border border-border px-4 text-lg"
-            placeholder={`${otherName}님께 보낼 말`}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <button type="submit" disabled={!text.trim()} className="h-14 rounded-[15px] bg-accent px-5 text-lg font-bold disabled:bg-(--neutral-soft) disabled:text-muted">
-            보내기
-          </button>
-        </form>
-      )}
+      <form
+        className={`sticky flex gap-2 bg-white py-3 ${me === "guardian" ? "bottom-[65px]" : "bottom-0"}`}
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+      >
+        <input
+          className="h-14 flex-1 rounded-[15px] border border-border px-4 text-lg disabled:bg-(--neutral-soft)"
+          placeholder={reportsOnly ? "대화는 준비 중이에요" : `${otherName}님께 보낼 말`}
+          disabled={reportsOnly}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button type="submit" disabled={reportsOnly || !text.trim()} className="h-14 rounded-[15px] bg-accent px-5 text-lg font-bold disabled:bg-(--neutral-soft) disabled:text-muted">
+          보내기
+        </button>
+      </form>
     </div>
   );
 }

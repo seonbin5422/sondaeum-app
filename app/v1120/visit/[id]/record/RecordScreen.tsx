@@ -8,6 +8,7 @@ import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
 import { extractRecord, keepFilled } from "../../../_extract";
 import type { CareRecord, Change } from "../../../_types";
+import { AUDIO_TOO_LARGE_MESSAGE, MAX_AUDIO_UPLOAD_BYTES } from "@/lib/audioUpload";
 
 // 무엇을 말할지 모르는 분을 위해 기록지 순서대로 묻고, 말한 내용에서 찾은 값을 바로 보여 준다.
 // 값은 낱말 찾기(extractRecord)로 미리 보는 것이고, 실제 정리는 "다 말했어요" 뒤에 AI가 한다.
@@ -75,6 +76,33 @@ export function RecordScreen({
   }
   const [typing, setTyping] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  // 녹음 앱으로 미리 녹음한 파일을 글로 바꿔 녹음 내용 뒤에 붙인다 (옛 화면과 같은 /transcribe, 4MB까지. 더 긴 파일은 STB-4)
+  async function uploadAudio(file: File) {
+    setUploadError("");
+    if (file.size > MAX_AUDIO_UPLOAD_BYTES) {
+      setUploadError(AUDIO_TOO_LARGE_MESSAGE);
+      return;
+    }
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("audio", file);
+      const res = await fetch(`/api/visits/${visitId}/transcribe`, { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.text) throw new Error(data.error || "음성 파일을 글로 바꾸지 못했어요. 다시 시도해 주세요.");
+      const next = (transcript + " " + data.text).trim();
+      setTranscript(next);
+      persist(next);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "음성 파일을 글로 바꾸지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const speech = useSpeech((text) => {
     setTranscript((prev) => {
@@ -230,14 +258,25 @@ export function RecordScreen({
         <Button variant="secondary" disabled={speech.recording} onClick={() => setTyping(true)}>
           글로 쓰기
         </Button>
-        <Button variant="secondary" disabled>
-          음성 파일 올리기
+        <Button variant="secondary" disabled={speech.recording || uploading} onClick={() => fileInput.current?.click()}>
+          {uploading ? "글로 바꾸는 중…" : "음성 파일 올리기"}
         </Button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="audio/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) uploadAudio(file);
+          }}
+        />
       </div>
-      <p className="-mt-3 text-base text-muted">
+      <p className={`-mt-3 text-base ${uploadError ? "text-(--text-danger)" : "text-muted"}`} role={uploadError ? "alert" : undefined}>
         {speech.recording
           ? "녹음을 끝내면 글로 쓰기·음성 파일 올리기를 쓸 수 있어요."
-          : "음성 파일 올리기는 아직 준비 중이에요."}
+          : uploadError || "휴대폰 녹음 앱으로 녹음한 파일을 올리면 글로 바꿔 드려요."}
       </p>
     </Screen>
   );

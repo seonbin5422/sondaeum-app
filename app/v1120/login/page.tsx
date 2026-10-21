@@ -1,15 +1,11 @@
 import Image from "next/image";
-import { headers } from "next/headers";
-import { buildAuthorizeUrl } from "@/lib/kakaoAuth";
 
 export const dynamic = "force-dynamic";
 
 // C-01 로그인 (와이어 263:368, DIF-1-9). "먼저 둘러보기"는 OPS-1 체험하기 (카카오 없이 체험 계정으로).
 export default async function LoginPage() {
-  const host = (await headers()).get("host");
-  const protocol = host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http:" : "https:";
-  // state "v1120": 콜백이 로그인 뒤 1120 화면으로 보내도록
-  const authorizeUrl = buildAuthorizeUrl({ state: "v1120", redirectUri: `${protocol}//${host}/api/auth/kakao/callback` });
+  // 카카오 버튼은 로그인 시작 경로로: 무작위 state를 만들고 로그인 뒤 1120 화면으로 (SEC-4)
+  const authorizeUrl = "/api/auth/kakao/start?to=v1120";
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">

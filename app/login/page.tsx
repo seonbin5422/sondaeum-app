@@ -1,15 +1,10 @@
-import { headers } from "next/headers";
 import { Logo } from "@/app/components/ui/Logo";
-import { buildAuthorizeUrl } from "@/lib/kakaoAuth";
 
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const protocol = host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http:" : "https:";
-  const redirectUri = `${protocol}//${host}/api/auth/kakao/callback`;
-  const authorizeUrl = buildAuthorizeUrl({ state: "login", redirectUri });
+  // 무작위 state를 만드는 로그인 시작 경로 (SEC-4)
+  const authorizeUrl = "/api/auth/kakao/start";
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center p-6">

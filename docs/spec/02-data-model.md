@@ -35,7 +35,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `age`, `gender` | Int?, String? | | 아니오 |
 | `allergies`, `medicalHistory`, `medicationNotes` | String? | 알레르기, 병력, 복용약 | 아니오 (SEC-5) |
 | `personalNotes` | String? | 요양보호사의 지속 메모(특이사항) | 아니오 |
-| `guardianName`, `guardianRelation` | String | 보호자 이름, 관계(아들·딸·배우자·직접 입력) | 아니오 |
+| `guardianName`, `guardianRelation` | String | 보고서 받을 사람(보호자) 이름, 관계. 관계는 딸·아들·배우자·이웃·친척·기타 또는 기관 사회복지사·주민센터 담당자·후견인, 받을 사람이 없으면 `없음`이고 이때 이름은 빈 글자 (D-49) | 아니오 |
 | `guardianPhone` | String? | 보호자 전화번호. 대화방 초대 문자에 씀 (D-33) | 아니오 (SEC-5) |
 | `careRegistrationNumber` | String? | 장기요양인정번호. 등록·수정(C-07·C-08)에서 필수 (D-31) | 아니오 (SEC-5) |
 | `careGrade` | String? | 장기요양등급 `"1등급"`~`"5등급"`, `"인지지원등급"` (LAW-4, D-31) | 아니오 |
@@ -152,6 +152,7 @@ type CareRecord = {
 ```ts
 type GuardianReportProps = {
   guardianName: string;      // "김○○" → "안녕하세요, 김○○ 보호자님"
+  guardianTitle?: string;    // 관계에 따른 호칭. 보호자·사회복지사·담당자·후견인 (D-49)
   clientName: string;        // "홍길순" → "홍길순 어르신 방문 보고서"
   caregiverName: string;     // 맨 아래 "이○○ 요양보호사가 작성하고 확인한 기록이에요"
   startedAt: string;         // ISO 시각 → "10월 6일 (월) 09:00 ~ 12:00 · 3시간"

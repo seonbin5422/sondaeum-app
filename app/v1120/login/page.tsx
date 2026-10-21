@@ -26,6 +26,12 @@ export default async function LoginPage() {
         </ul>
       </div>
       <div className="mt-auto flex flex-col gap-3">
+        <form action="/api/auth/demo" method="post" className="flex">
+          <button type="submit" className="flex h-16 flex-1 items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold">
+            먼저 둘러보기
+          </button>
+        </form>
+        <p className="text-center text-base text-muted">둘러보기는 예시 수급자 3명으로 체험해요. 24시간 뒤 지워져요.</p>
         <a href={authorizeUrl} className="flex h-16 items-center justify-center rounded-[15px] bg-[#FEE500] text-lg font-bold text-[#191919]">
           카카오로 시작하기
         </a>
@@ -33,12 +39,6 @@ export default async function LoginPage() {
         <a href="/api/auth/kakao/start?to=v1120&switch=1" className="flex min-h-12 items-center justify-center text-base font-bold underline underline-offset-4">
           다른 카카오 계정으로 로그인
         </a>
-        <form action="/api/auth/demo" method="post" className="flex">
-          <button type="submit" className="flex h-16 flex-1 items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold">
-            먼저 둘러보기
-          </button>
-        </form>
-        <p className="text-center text-base text-muted">둘러보기는 예시 수급자 3명으로 체험해요. 24시간 뒤 지워져요.</p>
       </div>
     </main>
   );

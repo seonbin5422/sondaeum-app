@@ -85,13 +85,13 @@ export function ChatRoom({
         }}
       >
         <input
-          className="h-14 flex-1 rounded-[15px] border border-border px-4 text-lg disabled:bg-(--neutral-soft)"
+          className="h-14 min-w-0 flex-1 rounded-[15px] border border-border px-4 text-lg disabled:bg-(--neutral-soft)"
           placeholder={reportsOnly ? "대화는 준비 중이에요" : `${otherName}님께 보낼 말`}
           disabled={reportsOnly}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <button type="submit" disabled={reportsOnly || !text.trim()} className="h-14 rounded-[15px] bg-accent px-5 text-lg font-bold disabled:bg-(--neutral-soft) disabled:text-muted">
+        <button type="submit" disabled={reportsOnly || !text.trim()} className="h-14 shrink-0 whitespace-nowrap rounded-[15px] bg-accent px-5 text-lg font-bold disabled:bg-(--neutral-soft) disabled:text-muted">
           보내기
         </button>
       </form>

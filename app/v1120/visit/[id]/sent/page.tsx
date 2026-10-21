@@ -8,5 +8,5 @@ export default async function SentPage({ params }: PageProps<"/v1120/visit/[id]/
   const v = await myVisit(id);
   if (!v) notFound();
   if (v.status !== "SENT" || !v.shareToken) redirect(`/v1120/visit/${id}/confirm`);
-  return <SentScreen shareToken={v.shareToken} clientName={v.client.name} guardianName={v.client.guardianName} date={v.time.date} />;
+  return <SentScreen visitId={id} shareToken={v.shareToken} clientName={v.client.name} guardianName={v.client.guardianName} date={v.time.date} />;
 }

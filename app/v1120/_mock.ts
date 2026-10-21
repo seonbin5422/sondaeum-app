@@ -99,8 +99,6 @@ export function findClient(id: string) {
   return clients.find((c) => c.id === id) ?? null;
 }
 
-export const unreadByClient: Record<string, number> = { "c-hong": 2, "c-kim": 0, "c-lee": 1 };
-
 // 홍길순 수급자 지난 한 달 방문 (9/9 ~ 10/9, 월·수·금). 진료 참고용 요약·이력 화면이 쓴다.
 function makeHistory(): HistoryVisit[] {
   const out: HistoryVisit[] = [];

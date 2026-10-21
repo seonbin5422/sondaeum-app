@@ -11,11 +11,13 @@ function formatSent(d: Date) {
 }
 
 export function SentScreen({
+  visitId,
   shareToken,
   clientName,
   guardianName,
   date,
 }: {
+  visitId: string;
   shareToken: string;
   clientName: string;
   guardianName: string;
@@ -24,23 +26,41 @@ export function SentScreen({
   const [sharedAt, setSharedAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
   const [link, setLink] = useState("");
+  // shortcut: 보낸 시각을 이 기기(localStorage)에만 둔다, 다른 기기에서 보내면 모름. 대화방 저장(DIF-5) 때 DB로 옮긴다
+  const key = `v1120:shared:${visitId}`;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- build the absolute link once window is available
     setLink(`${window.location.origin}/v1120/g/${shareToken}`);
-  }, [shareToken]);
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? "null") as { at: string; copied: boolean } | null;
+      if (saved) {
+        setSharedAt(new Date(saved.at));
+        setCopied(saved.copied);
+      }
+    } catch {}
+  }, [shareToken, key]);
+
+  function markShared(byCopy: boolean) {
+    const at = new Date();
+    setSharedAt(at);
+    setCopied(byCopy);
+    try {
+      localStorage.setItem(key, JSON.stringify({ at: at.toISOString(), copied: byCopy }));
+    } catch {}
+  }
 
   async function shareKakao() {
     const text = `${clientName} 어르신 ${date} 방문 보고서예요.`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "손다음 방문 보고서", text, url: link });
+        markShared(false);
       } else {
         // 공유 창이 없는 브라우저(PC, 카카오톡 안 브라우저 등): 보냈다고 하지 않고 복사했다고 알린다
         await navigator.clipboard.writeText(`${text}\n${link}`);
-        setCopied(true);
+        markShared(true);
       }
-      setSharedAt(new Date());
     } catch {
       // 공유 창을 닫으면 보낸 것으로 보지 않는다
     }
@@ -49,8 +69,7 @@ export function SentScreen({
   async function copy() {
     try {
       await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setSharedAt(new Date());
+      markShared(true);
     } catch {}
   }
 
@@ -79,6 +98,13 @@ export function SentScreen({
           <a href={`/v1120/g/${shareToken}`} className="mt-1 inline-flex min-h-12 w-fit items-center text-base font-bold underline underline-offset-4">
             보호자님이 보는 화면 열어 보기
           </a>
+          <button
+            type="button"
+            onClick={shareKakao}
+            className="mt-2 flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold active:bg-accent-soft"
+          >
+            카카오톡으로 다시 보내기
+          </button>
         </section>
       ) : (
         <section className="flex flex-col gap-3 rounded-[15px] p-5 ring-2 ring-accent">

@@ -7,7 +7,7 @@ import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, safeDecryptText } from "@/lib/crypto";
-import type { CareGrade, CareRecord, ClientProfile, HistoryVisit, Signatures } from "./_types";
+import type { CareGrade, CareRecord, ChatMessage, ClientProfile, HistoryVisit, Signatures } from "./_types";
 import { cleanSignatures } from "./_signatures";
 import type { SaidQuotes } from "./_extract";
 
@@ -113,6 +113,23 @@ export async function myTodayVisits() {
   const byClient = new Map<string, (typeof visits)[number]>();
   for (const v of visits) if (!byClient.has(v.clientId)) byClient.set(v.clientId, v);
   return byClient;
+}
+
+// 대화방(C-18)에 올라가는 보낸 보고서 카드 (오래된 것부터). 대화 저장(DIF-5) 전까지 대화방에는 이것만 보인다
+export async function mySentReports(clientId?: string): Promise<(ChatMessage & { clientId: string })[]> {
+  const caregiver = await requireCaregiver();
+  const visits = await prisma.visit.findMany({
+    where: { caregiverId: caregiver.id, status: "SENT", client: { caregiverId: caregiver.id, purgeAt: null }, ...(clientId ? { clientId } : {}) },
+    select: { id: true, clientId: true, startedAt: true, createdAt: true, report: { select: { shareToken: true, sentAt: true } } },
+  });
+  return visits
+    .flatMap((v) => {
+      if (!v.report) return [];
+      const [, m, d] = kstYmd(v.startedAt ?? v.createdAt).split("-");
+      const at = (v.report.sentAt ?? v.createdAt).toISOString();
+      return [{ id: v.id, clientId: v.clientId, from: "caregiver" as const, at, report: { shareToken: v.report.shareToken, title: `${+m}월 ${+d}일 방문 보고서` } }];
+    })
+    .sort((a, b) => a.at.localeCompare(b.at));
 }
 
 // 내 방문 하나 + 수급자 + 복호화한 기록. 남의 방문이면 null

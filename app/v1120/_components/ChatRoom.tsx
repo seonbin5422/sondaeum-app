@@ -23,11 +23,13 @@ export function ChatRoom({
   me,
   initial,
   otherName,
+  reportsOnly = false,
 }: {
   clientId: string;
   me: "caregiver" | "guardian";
   initial: ChatMessage[];
   otherName: string;
+  reportsOnly?: boolean; // 보낸 말이 저장되지 않으니 입력칸을 숨긴다 (실데이터 대화방)
 }) {
   const [messages, setMessages] = useState(initial);
   const [text, setText] = useState("");
@@ -46,7 +48,7 @@ export function ChatRoom({
   return (
     <div className="flex flex-1 flex-col gap-4">
       <ol className="flex flex-1 flex-col gap-3">
-        {messages.length === 0 && <li className="py-10 text-center text-lg text-muted">아직 주고받은 말이 없어요. 방문 보고서를 보내면 여기에 올라와요.</li>}
+        {messages.length === 0 && <li className="py-10 text-center text-lg text-muted">{reportsOnly ? "" : "아직 주고받은 말이 없어요. "}방문 보고서를 보내면 여기에 올라와요.</li>}
         {messages.map((m, i) => {
           const mine = m.from === me;
           const d = day(m.at);
@@ -75,23 +77,25 @@ export function ChatRoom({
       </ol>
 
       {/* 보호자 대화는 하단 메뉴바 위에 입력칸을 둔다 */}
-      <form
-        className={`sticky flex gap-2 bg-white py-3 ${me === "guardian" ? "bottom-[65px]" : "bottom-0"}`}
-        onSubmit={(e) => {
-          e.preventDefault();
-          send();
-        }}
-      >
-        <input
-          className="h-14 flex-1 rounded-[15px] border border-border px-4 text-lg"
-          placeholder={`${otherName}님께 보낼 말`}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button type="submit" disabled={!text.trim()} className="h-14 rounded-[15px] bg-accent px-5 text-lg font-bold disabled:bg-(--neutral-soft) disabled:text-muted">
-          보내기
-        </button>
-      </form>
+      {!reportsOnly && (
+        <form
+          className={`sticky flex gap-2 bg-white py-3 ${me === "guardian" ? "bottom-[65px]" : "bottom-0"}`}
+          onSubmit={(e) => {
+            e.preventDefault();
+            send();
+          }}
+        >
+          <input
+            className="h-14 flex-1 rounded-[15px] border border-border px-4 text-lg"
+            placeholder={`${otherName}님께 보낼 말`}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <button type="submit" disabled={!text.trim()} className="h-14 rounded-[15px] bg-accent px-5 text-lg font-bold disabled:bg-(--neutral-soft) disabled:text-muted">
+            보내기
+          </button>
+        </form>
+      )}
     </div>
   );
 }

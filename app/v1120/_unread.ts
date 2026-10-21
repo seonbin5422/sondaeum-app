@@ -3,7 +3,9 @@
 // 안 읽은 메시지 수. 대화방(C-18)을 열면 그 수급자의 메시지를 읽음으로 바꾼다.
 // 1120.ver에서는 읽음 상태를 이 브라우저 탭(sessionStorage)에만 둔다. API 연결 때 Message.readAt으로 바꾼다.
 import { useSyncExternalStore } from "react";
-import { unreadByClient } from "./_mock";
+
+// 보호자 메시지가 아직 저장되지 않아(DIF-5) 안 읽은 수는 늘 0. API 연결 때 서버 값으로 바꾼다
+const unreadByClient: Record<string, number> = {};
 
 const KEY = "v1120:read";
 const EVENT = "v1120:read-change";

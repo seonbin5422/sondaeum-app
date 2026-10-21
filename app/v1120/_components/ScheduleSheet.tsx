@@ -73,8 +73,10 @@ export function ScheduleSheet({ clients }: { clients: ClientProfile[] }) {
                   {w}
                 </span>
               ))}
-              {cells.map((d, i) =>
-                d ? (
+              {cells.map((d, i) => {
+                if (!d) return <span key={i} />;
+                const n = visitsOn(clients, d).length;
+                return (
                   <button
                     key={i}
                     type="button"
@@ -83,14 +85,11 @@ export function ScheduleSheet({ clients }: { clients: ClientProfile[] }) {
                     className={`flex h-[60px] flex-col items-center justify-center rounded-xl ${same(d, picked) ? "bg-accent" : ""}`}
                   >
                     <span className="text-lg">{d.getDate()}</span>
-                    {visitsOn(clients, d).length > 0 && (
-                      <span className="text-base font-bold text-accent-soft-foreground">{visitsOn(clients, d).length}건</span>
-                    )}
+                    {/* 돌봄이 없는 날도 건수 줄 높이를 비워 둬서 날짜 숫자가 같은 줄에 선다 */}
+                    <span className="h-6 text-base font-bold text-accent-soft-foreground">{n > 0 ? `${n}건` : ""}</span>
                   </button>
-                ) : (
-                  <span key={i} />
-                ),
-              )}
+                );
+              })}
             </div>
 
             <p className="flex items-center gap-3 text-base text-muted">

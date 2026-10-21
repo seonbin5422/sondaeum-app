@@ -51,12 +51,14 @@ export function RecordScreen({
   initialTranscript,
   saved,
   edited,
+  showSample,
 }: {
   visitId: string;
   clientName: string;
   initialTranscript: string;
   saved: CareRecord | null; // "더 말하기"로 돌아왔을 때 이미 정리·확인한 기록
   edited: boolean;
+  showSample: boolean; // 체험 계정만 "예시 내용 넣기"를 보여 준다
 }) {
   const router = useRouter();
   const [transcript, setTranscript] = useState(initialTranscript);
@@ -183,17 +185,19 @@ export function RecordScreen({
         ) : (
           <>
             <p className="text-lg text-muted">녹음을 시작하면 여기에 글자로 적혀요.</p>
-            {/* 1120.ver 미리보기용: 마이크 없이 흐름을 보려고 예시 내용을 넣는다 */}
-            <button
-              type="button"
-              className="mt-1 self-start text-base font-bold text-accent-soft-foreground underline underline-offset-4"
-              onClick={() => {
-                setTranscript(sampleTranscript);
-                persist(sampleTranscript);
-              }}
-            >
-              미리보기: 예시 내용 넣기
-            </button>
+            {/* 체험 계정용: 마이크 없이 흐름을 보려고 예시 내용을 넣는다 */}
+            {showSample && (
+              <button
+                type="button"
+                className="mt-1 self-start text-base font-bold text-accent-soft-foreground underline underline-offset-4"
+                onClick={() => {
+                  setTranscript(sampleTranscript);
+                  persist(sampleTranscript);
+                }}
+              >
+                미리보기: 예시 내용 넣기
+              </button>
+            )}
           </>
         )}
       </div>

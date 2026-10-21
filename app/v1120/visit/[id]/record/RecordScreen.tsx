@@ -237,7 +237,7 @@ export function RecordScreen({
       <p className="-mt-3 text-base text-muted">
         {speech.recording
           ? "녹음을 끝내면 글로 쓰기·음성 파일 올리기를 쓸 수 있어요."
-          : "음성 파일 올리기는 1120.ver에서 아직 준비 중이에요."}
+          : "음성 파일 올리기는 아직 준비 중이에요."}
       </p>
     </Screen>
   );

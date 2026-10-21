@@ -12,7 +12,7 @@ export default async function ChatsPage() {
   return (
     <Screen nav>
       <h1 className="text-2xl font-bold">대화</h1>
-      <p className="-mt-4 text-lg text-muted">수급자마다 보호자와 대화하는 방이 하나씩 있어요.</p>
+      <p className="-mt-4 text-lg text-muted">수급자의 보호자와 함께 대화할 수 있어요.</p>
       {rooms.length === 0 ? (
         <p className="py-10 text-center text-lg text-muted">수급자를 등록하면 대화방이 생겨요.</p>
       ) : (

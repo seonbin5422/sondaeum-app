@@ -5,7 +5,7 @@ import { Avatar, Screen } from "../_components/ui";
 
 // 내 정보 탭 (C-06 요양보호사 프로필 + 설정)
 export default async function MePage() {
-  const { name: caregiverName, licenseNumber: caregiverLicense } = await requireCaregiver();
+  const { name: caregiverName, licenseNumber: caregiverLicense, isDemo } = await requireCaregiver();
   const links: [string, string][] = [
     ["내 정보 고치기", "/v1120/me/edit"],
     ["동의한 내용 보기", "/v1120/me/consent"],
@@ -40,7 +40,7 @@ export default async function MePage() {
           </form>
         </li>
       </ul>
-      <p className="text-center text-base text-muted">손다음 1120.ver 미리보기</p>
+      {isDemo && <p className="text-center text-base text-muted">손다음 1120.ver 미리보기</p>}
     </Screen>
   );
 }

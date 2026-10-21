@@ -7,12 +7,12 @@ import { contactTitle, NO_CONTACT } from "../_types";
 // 대화 탭: 수급자별 대화방 목록 (DIF-5). 대화 저장 전까지는 보낸 보고서만 올라온다
 export default async function ChatsPage() {
   const [all, reports] = await Promise.all([myClients(), mySentReports()]);
-  // 보고서 받을 사람이 없는 수급자는 대화방이 없다 (D-49)
+  // 보호자가 없는 수급자는 대화방이 없다 (D-49)
   const rooms = all.filter((c) => c.isActive && c.guardianRelation !== NO_CONTACT);
   return (
     <Screen nav>
       <h1 className="text-2xl font-bold">대화</h1>
-      <p className="-mt-4 text-lg text-muted">수급자마다 보고서를 받는 분과 대화하는 방이 하나씩 있어요.</p>
+      <p className="-mt-4 text-lg text-muted">수급자마다 보호자와 대화하는 방이 하나씩 있어요.</p>
       {rooms.length === 0 ? (
         <p className="py-10 text-center text-lg text-muted">수급자를 등록하면 대화방이 생겨요.</p>
       ) : (

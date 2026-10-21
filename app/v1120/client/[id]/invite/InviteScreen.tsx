@@ -115,7 +115,7 @@ export function InviteScreen({
             </a>
           ) : (
             <div className="flex flex-col gap-2">
-              <p className="text-center text-base text-muted">받을 사람 전화번호가 없어 문자는 보낼 수 없어요. 수급자 정보에서 적어 주세요.</p>
+              <p className="text-center text-base text-muted">보호자 전화번호가 없어 문자는 보낼 수 없어요. 수급자 정보에서 적어 주세요.</p>
               <span className="flex h-14 w-full items-center justify-center rounded-[15px] bg-(--neutral-soft) text-lg font-bold text-muted">문자로 보내기</span>
             </div>
           )}

@@ -23,7 +23,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
     : !careNo.trim()
       ? "장기요양인정번호를 적어 주세요"
       : !guardian && !noContact
-        ? "보고서를 받을 사람 성함을 적어 주세요"
+        ? "보호자 성함을 적어 주세요"
         : days.length === 0
           ? "방문 요일을 골라 주세요"
           : null;
@@ -90,7 +90,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       </div>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-lg font-bold">보고서를 받을 사람</legend>
+        <legend className="mb-1 text-lg font-bold">보호자</legend>
         <p className="mb-2 text-base text-muted">가족이 없으시면 기관 사회복지사나 주민센터 담당자를 골라 주세요.</p>
         {[FAMILY_RELATIONS, [...STAFF_RELATIONS, NO_CONTACT]].map((group, i) => (
           <div key={i} className="flex flex-wrap gap-2">
@@ -110,12 +110,12 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       </fieldset>
 
       {noContact ? (
-        <p className="rounded-xl bg-(--neutral-soft) px-4 py-3 text-base">보고서를 보내지 않고 방문 기록과 서류로만 남겨요. 받을 사람이 생기면 정보 수정에서 바꿀 수 있어요.</p>
+        <p className="rounded-xl bg-(--neutral-soft) px-4 py-3 text-base">보고서를 보내지 않고 방문 기록과 서류로만 남겨요. 보호자가 생기면 정보 수정에서 바꿀 수 있어요.</p>
       ) : (
         <>
-          <Field label="받을 사람 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
+          <Field label="보호자 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
           <Field
-            label="받을 사람 전화번호"
+            label="보호자 전화번호"
             name="guardianPhone"
             inputMode="tel"
             value={guardianPhone}

@@ -37,7 +37,7 @@ export async function saveClient(form: FormData) {
   const name = text(form, "name");
   const careRegistrationNumber = text(form, "careRegistrationNumber");
   const guardianRelation = text(form, "guardianRelation") ?? "기타";
-  // 받을 사람이 없는 수급자(D-49)는 이름·번호를 비운다. guardianName이 필수 칸이라 빈 글자로 둔다
+  // 보호자가 없는 수급자(D-49)는 이름·번호를 비운다. guardianName이 필수 칸이라 빈 글자로 둔다
   const noContact = guardianRelation === NO_CONTACT;
   const guardianName = noContact ? "" : text(form, "guardianName");
   const days = form
@@ -77,7 +77,7 @@ export async function saveClient(form: FormData) {
     redirect(`/v1120/client/${id}`);
   }
   const created = await prisma.client.create({ data: { ...data, caregiverId: caregiver.id } });
-  // 새로 등록하면 바로 보호자 대화방 초대 화면으로 (D-33). 받을 사람이 없으면 초대할 사람도 없다
+  // 새로 등록하면 바로 보호자 대화방 초대 화면으로 (D-33). 보호자가 없으면 초대할 사람도 없다
   redirect(noContact ? `/v1120/client/${created.id}` : `/v1120/client/${created.id}/invite?new=1`);
 }
 

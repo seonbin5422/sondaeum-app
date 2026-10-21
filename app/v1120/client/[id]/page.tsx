@@ -19,8 +19,8 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
     ["복용 중인 약", c.medicationNotes],
     ["장기요양인정번호", c.careRegistrationNumber],
     ["수급자 전화번호", c.phone],
-    ["보고서 받는 사람", noContact ? null : `${c.guardianName} (${c.guardianRelation})`],
-    ...(noContact ? [] : ([["받는 사람 전화번호", c.guardianPhone]] as [string, string | null][])),
+    ["보호자", noContact ? null : `${c.guardianName} (${c.guardianRelation})`],
+    ...(noContact ? [] : ([["보호자 전화번호", c.guardianPhone]] as [string, string | null][])),
   ];
 
   return (

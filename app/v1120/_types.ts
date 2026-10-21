@@ -61,7 +61,7 @@ export type GuardianReportProps = {
   record: CareRecord;
 };
 
-// 연락받는 사람(보호자)과 수급자의 관계. 가족이 없는 어르신은 기관·공공 담당자가 받고, 아무도 없으면 "없음" (D-49)
+// 보호자와 수급자의 관계. 가족이 없는 어르신은 기관·공공 담당자가 받고, 아무도 없으면 "없음" (D-49)
 export const FAMILY_RELATIONS = ["딸", "아들", "배우자", "이웃·친척", "기타"] as const;
 export const STAFF_RELATIONS = ["기관 사회복지사", "주민센터 담당자", "후견인"] as const;
 export const NO_CONTACT = "없음";

@@ -24,7 +24,7 @@ export function SentScreen({
   clientName: string;
   guardianName: string;
   guardianTitle: string;
-  noContact: boolean; // 보고서 받을 사람이 없는 수급자 (D-49)
+  noContact: boolean; // 보호자가 없는 수급자 (D-49)
   date: string;
 }) {
   const [sharedAt, setSharedAt] = useState<Date | null>(null);
@@ -93,8 +93,8 @@ export function SentScreen({
 
       {noContact ? (
         <section className="flex flex-col gap-1 rounded-[15px] bg-(--neutral-soft) p-5">
-          <p className="text-lg font-bold">보고서를 받을 분이 없어요</p>
-          <p className="text-base">기록은 수급자의 방문 기록과 서류에 남아요. 받을 분이 생기면 수급자 정보 수정에서 적어 주세요.</p>
+          <p className="text-lg font-bold">보호자가 없어요</p>
+          <p className="text-base">기록은 수급자의 방문 기록과 서류에 남아요. 보호자가 생기면 수급자 정보 수정에서 적어 주세요.</p>
         </section>
       ) : sharedAt ? (
         <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">

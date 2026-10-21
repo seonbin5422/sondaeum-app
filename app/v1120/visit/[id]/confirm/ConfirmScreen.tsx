@@ -9,7 +9,7 @@ import { sendReport } from "../../../_actions";
 import type { CareRecord } from "../../../_types";
 
 // C-15 보낼 내용 보기 (와이어 263:308). 빠진 항목이 있으면 먼저 아래 시트로 알려 주고, 주 버튼은 "돌아가서 채울게요".
-// recipient: 받는 분 호칭(보호자님 등), 받을 분이 없으면 null (D-49)
+// recipient: 보호자 호칭(보호자님 등), 보호자가 없으면 null (D-49)
 export function ConfirmScreen({ id, record, reviewHref, recipient }: { id: string; record: CareRecord; reviewHref: string; recipient: string | null }) {
   const router = useRouter();
   const missing = missingItems(record);

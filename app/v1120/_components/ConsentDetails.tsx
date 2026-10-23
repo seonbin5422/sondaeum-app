@@ -14,6 +14,7 @@ export function ConsentDetails({ item }: { item: (typeof CONSENT_ITEMS)[number] 
               <dd className="text-muted">{v}</dd>
             </div>
           ))}
+          {"note" in item && <p className="text-muted">{item.note}</p>}
           <p className="text-muted">{CONSENT_REFUSE}</p>
         </dl>
       </details>

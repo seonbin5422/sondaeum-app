@@ -1,5 +1,5 @@
 import { Screen, TopBar } from "../_components/ui";
-import { OVERSEAS_ROWS } from "../_consent";
+import { OVERSEAS_ROWS, SPEECH_NOTICE } from "../_consent";
 
 // LAW-12 개인정보 처리방침 (기획 확정본 10/23). 보호책임자·이메일은 비워 둔 칸
 const SECTIONS: [string, string[]][] = [
@@ -28,6 +28,7 @@ const SECTIONS: [string, string[]][] = [
     "손다음을 운영하려고 아래 해외 회사에 일을 맡겨요(처리위탁). 각 회사는 맡은 일에 필요한 만큼만 개인정보를 받아요.",
     ...OVERSEAS_ROWS.map(([k, v]) => `${k}: ${v}`),
     "손다음의 데이터베이스는 일본 도쿄에 저장돼요.",
+    SPEECH_NOTICE,
     "국외 이전에 동의하지 않으면 손다음을 쓸 수 없어요.",
   ]],
   ["보관 기간", [

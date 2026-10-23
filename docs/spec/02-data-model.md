@@ -35,7 +35,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `age`, `gender` | Int?, String? | | 아니오 |
 | `allergies`, `medicalHistory`, `medicationNotes` | String? | 알레르기, 병력, 복용약 | 아니오 (SEC-5) |
 | `personalNotes` | String? | 요양보호사의 지속 메모(특이사항) | 아니오 |
-| `guardianName`, `guardianRelation` | String | 보호자 이름, 관계(아들·딸·배우자·직접 입력) | 아니오 |
+| `guardianName`, `guardianRelation` | String | 보고서 받을 사람(보호자) 이름, 관계. 관계는 딸·아들·배우자·이웃·친척·기타 또는 기관 사회복지사·주민센터 담당자·후견인, 받을 사람이 없으면 `없음`이고 이때 이름은 빈 글자 (D-49) | 아니오 |
 | `guardianPhone` | String? | 보호자 전화번호. 대화방 초대 문자에 씀 (D-33) | 아니오 (SEC-5) |
 | `careRegistrationNumber` | String? | 장기요양인정번호. 등록·수정(C-07·C-08)에서 필수 (D-31) | 아니오 (SEC-5) |
 | `careGrade` | String? | 장기요양등급 `"1등급"`~`"5등급"`, `"인지지원등급"` (LAW-4, D-31) | 아니오 |
@@ -73,6 +73,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `medicationMorning` / `Lunch` / `Evening` / `Bedtime` / `None` | Boolean | 복약 체크박스 |
 | `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화**. 1120 기록은 항목별 "내가 한 말"(`SaidQuotes`) |
 | `careRecord` | String? | 급여제공기록지 모양 `CareRecord` JSON, **암호화** (DIF-2, D-36). 아래 절 |
+| `signatures` | String? | 급여제공기록지 확인 서명 JSON, **암호화** (LAW-9, D-48). `{ recipient: Stroke[], caregiver: Stroke[], reason }` — `Stroke`는 서명칸 비율 좌표(0~400·0~120) 점 목록, `reason`은 서명 불가 사유(200자). 비면 `null`. 1120 `saveSignatures`가 모양·크기(획 100·점 4000)를 확인하고 저장 |
 | `wasEdited` | Boolean | 요양보호사가 수정했는지 |
 | `shareToken` | String unique | 보호자 링크 `/g/[token]` |
 | `sentAt`, `viewedAt`, `viewCount` | | 전송·첫 열람 시각, 열람 횟수 |
@@ -151,6 +152,7 @@ type CareRecord = {
 ```ts
 type GuardianReportProps = {
   guardianName: string;      // "김○○" → "안녕하세요, 김○○ 보호자님"
+  guardianTitle?: string;    // 관계에 따른 호칭. 보호자·사회복지사·담당자·후견인 (D-49)
   clientName: string;        // "홍길순" → "홍길순 어르신 방문 보고서"
   caregiverName: string;     // 맨 아래 "이○○ 요양보호사가 작성하고 확인한 기록이에요"
   startedAt: string;         // ISO 시각 → "10월 6일 (월) 09:00 ~ 12:00 · 3시간"

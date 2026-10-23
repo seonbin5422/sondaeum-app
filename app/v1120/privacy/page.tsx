@@ -34,7 +34,7 @@ const SECTIONS: [string, string[]][] = [
     "요양보호사 정보와 돌봄 기록: 탈퇴할 때까지",
     "삭제한 수급자: 14일 동안 되살릴 수 있고, 그 뒤 완전히 지워요.",
     "\"먼저 둘러보기\" 예시 정보: 24시간 뒤 지워요.",
-    "녹음 원본: [보관 기간]",
+    "녹음 원본: 저장하지 않아요. 말한 내용은 글로 바꿔 돌봄 기록과 함께 보관해요.",
     "지운 정보는 다시 살릴 수 없게 지워요. 장기요양기관은 법에 따라 급여제공기록을 5년 동안 보관해야 하는데, 이건 기관의 의무라서 손다음이 대신 보관하지 않아요. 필요한 기록은 지우기 전에 기관 시스템에 옮겨 주세요.",
   ]],
   ["문의", [
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
     <Screen>
       <TopBar backHref="/v1120/me" title="개인정보 처리방침" />
       <p className="text-lg">손다음은 「개인정보 보호법」에 따라 이용자의 개인정보를 지키고, 궁금한 점을 빠르게 해결하려고 이 처리방침을 만들었어요.</p>
-      <p className="text-base text-muted">시행일: [2026년 ○월 ○일]</p>
+      <p className="text-base text-muted">시행일: 2026년 11월 28일</p>
       {SECTIONS.map(([t, lines]) => (
         <section key={t} className="flex flex-col gap-1">
           <h2 className="text-lg font-bold">{t}</h2>

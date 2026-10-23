@@ -14,6 +14,7 @@ export default async function Page({ params, searchParams }: PageProps<"/v1120/c
       client={c}
       history={await myHistory(id)}
       caregiverName={(await requireCaregiver()).name}
+      today={today}
       from={String(from ?? today)}
       to={String(to ?? today)}
       backHref={`/v1120/client/${id}/documents`}

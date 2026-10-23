@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Screen } from "../../_components/ui";
+import { ConsentDetails } from "../../_components/ConsentDetails";
 import { CONSENT_ITEMS as ITEMS } from "../../_consent";
 
 // C-21 동의 (LAW-3). 개인정보 / 건강정보(민감) / 보호자 제공 / 국외 이전(Groq)을 따로 받는다. 항목은 _consent.ts.
@@ -55,7 +56,7 @@ export default function ConsentPage() {
               />
               (필수) {i.title}
             </label>
-            <p className="text-base text-muted">{i.body}</p>
+            <ConsentDetails item={i} />
           </li>
         ))}
       </ul>

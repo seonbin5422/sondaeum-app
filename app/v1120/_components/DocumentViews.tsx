@@ -200,7 +200,7 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
         </section>
 
         <footer className="rounded-md bg-(--neutral-soft) px-3 py-2 text-base text-muted">
-          <p className="font-bold">요양보호사 관찰 기록이며 의료적 진단이 아닙니다.</p>
+          <p className="font-bold">요양보호사가 보고 적은 기록과 AI가 모아 쓴 요약이에요. 의료적 진단이 아니니, 건강 상태는 꼭 의료진과 상담해 주세요.</p>
           <p>
             작성 {caregiverName} 요양보호사 · 작성일 {fmt(today)}
           </p>
@@ -211,14 +211,14 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
 }
 
 // 급여제공기록지: 날짜마다 한 장 (결과 화면은 D-29 정할 것 ① 이후 다듬는다)
-export function CareSheetView({ client: c, history, caregiverName, from, to, backHref, role }: Omit<ViewProps, "today">) {
+export function CareSheetView({ client: c, history, caregiverName, today, from, to, backHref, role }: ViewProps) {
   const visits = visitsIn(history, from, to);
   return (
     <Shell backHref={backHref} canShare={role === "caregiver"}>
       <header className="print:hidden">
         <h1 className="text-2xl font-bold">급여제공기록지</h1>
         <p className="text-base text-muted">
-          {fmt(from)} ~ {fmt(to)} · {visits.length}장. 기관이 발급하는 공식 사본은 아니에요.
+          {fmt(from)} ~ {fmt(to)} · {visits.length}장
         </p>
       </header>
       {visits.map((v) => (
@@ -234,6 +234,12 @@ export function CareSheetView({ client: c, history, caregiverName, from, to, bac
           />
         </div>
       ))}
+      <footer className="rounded-md bg-(--neutral-soft) px-3 py-2 text-base text-muted">
+        <p className="font-bold">
+          요양보호사가 손다음에 보낸 기록으로 만든 참고용 기록지예요. 기관이 발급하는 공식 사본이 아니어서 국민건강보험공단 제출 같은 공식 용도로는 쓸 수 없어요. 공식 기록은 소속 기관에 요청해 주세요.
+        </p>
+        <p>만든 날 {fmt(today)}</p>
+      </footer>
     </Shell>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireCaregiver } from "../../_data";
 import { CONSENT_ITEMS } from "../../_consent";
 import { Screen, TopBar } from "../../_components/ui";
+import { ConsentDetails } from "../../_components/ConsentDetails";
 
 // 내 정보 > 동의한 내용 보기. 처음 설정(C-21)에서 모두 동의해야 쓸 수 있다. 날짜는 LAW-3 동의 기록(Caregiver.consentedAt)
 export default async function MyConsentPage() {
@@ -23,7 +24,7 @@ export default async function MyConsentPage() {
                 <span className="shrink-0 rounded-full bg-(--success-soft) px-3 py-0.5 text-base text-(--text-success)">✓ 동의함</span>
               )}
             </p>
-            <p className="text-base text-muted">{i.body}</p>
+            <ConsentDetails item={i} />
           </li>
         ))}
       </ul>

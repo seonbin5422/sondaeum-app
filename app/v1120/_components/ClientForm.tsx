@@ -121,7 +121,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
             value={guardianPhone}
             onChange={(e) => setGuardianPhone(e.target.value)}
             placeholder="예: 010-0000-0000"
-            hint="등록하면 이 번호로 대화방에 초대할 수 있어요."
+            hint="등록하면 이 번호로 게시판에 초대할 수 있어요."
           />
         </>
       )}

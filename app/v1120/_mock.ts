@@ -1,5 +1,5 @@
 // 1120.ver 화면용 임시 데이터. DB에 쓰지 않는다. API 연결 때 page.tsx의 조회로 바꾼다.
-import type { CareRecord, ChatMessage, ClientProfile, GuardianReportProps, HistoryVisit, TodayVisit } from "./_types";
+import type { BoardPost, CareRecord, ClientProfile, GuardianReportProps, HistoryVisit, TodayVisit } from "./_types";
 
 export const caregiverName = "박현우";
 
@@ -129,19 +129,47 @@ export function historyOf(clientId: string) {
   return historyByClient[clientId] ?? [];
 }
 
-export const chatByClient: Record<string, ChatMessage[]> = {
+export const boardByClient: Record<string, BoardPost[]> = {
   "c-hong": [
-    { id: "m1", from: "caregiver", at: "2026-10-05T12:05:00+09:00", report: { shareToken: "h-2026-10-05", title: "10월 5일 방문 보고서" } },
-    { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?" },
-    { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요." },
-    { id: "m4", from: "caregiver", at: "2026-10-07T12:02:00+09:00", report: { shareToken: "h-2026-10-07", title: "10월 7일 방문 보고서" } },
-    { id: "m5", from: "guardian", at: "2026-10-07T20:41:00+09:00", text: "식사를 반만 드셨네요. 내일 반찬을 좀 보낼게요." },
-    { id: "m6", from: "guardian", at: "2026-10-07T20:42:00+09:00", text: "감사합니다." },
+    {
+      shareToken: "h-2026-10-07",
+      title: "10월 7일 방문 보고서",
+      at: "2026-10-07T12:02:00+09:00",
+      notes: "점심을 반 공기 드셨어요. 걸으실 때 오른쪽 무릎이 아프다고 하셔서 천천히 부축해 드렸어요.",
+      physicalNote: null,
+      kind: "report",
+      period: null,
+      comments: [
+        { id: "m5", from: "guardian", at: "2026-10-07T20:41:00+09:00", text: "식사를 반만 드셨네요. 내일 반찬을 좀 보낼게요." },
+        { id: "m6", from: "guardian", at: "2026-10-07T20:42:00+09:00", text: "감사합니다." },
+      ],
+    },
+    {
+      shareToken: "h-2026-10-05",
+      title: "10월 5일 방문 보고서",
+      at: "2026-10-05T12:05:00+09:00",
+      notes: "아침 약을 드신 걸 확인했어요. 혈압은 132/84였어요.",
+      physicalNote: null,
+      kind: "report",
+      period: null,
+      comments: [
+        { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?" },
+        { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요." },
+      ],
+    },
   ],
   "c-kim": [],
   "c-lee": [
-    { id: "l1", from: "caregiver", at: "2026-10-08T17:05:00+09:00", report: { shareToken: "v-lee", title: "10월 8일 방문 보고서" } },
-    { id: "l2", from: "guardian", at: "2026-10-08T21:00:00+09:00", text: "저녁은 잘 드셨나요?" },
+    {
+      shareToken: "v-lee",
+      title: "10월 8일 방문 보고서",
+      at: "2026-10-08T17:05:00+09:00",
+      notes: "저녁을 다 드셨어요.",
+      physicalNote: null,
+      kind: "report",
+      period: null,
+      comments: [{ id: "l2", from: "guardian", at: "2026-10-08T21:00:00+09:00", text: "저녁은 잘 드셨나요?" }],
+    },
   ],
 };
 

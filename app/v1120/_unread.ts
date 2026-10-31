@@ -1,10 +1,10 @@
 "use client";
 
-// 안 읽은 메시지 수. 대화방(C-18)을 열면 그 수급자의 메시지를 읽음으로 바꾼다.
-// 1120.ver에서는 읽음 상태를 이 브라우저 탭(sessionStorage)에만 둔다. API 연결 때 Message.readAt으로 바꾼다.
+// 안 읽은 댓글 수. 게시판(C-18)을 열면 그 수급자의 댓글을 읽음으로 바꾼다.
+// 1120.ver에서는 읽음 상태를 이 브라우저 탭(sessionStorage)에만 둔다.
 import { useSyncExternalStore } from "react";
 
-// 보호자 메시지가 아직 저장되지 않아(DIF-5) 안 읽은 수는 늘 0. API 연결 때 서버 값으로 바꾼다
+// shortcut: 안 읽은 수는 늘 0, 보호자 댓글이 저장되니 Comment에 읽은 시각을 두고 서버 값으로 바꾼다
 const unreadByClient: Record<string, number> = {};
 
 const KEY = "v1120:read";

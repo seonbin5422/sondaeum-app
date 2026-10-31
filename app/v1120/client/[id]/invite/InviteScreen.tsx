@@ -32,12 +32,12 @@ export function InviteScreen({
   }, [chatPath]);
 
   // 보호자가 읽는 글이라 "어르신"을 쓴다 (D-31)
-  const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서와 대화, 서류 만들기는 이 대화방에서 할 수 있어요. 따로 가입하지 않아도 돼요.`;
+  const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서는 이 게시판에 올라오고 댓글로 이야기할 수 있어요. 따로 가입하지 않아도 돼요.`;
 
   async function kakao() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: "손다음 대화방 초대", text: message, url: link });
+        await navigator.share({ title: "손다음 게시판 초대", text: message, url: link });
         setSent("kakao");
       } else {
         await navigator.clipboard.writeText(`${message}\n${link}`);
@@ -66,23 +66,23 @@ export function InviteScreen({
         </p>
       )}
       <header>
-        <h1 className="text-2xl font-bold">{guardianTitle}님을 대화방에 초대할까요?</h1>
+        <h1 className="text-2xl font-bold">{guardianTitle}님을 게시판에 초대할까요?</h1>
         <p className="text-lg text-muted">
           {guardianName} {guardianTitle}님{guardianPhone ? ` · ${guardianPhone}` : ""}
         </p>
       </header>
 
       <ul className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
-        <li>· 방문 보고서가 대화방에 자동으로 올라가요</li>
+        <li>· 방문 보고서가 게시판에 자동으로 올라가요</li>
         <li>· {guardianTitle}님이 궁금한 점을 바로 물어볼 수 있어요</li>
-        <li>· {guardianTitle}님도 대화방에서 서류를 만들 수 있어요</li>
+        <li>· {guardianTitle}님도 게시판에서 서류를 만들 수 있어요</li>
       </ul>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-lg font-bold">{guardianTitle}님께 가는 글</h2>
         <div className="rounded-[15px] border border-border p-4 text-lg">
           {message}
-          <p className="mt-2 text-base font-bold text-accent-soft-foreground">＋ 대화방 링크</p>
+          <p className="mt-2 text-base font-bold text-accent-soft-foreground">＋ 게시판 링크</p>
         </div>
       </section>
 

@@ -8,7 +8,7 @@ import { useTotalUnread } from "../_unread";
 const TABS = [
   { href: "/v1120", label: "홈", icon: "⌂", match: (p: string) => p === "/v1120" },
   { href: "/v1120/clients", label: "수급자", icon: "☺", match: (p: string) => p.startsWith("/v1120/client") },
-  { href: "/v1120/chats", label: "대화", icon: "✉", match: (p: string) => p.startsWith("/v1120/chats") },
+  { href: "/v1120/chats", label: "게시판", icon: "✉", match: (p: string) => p.startsWith("/v1120/chats") },
   { href: "/v1120/me", label: "내 정보", icon: "☰", match: (p: string) => p.startsWith("/v1120/me") },
 ];
 
@@ -17,7 +17,7 @@ function guardianTabs(token: string) {
   const home = `/v1120/c/${token}`;
   return [
     { href: home, label: "홈", icon: "⌂", match: (p: string) => p === home || p.startsWith(`${home}/documents`) || p.startsWith(`${home}/reports`) },
-    { href: `${home}/chat`, label: "대화", icon: "✉", match: (p: string) => p.startsWith(`${home}/chat`) },
+    { href: `${home}/chat`, label: "게시판", icon: "✉", match: (p: string) => p.startsWith(`${home}/chat`) },
     { href: `${home}/me`, label: "내 정보", icon: "☰", match: (p: string) => p.startsWith(`${home}/me`) },
   ];
 }
@@ -45,7 +45,7 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
                   {t.icon}
                 </span>
                 {t.label}
-                {!guardianToken && t.label === "대화" && unread > 0 && (
+                {!guardianToken && t.label === "게시판" && unread > 0 && (
                   <span className="absolute right-[22%] top-1.5 rounded-full bg-(--danger) px-1.5 text-base font-bold leading-6 text-white">
                     {unread}
                   </span>

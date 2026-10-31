@@ -7,7 +7,7 @@ import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, safeDecryptText } from "@/lib/crypto";
-import type { CareGrade, CareRecord, ChatMessage, ClientProfile, HistoryVisit, Signatures } from "./_types";
+import type { BoardComment, BoardPost, CareGrade, CareRecord, ClientProfile, HistoryVisit, Signatures } from "./_types";
 import { cleanSignatures } from "./_signatures";
 import type { SaidQuotes } from "./_extract";
 
@@ -38,7 +38,7 @@ export function toProfile(c: Client): ClientProfile {
     guardianName: c.guardianName,
     guardianRelation: c.guardianRelation,
     guardianPhone: c.guardianPhone,
-    guardianJoined: false, // shortcut: 대화방(DIF-5) 모델이 생기면 보호자 첫 입장 시각으로 바꾼다
+    guardianJoined: false, // shortcut: 보호자 로그인(D-44)이 생기면 보호자 첫 입장 시각으로 바꾼다
     careRegistrationNumber: c.careRegistrationNumber,
     careGrade: c.careGrade as CareGrade | null,
     phone: c.phone,
@@ -115,21 +115,135 @@ export async function myTodayVisits() {
   return byClient;
 }
 
-// 대화방(C-18)에 올라가는 보낸 보고서 카드 (오래된 것부터). 대화 저장(DIF-5) 전까지 대화방에는 이것만 보인다
-export async function mySentReports(clientId?: string): Promise<(ChatMessage & { clientId: string })[]> {
-  const caregiver = await requireCaregiver();
-  const visits = await prisma.visit.findMany({
-    where: { caregiverId: caregiver.id, status: "SENT", client: { caregiverId: caregiver.id, purgeAt: null }, ...(clientId ? { clientId } : {}) },
-    select: { id: true, clientId: true, startedAt: true, createdAt: true, report: { select: { shareToken: true, sentAt: true } } },
-  });
+// 수급자 게시판(C-18·G-02)의 글: 보낸 보고서마다 하나, 최신 글이 위
+type PostRow = {
+  startedAt: Date | null;
+  createdAt: Date;
+  report: { shareToken: string; sentAt: Date | null; careRecord: string | null; comments: { id: string; author: string; body: string; createdAt: Date }[] } | null;
+};
+const postSelect = {
+  startedAt: true,
+  createdAt: true,
+  report: { select: { shareToken: true, sentAt: true, careRecord: true, comments: { orderBy: { createdAt: "asc" as const } } } },
+};
+function toPosts(visits: PostRow[]): BoardPost[] {
   return visits
     .flatMap((v) => {
       if (!v.report) return [];
       const [, m, d] = kstYmd(v.startedAt ?? v.createdAt).split("-");
-      const at = (v.report.sentAt ?? v.createdAt).toISOString();
-      return [{ id: v.id, clientId: v.clientId, from: "caregiver" as const, at, report: { shareToken: v.report.shareToken, title: `${+m}월 ${+d}일 방문 보고서` } }];
+      let record: CareRecord | null = null;
+      try {
+        record = v.report.careRecord ? (JSON.parse(decryptText(v.report.careRecord)) as CareRecord) : null;
+      } catch {}
+      return [
+        {
+          shareToken: v.report.shareToken,
+          title: `${+m}월 ${+d}일 방문 보고서`,
+          at: (v.report.sentAt ?? v.createdAt).toISOString(),
+          kind: "report" as const,
+          period: null,
+          notes: record?.guardianNotes ?? record?.notes ?? null,
+          physicalNote: record?.physicalNote ?? null,
+          comments: toComments(v.report.comments),
+        },
+      ];
     })
-    .sort((a, b) => a.at.localeCompare(b.at));
+    .sort((a, b) => b.at.localeCompare(a.at));
+}
+
+type CommentRow = { id: string; author: string; body: string; createdAt: Date };
+function toComments(rows: CommentRow[]): BoardComment[] {
+  return rows.map((c) => ({
+    id: c.id,
+    from: c.author === "guardian" ? ("guardian" as const) : ("caregiver" as const),
+    at: c.createdAt.toISOString(),
+    text: safeDecryptText(c.body, "(읽을 수 없는 댓글)"),
+  }));
+}
+
+// 게시판에 올린 서류(진료 참고용 요약)도 글 하나. 내용은 기간만 두고 볼 때 다시 만든다
+const docSelect = { shareToken: true, from: true, to: true, createdAt: true, comments: { orderBy: { createdAt: "asc" as const } } };
+const dot = (ymd: string) => `${+ymd.slice(5, 7)}/${+ymd.slice(8)}`;
+function docsToPosts(docs: { shareToken: string; from: string; to: string; createdAt: Date; comments: CommentRow[] }[]): BoardPost[] {
+  return docs.map((d) => ({
+    shareToken: d.shareToken,
+    title: `진료 참고용 요약 (${dot(d.from)}~${dot(d.to)})`,
+    at: d.createdAt.toISOString(),
+    kind: "summary" as const,
+    period: { from: d.from, to: d.to },
+    notes: `${d.from.replaceAll("-", ".")} ~ ${d.to.replaceAll("-", ".")} 방문 기록을 모은 요약이에요. 진료 때 의료진에게 보여 주세요.`,
+    physicalNote: null,
+    comments: toComments(d.comments),
+  }));
+}
+const newestFirst = (posts: BoardPost[]) => posts.sort((a, b) => b.at.localeCompare(a.at));
+
+export async function myBoard(clientId: string): Promise<BoardPost[]> {
+  const caregiver = await requireCaregiver();
+  const [visits, docs] = await Promise.all([
+    prisma.visit.findMany({
+      where: { caregiverId: caregiver.id, status: "SENT", clientId, client: { caregiverId: caregiver.id, purgeAt: null } },
+      select: postSelect,
+    }),
+    prisma.sharedDocument.findMany({ where: { clientId, client: { caregiverId: caregiver.id, purgeAt: null } }, select: docSelect }),
+  ]);
+  return newestFirst([...toPosts(visits), ...docsToPosts(docs)]);
+}
+
+// 게시판 탭(목록)에 보일 수급자별 최근 글 제목과 댓글 수
+export async function myBoardSummary(): Promise<Map<string, { title: string; comments: number }>> {
+  const caregiver = await requireCaregiver();
+  const visits = await prisma.visit.findMany({
+    where: { caregiverId: caregiver.id, status: "SENT", client: { caregiverId: caregiver.id, purgeAt: null } },
+    select: { clientId: true, startedAt: true, createdAt: true, report: { select: { sentAt: true, _count: { select: { comments: true } } } } },
+  });
+  const latest = new Map<string, { at: Date; title: string; comments: number }>();
+  for (const v of visits) {
+    if (!v.report) continue;
+    const at = v.report.sentAt ?? v.createdAt;
+    const cur = latest.get(v.clientId);
+    if (cur && cur.at >= at) continue;
+    const [, m, d] = kstYmd(v.startedAt ?? v.createdAt).split("-");
+    latest.set(v.clientId, { at, title: `${+m}월 ${+d}일 방문 보고서`, comments: v.report._count.comments });
+  }
+  const docs = await prisma.sharedDocument.findMany({
+    where: { client: { caregiverId: caregiver.id, purgeAt: null } },
+    select: { clientId: true, from: true, to: true, createdAt: true, _count: { select: { comments: true } } },
+  });
+  for (const d of docs) {
+    const cur = latest.get(d.clientId);
+    if (cur && cur.at >= d.createdAt) continue;
+    latest.set(d.clientId, { at: d.createdAt, title: `진료 참고용 요약 (${dot(d.from)}~${dot(d.to)})`, comments: d._count.comments });
+  }
+  return latest;
+}
+
+// 보호자 게시판 (G-02): 보고서·서류 링크 하나를 가진 보호자가 그 수급자의 게시판을 모두 본다. 로그인 없음
+// shortcut: 링크만 있으면 누구나 그 수급자 게시판을 본다, 보호자 로그인(D-44)·링크 만료(STB-5)가 생기면 그걸로 막는다
+export async function guardianBoard(shareToken: string) {
+  const clientSelect = { id: true, name: true, guardianName: true, guardianRelation: true, isActive: true, purgeAt: true, scheduleLabel: true };
+  const [r, doc] = await Promise.all([
+    prisma.report.findUnique({ where: { shareToken }, select: { sentAt: true, visit: { select: { caregiver: { select: { name: true } }, client: { select: clientSelect } } } } }),
+    prisma.sharedDocument.findUnique({ where: { shareToken }, select: { caregiverId: true, client: { select: clientSelect } } }),
+  ]);
+  const c = r?.sentAt ? r.visit.client : doc?.client;
+  if (!c?.isActive || c.purgeAt) return null;
+  const caregiverName = r?.sentAt ? r.visit.caregiver.name : ((await prisma.caregiver.findUnique({ where: { id: doc!.caregiverId }, select: { name: true } }))?.name ?? "");
+  const [visits, docs] = await Promise.all([
+    prisma.visit.findMany({ where: { clientId: c.id, status: "SENT" }, select: postSelect }),
+    prisma.sharedDocument.findMany({ where: { clientId: c.id }, select: docSelect }),
+  ]);
+  return { clientId: c.id, clientName: c.name, guardianName: c.guardianName, guardianRelation: c.guardianRelation, caregiverName, posts: newestFirst([...toPosts(visits), ...docsToPosts(docs)]) };
+}
+
+// 보호자가 게시판에 올라온 서류를 볼 때 쓰는 방문 기록 (보낸 것만). 링크 확인은 guardianBoard에서 먼저 한다
+export async function guardianHistory(clientId: string): Promise<HistoryVisit[]> {
+  const visits = await prisma.visit.findMany({
+    where: { clientId, status: "SENT" },
+    include: { report: true, client: { select: { scheduleLabel: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return visits.map(toHistoryVisit);
 }
 
 // 내 방문 하나 + 수급자 + 복호화한 기록. 남의 방문이면 null
@@ -191,24 +305,27 @@ export async function myHistory(clientId: string): Promise<HistoryVisit[]> {
     include: { report: true, client: { select: { scheduleLabel: true } } },
     orderBy: { createdAt: "desc" },
   });
-  return visits.map((v) => {
-    const day = v.startedAt ?? v.createdAt;
-    const time = serviceTimeOf(v.client.scheduleLabel, day);
-    let record = EMPTY_RECORD;
-    try {
-      if (v.report?.careRecord) record = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
-    } catch {}
-    return {
-      visitId: v.id,
-      date: kstYmd(day),
-      start: time.start,
-      end: time.end,
-      status: v.status,
-      record,
-      shareToken: v.status === "SENT" ? v.report?.shareToken : undefined,
-      signatures: readSignatures(v.report?.signatures),
-    };
-  });
+  return visits.map(toHistoryVisit);
+}
+
+type HistoryRow = { id: string; startedAt: Date | null; createdAt: Date; status: HistoryVisit["status"]; client: { scheduleLabel: string | null }; report: { careRecord: string | null; shareToken: string; signatures: string | null } | null };
+function toHistoryVisit(v: HistoryRow): HistoryVisit {
+  const day = v.startedAt ?? v.createdAt;
+  const time = serviceTimeOf(v.client.scheduleLabel, day);
+  let record = EMPTY_RECORD;
+  try {
+    if (v.report?.careRecord) record = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
+  } catch {}
+  return {
+    visitId: v.id,
+    date: kstYmd(day),
+    start: time.start,
+    end: time.end,
+    status: v.status,
+    record,
+    shareToken: v.status === "SENT" ? v.report?.shareToken : undefined,
+    signatures: readSignatures(v.report?.signatures),
+  };
 }
 
 // 저장된 서명을 풀어 읽는다. 풀 수 없으면 빈 서명칸으로 보여 준다

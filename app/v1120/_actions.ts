@@ -77,7 +77,7 @@ export async function saveClient(form: FormData) {
     redirect(`/v1120/client/${id}`);
   }
   const created = await prisma.client.create({ data: { ...data, caregiverId: caregiver.id } });
-  // 새로 등록하면 바로 보호자 대화방 초대 화면으로 (D-33). 보호자가 없으면 초대할 사람도 없다
+  // 새로 등록하면 바로 보호자 게시판 초대 화면으로 (D-33). 보호자가 없으면 초대할 사람도 없다
   redirect(noContact ? `/v1120/client/${created.id}` : `/v1120/client/${created.id}/invite?new=1`);
 }
 
@@ -259,6 +259,53 @@ export async function sendReport(visitId: string) {
   await prisma.report.update({ where: { visitId }, data: { sentAt: new Date() } });
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
   redirect(`/v1120/visit/${visitId}/sent`);
+}
+
+// 게시판 댓글 (DIF-5, D-15 261101.ver). 글은 암호화해 저장한다 (LAW-11)
+const COMMENT_MAX = 500;
+function commentBody(text: string) {
+  const t = text.trim();
+  if (!t) throw new Error("댓글을 적어 주세요.");
+  if (t.length > COMMENT_MAX) throw new Error(`댓글은 ${COMMENT_MAX}자까지 쓸 수 있어요.`);
+  return encryptText(t);
+}
+
+// 댓글을 달 글: 보낸 보고서 또는 게시판에 올린 서류 (같은 shareToken 자리를 쓴다)
+async function postTarget(shareToken: string, caregiverId?: string) {
+  const own = caregiverId ? { caregiverId } : { isActive: true };
+  const [r, d] = await Promise.all([
+    prisma.report.findFirst({
+      where: { shareToken, sentAt: { not: null }, visit: { ...(caregiverId ? { caregiverId } : {}), client: { ...own, purgeAt: null } } },
+      select: { id: true },
+    }),
+    prisma.sharedDocument.findFirst({ where: { shareToken, client: { ...own, purgeAt: null } }, select: { id: true } }),
+  ]);
+  if (r) return { reportId: r.id };
+  if (d) return { documentId: d.id };
+  throw new Error("게시글을 찾을 수 없어요.");
+}
+
+// C-18 요양보호사: 내 수급자의 글에만
+export async function commentAsCaregiver(shareToken: string, text: string) {
+  const caregiver = await requireCaregiver();
+  const target = await postTarget(shareToken, caregiver.id);
+  await prisma.comment.create({ data: { ...target, author: "caregiver", body: commentBody(text) } });
+}
+
+// G-02 보호자: 로그인 없이 링크로. 보낸 보고서·올린 서류, 지우지 않은 수급자에만
+// shortcut: 링크만 있으면 누구나 보호자로 댓글을 단다, 보호자 로그인(D-44)이 생기면 그걸로 막는다
+export async function commentAsGuardian(shareToken: string, text: string) {
+  const target = await postTarget(shareToken);
+  await prisma.comment.create({ data: { ...target, author: "guardian", body: commentBody(text) } });
+}
+
+// C-20 진료 참고용 요약 "게시판에 올리기": 같은 기간을 이미 올렸으면 다시 만들지 않는다
+export async function shareSummary(clientId: string, from: string, to: string) {
+  const c = await ownClientOrThrow(clientId);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error("기간이 올바르지 않아요.");
+  if (c.guardianRelation === NO_CONTACT) throw new Error("보호자가 없어 게시판이 없어요.");
+  const exists = await prisma.sharedDocument.findFirst({ where: { clientId, kind: "summary", from, to } });
+  if (!exists) await prisma.sharedDocument.create({ data: { clientId, caregiverId: c.caregiverId!, kind: "summary", from, to } });
 }
 
 // C-06 내 정보 고치기

@@ -27,6 +27,6 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
 
 export default async function GuardianReportPage({ params, searchParams }: PageProps<"/v1120/g/[token]">) {
   const { token } = await params;
-  const { order } = await searchParams;
-  return <GuardianReport token={token} order={order === "improved" ? "improved" : "base"} sent={await sentReport(token)} />;
+  const { order, from } = await searchParams;
+  return <GuardianReport token={token} order={order === "improved" ? "improved" : "base"} sent={await sentReport(token)} fromBoard={from === "board"} />;
 }

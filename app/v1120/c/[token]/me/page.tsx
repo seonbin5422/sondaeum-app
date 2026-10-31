@@ -19,7 +19,7 @@ export default async function GuardianMePage({ params }: PageProps<"/v1120/c/[to
           <p className="text-base text-muted">{c.guardianPhone ?? "전화번호 없음"}</p>
         </div>
       </div>
-      <p className="text-base text-muted">정보가 다르면 대화에서 요양보호사에게 알려 주세요.</p>
+      <p className="text-base text-muted">정보가 다르면 게시판 댓글로 요양보호사에게 알려 주세요.</p>
       <ul className="flex flex-col divide-y divide-(--line) rounded-[15px] border border-(--line)">
         <li>
           <Link href="/v1120/privacy" className="flex min-h-16 items-center justify-between px-4 text-lg font-bold">

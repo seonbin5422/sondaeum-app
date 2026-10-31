@@ -46,9 +46,9 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
 
       {!c.guardianJoined && !noContact && (
         <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
-          <p className="text-lg font-bold">{c.guardianName} {title}님이 아직 대화방에 들어오지 않았어요</p>
+          <p className="text-lg font-bold">{c.guardianName} {title}님이 아직 게시판에 들어오지 않았어요</p>
           <LinkButton href={`/v1120/client/${c.id}/invite`} className="!h-14">
-            {title}님 대화방에 초대하기
+            {title}님 게시판에 초대하기
           </LinkButton>
         </div>
       )}
@@ -72,7 +72,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
           </LinkButton>
           {!noContact && (
             <LinkButton href={`/v1120/chats/${c.id}`} variant="secondary">
-              대화방
+              게시판
             </LinkButton>
           )}
         </div>

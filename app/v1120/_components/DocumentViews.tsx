@@ -20,14 +20,14 @@ const SYM: Record<Change, { s: string; c: string }> = {
   worse: { s: "▼", c: "text-(--danger)" },
 };
 
-function Shell({ backHref, children, canShare }: { backHref: string; children: React.ReactNode; canShare: boolean }) {
+function Shell({ backHref, children, share }: { backHref: string; children: React.ReactNode; share?: () => Promise<void> }) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-4 pb-10 print:max-w-none print:p-0">
       <div className="print:hidden">
         <SmallLinkButton href={backHref}>← 뒤로</SmallLinkButton>
       </div>
       {children}
-      <PrintActions canShare={canShare} />
+      <PrintActions share={share} />
     </main>
   );
 }
@@ -42,6 +42,7 @@ type ViewProps = {
   to: string;
   backHref: string;
   role: "caregiver" | "guardian";
+  share?: () => Promise<void>; // 게시판에 올리기 (요양보호사의 진료 참고용 요약만)
 };
 
 // 기간 요약: 기록에 있는 사실만 센다 (LAW-1: 진단·해석 없이)
@@ -62,7 +63,7 @@ function periodSummary(visits: HistoryVisit[]) {
 }
 
 // C-20 진료 참고용 요약 (와이어 305:38)
-export function SummaryView({ client: c, history, caregiverName, today, from, to, backHref, role }: ViewProps) {
+export function SummaryView({ client: c, history, caregiverName, today, from, to, backHref, share }: ViewProps) {
   const visits = visitsIn(history, from, to);
   const recent = visits.slice(-5);
   const worse = visits
@@ -81,7 +82,7 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
   const notes = visits.filter((v) => v.record.notes).reverse();
 
   return (
-    <Shell backHref={backHref} canShare={role === "caregiver"}>
+    <Shell backHref={backHref} share={share}>
       <article className="flex flex-col gap-4 rounded-md border border-border bg-white p-4 print:border-0">
         <header className="flex flex-col gap-0.5">
           <h1 className="text-2xl font-bold">진료 참고용 기록 요약</h1>
@@ -214,7 +215,7 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
 export function CareSheetView({ client: c, history, caregiverName, today, from, to, backHref, role }: ViewProps) {
   const visits = visitsIn(history, from, to);
   return (
-    <Shell backHref={backHref} canShare={role === "caregiver"}>
+    <Shell backHref={backHref}>
       <header className="print:hidden">
         <h1 className="text-2xl font-bold">급여제공기록지</h1>
         <p className="text-base text-muted">

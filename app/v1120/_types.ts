@@ -71,6 +71,9 @@ export function contactTitle(relation: string) {
   return ({ "기관 사회복지사": "사회복지사", "주민센터 담당자": "담당자", 후견인: "후견인" } as Record<string, string>)[relation] ?? "보호자";
 }
 
+// "박○○ 요양보호사". 체험 계정 이름("체험 요양보호사")처럼 이미 붙어 있으면 다시 붙이지 않는다
+export const caregiverTitle = (name: string) => (name.endsWith("요양보호사") ? name : `${name} 요양보호사`);
+
 export const CARE_GRADES =["1등급", "2등급", "3등급", "4등급", "5등급", "인지지원등급"] as const;
 export type CareGrade = (typeof CARE_GRADES)[number];
 
@@ -85,8 +88,8 @@ export type ClientProfile = {
   personalNotes: string | null;
   guardianName: string;
   guardianRelation: string;
-  guardianPhone: string | null; // 보호자 전화번호 (대화방 초대 문자에 씀)
-  guardianJoined: boolean; // 보호자가 대화방에 들어왔는지
+  guardianPhone: string | null; // 보호자 전화번호 (게시판 초대 문자에 씀)
+  guardianJoined: boolean; // 보호자가 게시판에 들어왔는지
   careRegistrationNumber: string | null;
   careGrade: CareGrade | null; // 장기요양등급 (LAW-4)
   phone: string | null; // 수급자 전화번호
@@ -110,10 +113,15 @@ export type HistoryVisit = {
 export type Stroke = [number, number][];
 export type Signatures = { recipient: Stroke[]; caregiver: Stroke[]; reason: string };
 
-export type ChatMessage = {
-  id: string;
-  from: "caregiver" | "guardian";
-  at: string; // ISO
-  text?: string;
-  report?: { shareToken: string; title: string }; // 보고서 카드. DB는 Message.reportId, 링크는 /g/[shareToken] (D-45)
+// 수급자 게시판(DIF-5, D-15 261101.ver): 보낸 보고서 하나가 게시글 하나, 이야기는 댓글로
+export type BoardComment = { id: string; from: "caregiver" | "guardian"; at: string; text: string }; // at: ISO
+export type BoardPost = {
+  shareToken: string; // 보고서 링크 /g/[shareToken]이자 댓글을 달 게시글 키
+  title: string;
+  at: string; // 보낸 시각 ISO
+  kind: "report" | "summary"; // 보낸 방문 보고서 / 게시판에 올린 진료 참고용 요약
+  period: { from: string; to: string } | null; // 서류의 기간 (YYYY-MM-DD)
+  notes: string | null; // 보호자에게 보인 특이사항(guardianNotes, 없으면 notes). 카드 미리보기·상세 요약
+  physicalNote: string | null; // 신체활동으로 한 일
+  comments: BoardComment[]; // 오래된 것부터
 };

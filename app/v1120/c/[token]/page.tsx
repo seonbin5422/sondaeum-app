@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { caregiverName, chatTokenToClient, findClient } from "../../_mock";
 import { Avatar, Chip, LinkButton, Screen } from "../../_components/ui";
 
-// G-04 보호자 홈 (D-44). 어르신 정보는 보기만, 고칠 내용은 대화로 요양보호사에게 말한다
+// G-04 보호자 홈 (D-44). 어르신 정보는 보기만, 고칠 내용은 게시판 댓글로 요양보호사에게 말한다
 export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[token]">) {
   const { token } = await params;
   const c = findClient(chatTokenToClient[token] ?? "");
@@ -51,7 +51,7 @@ export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[
             </div>
           ))}
         </dl>
-        <p className="text-base text-muted">바뀐 내용이 있으면 대화에서 요양보호사에게 알려 주세요.</p>
+        <p className="text-base text-muted">바뀐 내용이 있으면 게시판 댓글로 요양보호사에게 알려 주세요.</p>
       </section>
     </Screen>
   );

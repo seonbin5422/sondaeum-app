@@ -21,8 +21,11 @@ async function purgeExpiredDemos() {
     select: { id: true },
   });
   for (const { id } of expired) {
+    await prisma.comment.deleteMany({ where: { report: { visit: { OR: [{ caregiverId: id }, { client: { caregiverId: id } }] } } } });
     await prisma.report.deleteMany({ where: { visit: { OR: [{ caregiverId: id }, { client: { caregiverId: id } }] } } });
     await prisma.visit.deleteMany({ where: { OR: [{ caregiverId: id }, { client: { caregiverId: id } }] } });
+    await prisma.comment.deleteMany({ where: { document: { client: { caregiverId: id } } } });
+    await prisma.sharedDocument.deleteMany({ where: { client: { caregiverId: id } } });
     await prisma.client.deleteMany({ where: { caregiverId: id } });
     await prisma.aiUsage.deleteMany({ where: { caregiverId: id } });
     await prisma.caregiver.delete({ where: { id } });

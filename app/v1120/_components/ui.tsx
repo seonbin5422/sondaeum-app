@@ -62,7 +62,7 @@ export function SmallLinkButton({ href, children }: { href: string; children: Re
   );
 }
 
-// nav: 하단 메뉴바(홈·수급자·대화·내 정보)를 붙인다. 기록 흐름·보호자 화면에는 붙이지 않는다.
+// nav: 하단 메뉴바(홈·수급자·게시판·내 정보)를 붙인다. 기록 흐름·보호자 화면에는 붙이지 않는다.
 export function Screen({
   children,
   bottom,

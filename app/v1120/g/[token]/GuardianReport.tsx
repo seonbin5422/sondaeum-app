@@ -3,6 +3,7 @@
 import { ReportSections } from "../../_components/ReportView";
 import { chatTokenToClient, historyByClient, sampleGuardianReport } from "../../_mock";
 import { BackButton } from "../../_components/BackButton";
+import { LinkButton } from "../../_components/ui";
 import type { GuardianReportProps } from "../../_types";
 
 // G-01 보호자 보고서 (와이어 263:692). ?order=improved 를 붙이면 개선안(263:822, PR #9 머지 보류) 순서로 본다.
@@ -18,8 +19,8 @@ function formatVisit(startIso: string, endIso: string) {
   return `${s.getMonth() + 1}월 ${s.getDate()}일 (${days[s.getDay()]}) ${hm(s)} ~ ${hm(e)} · ${length}`;
 }
 
-export function GuardianReport({ token, order, sent }: { token: string; order: "base" | "improved"; sent: GuardianReportProps | null }) {
-  // 이력(C-22)·대화방 카드에서 열면 그 날짜 기록을, 아니면 예시 보고서를 보여 준다
+export function GuardianReport({ token, order, sent, fromBoard = false }: { token: string; order: "base" | "improved"; sent: GuardianReportProps | null; fromBoard?: boolean }) {
+  // 이력(C-22)·게시판 글에서 열면 그 날짜 기록을, 아니면 예시 보고서를 보여 준다
   const past = Object.values(historyByClient).flat().find((v) => v.visitId === token);
   const report = past
     ? { ...sampleGuardianReport, startedAt: `${past.date}T${past.start}:00+09:00`, endedAt: `${past.date}T${past.end}:00+09:00`, record: past.record }
@@ -27,14 +28,13 @@ export function GuardianReport({ token, order, sent }: { token: string; order: "
   const head = sent ?? report;
   const record = head.record;
 
-  // 돌아갈 곳이 없을 때(카카오톡 링크로 바로 들어옴) 보낼 보호자 대화방
-  // shortcut: 보낸 기록의 보호자 대화방은 DIF-5(개발 1)에서 생긴다, 그 전까지는 대화방 대신 안내만
+  // 돌아갈 곳이 없을 때(카카오톡 링크로 바로 들어옴) 보낼 보호자 게시판. 보낸 기록이면 그 어르신의 실제 게시판
   const clientId = past ? Object.keys(historyByClient).find((k) => historyByClient[k].includes(past)) : undefined;
   const chatToken = Object.keys(chatTokenToClient).find((t) => chatTokenToClient[t] === clientId);
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
-      <BackButton fallback={chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />
+      <BackButton fallback={sent ? `/v1120/g/${token}/board` : chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />
       <header className="flex flex-col gap-1">
         <p className="text-base text-muted">안녕하세요, {head.guardianName} {head.guardianTitle ?? "보호자"}님</p>
         <h1 className="text-2xl font-bold">{head.clientName} 어르신 방문 보고서</h1>
@@ -47,6 +47,9 @@ export function GuardianReport({ token, order, sent }: { token: string; order: "
       </div>
 
       <ReportSections record={record} order={order} />
+
+      {/* 게시판의 "보고서 전체 보기"로 들어왔으면 게시판으로 돌아가는 버튼은 안 보인다(뒤로가기로 돌아감) */}
+      {sent && !fromBoard && <LinkButton href={`/v1120/g/${token}/board`}>게시판에서 댓글 보기</LinkButton>}
 
       <p className="rounded-xl bg-(--neutral-soft) px-4 py-3 text-base text-muted">
         {head.caregiverName} 요양보호사가 작성하고 확인한 기록이에요. 의료적 판단이 아니에요. 궁금한 점은 담당 기관에

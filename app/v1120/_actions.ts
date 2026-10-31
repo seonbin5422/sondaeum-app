@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
-import { decryptText, encryptText } from "@/lib/crypto";
+import { decryptText, encryptText, openPII, sealPII } from "@/lib/crypto";
 import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
 import { extractRecord, keepFilled } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
@@ -54,12 +54,13 @@ export async function saveClient(form: FormData) {
   const grade = text(form, "careGrade");
   const age = text(form, "age");
 
+  // SEC-5: 수급자 이름·전화번호와 보호자 전화번호는 암호화해 저장한다
   const data = {
-    name,
+    name: sealPII(name),
     careRegistrationNumber,
     guardianName: guardianName ?? "",
     guardianRelation,
-    guardianPhone: noContact ? null : text(form, "guardianPhone"),
+    guardianPhone: noContact ? null : sealPII(text(form, "guardianPhone")),
     careGrade: grade && (CARE_GRADES as readonly string[]).includes(grade) ? grade : null,
     // lib/schedule.ts가 읽는 모양: "월,수,금 09:00-11:00"
     scheduleLabel: `${days.map((d) => WEEKDAY_LABELS[d]).join(",")} ${start}-${end}`,
@@ -68,7 +69,7 @@ export async function saveClient(form: FormData) {
     allergies: text(form, "allergies"),
     medicalHistory: text(form, "medicalHistory"),
     medicationNotes: text(form, "medicationNotes"),
-    phone: text(form, "phone"),
+    phone: sealPII(text(form, "phone")),
   };
 
   if (id) {
@@ -164,7 +165,7 @@ async function fillVisitRecord(transcript: string, clientId: string, caregiverId
   if (!client) return fallback();
   // SEC-3: 한도를 넘으면 AI 없이 낱말 찾기로 채운다 (기록은 막지 않음)
   if (!(await takeAiCall(caregiverId, "fill-record"))) return fallback();
-  const people = { client: client.name, guardian: client.guardianName, caregiver: caregiver?.name, phones: [client.phone, client.guardianPhone] };
+  const people = { client: openPII(client.name), guardian: client.guardianName, caregiver: caregiver?.name, phones: [openPII(client.phone), openPII(client.guardianPhone)] };
   try {
     const { record, quotes } = fillGaps(await fillRecord(redactForAi(transcript, people)), fallback());
     const roles = (t: string | null) => (t ? toRoleWords(t) : t);
@@ -297,6 +298,23 @@ export async function commentAsCaregiver(shareToken: string, text: string) {
 export async function commentAsGuardian(shareToken: string, text: string) {
   const target = await postTarget(shareToken);
   await prisma.comment.create({ data: { ...target, author: "guardian", body: commentBody(text) } });
+}
+
+// 게시글을 열면 상대가 단 댓글을 읽음으로 (DIF-5 안 읽은 수)
+export async function markReadAsCaregiver(shareToken: string) {
+  const caregiver = await requireCaregiver();
+  const target = await postTarget(shareToken, caregiver.id);
+  await prisma.comment.updateMany({ where: { ...target, author: "guardian", readAt: null }, data: { readAt: new Date() } });
+}
+export async function markReadAsGuardian(shareToken: string) {
+  const target = await postTarget(shareToken);
+  await prisma.comment.updateMany({ where: { ...target, author: "caregiver", readAt: null }, data: { readAt: new Date() } });
+}
+
+// 하단 메뉴 "게시판" 위 숫자 (화면이 바뀔 때마다 다시 묻는다)
+export async function myUnreadTotal(): Promise<number> {
+  const { myUnreadByClient } = await import("./_data");
+  return [...(await myUnreadByClient()).values()].reduce((a, b) => a + b, 0);
 }
 
 // C-20 진료 참고용 요약 "게시판에 올리기": 같은 기간을 이미 올렸으면 다시 만들지 않는다

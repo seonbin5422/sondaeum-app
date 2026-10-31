@@ -6,7 +6,7 @@ import { getSessionCaregiverId } from "@/lib/session";
 import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
-import { decryptText, safeDecryptText } from "@/lib/crypto";
+import { decryptText, openPII, safeDecryptText } from "@/lib/crypto";
 import type { BoardComment, BoardPost, CareGrade, CareRecord, ClientProfile, HistoryVisit, Signatures } from "./_types";
 import { cleanSignatures } from "./_signatures";
 import type { SaidQuotes } from "./_extract";
@@ -28,7 +28,7 @@ export function displaySchedule(label: string | null) {
 export function toProfile(c: Client): ClientProfile {
   return {
     id: c.id,
-    name: c.name,
+    name: openPII(c.name),
     age: c.age,
     gender: c.gender,
     allergies: c.allergies,
@@ -37,11 +37,11 @@ export function toProfile(c: Client): ClientProfile {
     personalNotes: c.personalNotes,
     guardianName: c.guardianName,
     guardianRelation: c.guardianRelation,
-    guardianPhone: c.guardianPhone,
+    guardianPhone: openPII(c.guardianPhone),
     guardianJoined: false, // shortcut: 보호자 로그인(D-44)이 생기면 보호자 첫 입장 시각으로 바꾼다
     careRegistrationNumber: c.careRegistrationNumber,
     careGrade: c.careGrade as CareGrade | null,
-    phone: c.phone,
+    phone: openPII(c.phone),
     scheduleLabel: displaySchedule(c.scheduleLabel),
     scheduleDays: parseScheduleDays(c.scheduleLabel).map((d) => WEEKDAY_LABELS.indexOf(d)),
     isActive: c.isActive,
@@ -119,7 +119,7 @@ export async function myTodayVisits() {
 type PostRow = {
   startedAt: Date | null;
   createdAt: Date;
-  report: { shareToken: string; sentAt: Date | null; careRecord: string | null; comments: { id: string; author: string; body: string; createdAt: Date }[] } | null;
+  report: { shareToken: string; sentAt: Date | null; careRecord: string | null; comments: CommentRow[] } | null;
 };
 const postSelect = {
   startedAt: true,
@@ -151,14 +151,31 @@ function toPosts(visits: PostRow[]): BoardPost[] {
     .sort((a, b) => b.at.localeCompare(a.at));
 }
 
-type CommentRow = { id: string; author: string; body: string; createdAt: Date };
+type CommentRow = { id: string; author: string; body: string; createdAt: Date; readAt: Date | null };
 function toComments(rows: CommentRow[]): BoardComment[] {
   return rows.map((c) => ({
     id: c.id,
     from: c.author === "guardian" ? ("guardian" as const) : ("caregiver" as const),
     at: c.createdAt.toISOString(),
     text: safeDecryptText(c.body, "(읽을 수 없는 댓글)"),
+    readAt: c.readAt?.toISOString() ?? null,
   }));
+}
+
+// 요양보호사가 아직 안 읽은 보호자 댓글 수 (수급자별). 게시판 탭·홈 카드·수급자 목록·하단 메뉴에 쓴다
+export async function myUnreadByClient(): Promise<Map<string, number>> {
+  const caregiver = await requireCaregiver();
+  const mine = { caregiverId: caregiver.id, purgeAt: null };
+  const rows = await prisma.comment.findMany({
+    where: { author: "guardian", readAt: null, OR: [{ report: { visit: { client: mine } } }, { document: { client: mine } }] },
+    select: { report: { select: { visit: { select: { clientId: true } } } }, document: { select: { clientId: true } } },
+  });
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    const id = r.report?.visit.clientId ?? r.document?.clientId;
+    if (id) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
 }
 
 // 게시판에 올린 서류(진료 참고용 요약)도 글 하나. 내용은 기간만 두고 볼 때 다시 만든다
@@ -241,7 +258,7 @@ export async function guardianBoard(shareToken: string) {
   ]);
   return {
     clientId: c.id,
-    clientName: c.name,
+    clientName: openPII(c.name),
     guardianName: c.guardianName,
     guardianRelation: c.guardianRelation,
     caregiverName,

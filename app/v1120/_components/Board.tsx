@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { markRead } from "../_unread";
 import { caregiverTitle, type BoardComment, type BoardPost } from "../_types";
 
 // C-18 수급자 게시판 · G-02 보호자 게시판 (DIF-5, D-15 261101.ver, Figma wireframe-1120 "와이어 · C-18 수급자 게시판"·"게시글 상세").
@@ -56,8 +55,9 @@ export function LiveRefresh() {
 }
 
 // 목록의 글 카드. 누르면 게시글 상세(href)
-export function PostCard({ post, names, href }: { post: BoardPost; names: Names; href: string }) {
+export function PostCard({ post, names, href, me }: { post: BoardPost; names: Names; href: string; me: "caregiver" | "guardian" }) {
   const last = post.comments.at(-1);
+  const unread = post.comments.filter((c) => c.from !== me && !c.readAt).length;
   const preview = post.notes ?? post.physicalNote;
   return (
     <Link href={href} className="flex flex-col gap-3 rounded-2xl border border-(--line) bg-white px-5 pb-4 pt-5">
@@ -83,6 +83,7 @@ export function PostCard({ post, names, href }: { post: BoardPost; names: Names;
             <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12Z" />
           </svg>
           댓글 {post.comments.length}
+          {unread > 0 && <span className="rounded-full bg-accent px-2 text-base font-bold">새 댓글 {unread}</span>}
         </span>
         <span className="text-muted">댓글 보기 ›</span>
       </div>
@@ -123,14 +124,14 @@ export function CommentThread({
   post,
   me,
   names,
-  clientId,
   send,
+  markRead,
 }: {
   post: BoardPost;
   me: "caregiver" | "guardian";
   names: Names;
-  clientId?: string;
   send?: Send;
+  markRead?: (shareToken: string) => Promise<void>;
 }) {
   const router = useRouter();
   const [text, setText] = useState("");
@@ -139,10 +140,11 @@ export function CommentThread({
   const [error, setError] = useState<string | null>(null);
   const comments = [...post.comments, ...local];
 
-  // 요양보호사가 게시글을 열면 그 수급자의 보호자 댓글을 읽음으로 (메뉴바·홈·목록의 숫자가 사라짐)
+  // 게시글을 열어 두면 상대가 단 댓글을 읽음으로 (새 댓글이 와도 다시). 메뉴바·홈·목록의 숫자가 줄어든다
+  const unread = post.comments.filter((c) => c.from !== me && !c.readAt).length;
   useEffect(() => {
-    if (me === "caregiver" && clientId) markRead(clientId);
-  }, [clientId, me]);
+    if (unread > 0) markRead?.(post.shareToken).catch(() => {});
+  }, [unread, post.shareToken, markRead]);
 
   async function submit() {
     const t = text.trim();
@@ -154,7 +156,7 @@ export function CommentThread({
         await send(post.shareToken, t);
         router.refresh();
       } else {
-        setLocal([...local, { id: crypto.randomUUID(), from: me, at: new Date().toISOString(), text: t }]);
+        setLocal([...local, { id: crypto.randomUUID(), from: me, at: new Date().toISOString(), text: t, readAt: null }]);
       }
       setText("");
     } catch (e) {

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { kstWeekday, myClients, myTodayVisits, requireCaregiver } from "./_data";
+import { kstWeekday, myClients, myTodayVisits, myUnreadByClient, requireCaregiver } from "./_data";
 import { startVisit } from "./_actions";
 import { UnreadMessageLink } from "./_components/Unread";
 import { ScheduleSheet } from "./_components/ScheduleSheet";
@@ -10,7 +10,7 @@ import { Avatar, Button, Card, Chip, LinkButton, Screen, StatusBadge } from "./_
 export default async function HomePage() {
   const caregiver = await requireCaregiver();
   const clients = await myClients();
-  const visits = await myTodayVisits();
+  const [visits, unread] = await Promise.all([myTodayVisits(), myUnreadByClient()]);
   // 서버(Vercel)는 UTC라서 한국 시간 기준 요일로 센다. 오늘 요일이 아니어도 오늘 기록을 시작했으면 보여 준다
   const today = kstWeekday();
   const todayVisits: TodayVisit[] = clients
@@ -24,6 +24,7 @@ export default async function HomePage() {
         scheduleLabel: c.scheduleLabel,
         status: v?.status ?? "NOT_STARTED",
         interrupted: v?.status === "RECORDING" && !!v.transcript, // 녹음이 중간에 멈춤 (D-27)
+        unread: unread.get(c.id) ?? 0,
       };
     });
   return (
@@ -70,7 +71,7 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
         </div>
       </div>
 
-      <UnreadMessageLink clientId={visit.clientId} />
+      <UnreadMessageLink clientId={visit.clientId} n={visit.unread ?? 0} />
 
       {visit.interrupted && (
         <p className="rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">

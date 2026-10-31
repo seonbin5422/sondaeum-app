@@ -4,7 +4,7 @@ import { absoluteUrl } from "@/lib/absoluteUrl";
 import { createSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { randomUUID } from "node:crypto";
-import { encryptText } from "@/lib/crypto";
+import { encryptText, sealPII } from "@/lib/crypto";
 import type { Prisma } from "@/app/generated/prisma/client";
 import { clients as sampleClients, sampleRecord } from "@/app/v1120/_mock";
 import { NO_CONTACT, type CareRecord } from "@/app/v1120/_types";
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         const [start, end] = c.scheduleLabel.split(" ").pop()!.split("–");
         return {
           caregiverId: caregiver.id,
-          name: c.name,
+          name: sealPII(c.name),
           age: c.age,
           gender: c.gender,
           allergies: c.allergies,
@@ -142,10 +142,10 @@ export async function POST(req: NextRequest) {
           personalNotes: c.personalNotes,
           guardianName: c.guardianName,
           guardianRelation: c.guardianRelation,
-          guardianPhone: c.guardianPhone,
+          guardianPhone: sealPII(c.guardianPhone),
           careRegistrationNumber: c.careRegistrationNumber,
           careGrade: c.careGrade,
-          phone: c.phone,
+          phone: sealPII(c.phone),
           scheduleLabel: `${c.scheduleDays.map((d) => WEEKDAY_LABELS[d]).join(",")} ${start}-${end}`,
         };
       }),

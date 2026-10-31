@@ -18,7 +18,7 @@ export default async function GuardianBoardDemoPage({ params }: PageProps<"/v112
       <ol className="flex flex-col gap-4">
         {(boardByClient[c.id] ?? []).map((p) => (
           <li key={p.shareToken}>
-            <PostCard post={p} names={names} href={`/v1120/g/${p.shareToken}`} />
+            <PostCard post={p} names={names} me="guardian" href={`/v1120/g/${p.shareToken}`} />
           </li>
         ))}
       </ol>

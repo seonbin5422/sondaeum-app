@@ -40,3 +40,23 @@ export function safeDecryptText(encoded: string, fallback = "(복호화 오류)"
     return fallback;
   }
 }
+
+// SEC-5 수급자 이름·전화번호처럼 칸 하나를 암호화해 저장한다. 빈 값은 그대로 둔다
+export function sealPII(value: string): string;
+export function sealPII(value: string | null): string | null;
+export function sealPII(value: string | null): string | null {
+  return value ? encryptText(value) : value;
+}
+
+// 암호화하기 전에 저장된 값(평문)도 그대로 읽는다. 옛 화면(main)이 쓰는 기존 데이터를 한 번에 바꾸지 않기 위해서
+// shortcut: 평문으로 남은 기존 수급자는 수정할 때 암호화된다, 옛 화면을 지우면 한 번에 바꾸는 스크립트를 돌린다
+export function openPII(value: string): string;
+export function openPII(value: string | null): string | null;
+export function openPII(value: string | null): string | null {
+  if (!value) return value;
+  try {
+    return decryptText(value);
+  } catch {
+    return value;
+  }
+}

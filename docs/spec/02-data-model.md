@@ -248,6 +248,7 @@ model Comment {
 
 - 댓글은 보낸 보고서(`reportId`) 또는 게시판에 올린 서류(`documentId`) 중 하나에 단다 (11/1 저녁, 마이그레이션 `20261101180000_shared_documents`).
 - `SharedDocument`(clientId, caregiverId, kind="summary", from·to YYYY-MM-DD, shareToken): 진료 참고용 요약(C-20)의 "게시판에 올리기". 내용은 저장하지 않고 볼 때 그 기간 기록으로 다시 만든다. 같은 수급자·기간은 한 번만. 보호자는 `/v1120/g/[shareToken]/post`·`/document`로 본다.
+- `Comment.readAt`(11/2, 마이그레이션 `20261102000000_comment_read_at`): 상대가 그 글(게시글 상세)을 연 시각. 요양보호사가 열면 보호자 댓글, 보호자가 열면 요양보호사 댓글이 읽음이 된다(`markReadAsCaregiver`·`markReadAsGuardian`). 안 읽은 수는 `myUnreadByClient`(게시판 탭·홈 카드·수급자 탭)·`myUnreadTotal`(하단 메뉴)·글 카드가 센다.
 - `Client.boardToken`(11/1, 마이그레이션 `20261101210000_client_board_token`): 보호자 게시판 초대 링크 `/v1120/g/[boardToken]/board`. 초대 화면(C-23)을 처음 열 때 `myBoardToken`이 만든다. 보고서를 보내기 전에도 들어올 수 있다. `guardianBoard`는 보고서·서류·초대 토큰을 모두 받는다.
 - 수급자를 완전히 지우거나(`purgeExpiredClients`) 체험 계정을 지울 때 보고서·서류보다 먼저 지운다. FK도 `ON DELETE CASCADE`.
 - 마이그레이션: `prisma/migrations/20261101120000_board_comments`.
@@ -280,7 +281,6 @@ type BoardPost = { shareToken: string; title: string; at: string; notes: string 
 
 ### 남은 것
 
-- 안 읽은 댓글 수: 지금은 늘 0 (`_unread.ts`). `Comment`에 읽은 시각을 두고 서버 값으로 바꾼다.
 - 보호자 확인: 링크만 있으면 누구나 보호자로 보고 쓴다. 보호자 로그인(D-44)이나 링크 만료(STB-5)로 막는다.
 
 ## 방문 상태 전이
@@ -312,3 +312,7 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29) |
 | STB-5 | `Report.shareExpiresAt` |
 | LAW-3 | 동의 기록: `Caregiver.consentedAt`·`consentItems`로 넣음 (10/13, D-40) |
+
+## 개인정보 암호화 (SEC-5, 11/2)
+
+`Client.name`·`Client.phone`·`Client.guardianPhone`은 `lib/crypto.ts`의 `sealPII`로 암호화해 저장하고 `openPII`로 읽는다. `openPII`는 암호화 전에 저장된 평문도 그대로 돌려주므로 기존 데이터는 한 번에 바꾸지 않았다(옛 화면이 쓰는 `main`이 같은 팀 DB를 읽기 때문). 1120 화면은 `toProfile`을 거쳐 읽는다. 기존 수급자는 정보를 수정하면 암호화된다. 옛 화면을 지운 뒤 남은 평문을 한 번에 암호화한다. 보호자 이름·장기요양인정번호·병력 등은 아직 평문이다.

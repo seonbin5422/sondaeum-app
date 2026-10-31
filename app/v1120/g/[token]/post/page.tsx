@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { guardianBoard } from "../../../_data";
-import { commentAsGuardian } from "../../../_actions";
+import { commentAsGuardian, markReadAsGuardian } from "../../../_actions";
 import { CommentThread, PostSummary } from "../../../_components/Board";
 import { BackButton } from "../../../_components/BackButton";
 import { contactTitle } from "../../../_types";
@@ -17,7 +17,7 @@ export default async function GuardianPostPage({ params }: PageProps<"/v1120/g/[
       <BackButton fallback={`/v1120/g/${token}/board`} />
       <h1 className="text-2xl font-bold">{post.title}</h1>
       <PostSummary post={post} names={names} fullHref={post.period ? `/v1120/g/${token}/document` : `/v1120/g/${token}?from=board`} />
-      <CommentThread post={post} me="guardian" names={names} send={commentAsGuardian} />
+      <CommentThread post={post} me="guardian" names={names} send={commentAsGuardian} markRead={markReadAsGuardian} />
     </main>
   );
 }

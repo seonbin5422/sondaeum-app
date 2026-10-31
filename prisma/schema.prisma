@@ -36,7 +36,7 @@ model AiUsage {
 
 model Client {
   id                     String           @id @default(cuid())
-  name                   String
+  name                   String // SEC-5: 암호화 (lib/crypto sealPII·openPII, 예전 평문도 읽음)
   age                    Int?
   gender                 String?
   allergies              String?
@@ -45,10 +45,10 @@ model Client {
   personalNotes          String?
   guardianName           String
   guardianRelation       String           @default("기타")
-  guardianPhone          String?
+  guardianPhone          String? // SEC-5: 암호화
   careRegistrationNumber String?
   careGrade              String?
-  phone                  String?
+  phone                  String? // SEC-5: 암호화
   scheduleLabel          String?
   isActive               Boolean          @default(true)
   purgeAt                DateTime?
@@ -120,6 +120,7 @@ model Comment {
   author     String // "caregiver" | "guardian"
   body       String // LAW-11: 암호화
   createdAt  DateTime        @default(now())
+  readAt     DateTime? // 상대가 그 글을 연 시각. 비어 있으면 안 읽은 댓글
 
   @@index([reportId])
   @@index([documentId])

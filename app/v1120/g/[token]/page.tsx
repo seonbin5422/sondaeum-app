@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { decryptText } from "@/lib/crypto";
+import { decryptText, openPII } from "@/lib/crypto";
 import { serviceTimeOf } from "../../_data";
 import { contactTitle, type CareRecord, type GuardianReportProps } from "../../_types";
 import { GuardianReport } from "./GuardianReport";
@@ -17,7 +17,7 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
   return {
     guardianName: visit.client.guardianName,
     guardianTitle: contactTitle(visit.client.guardianRelation),
-    clientName: visit.client.name,
+    clientName: openPII(visit.client.name),
     caregiverName: visit.caregiver.name,
     startedAt: time.startedAt,
     endedAt: time.endedAt,

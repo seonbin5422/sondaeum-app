@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { myBoardSummary, myClients } from "../_data";
+import { myBoardSummary, myClients, myUnreadByClient } from "../_data";
 import { UnreadBadge } from "../_components/Unread";
 import { Avatar, Screen } from "../_components/ui";
 import { contactTitle, NO_CONTACT } from "../_types";
 
 // 게시판 탭: 수급자별 게시판 목록 (DIF-5, D-15 261101.ver). 보낸 보고서가 글로 올라오고 댓글로 이야기한다
 export default async function ChatsPage() {
-  const [all, latest] = await Promise.all([myClients(), myBoardSummary()]);
+  const [all, latest, unread] = await Promise.all([myClients(), myBoardSummary(), myUnreadByClient()]);
   // 보호자가 없는 수급자는 게시판이 없다 (D-49)
   const rooms = all.filter((c) => c.isActive && c.guardianRelation !== NO_CONTACT);
   return (
@@ -30,7 +30,7 @@ export default async function ChatsPage() {
                     </span>
                     <span className={`text-base ${post ? "font-bold" : "text-muted"}`}>{post ? `${post.title} · 댓글 ${post.comments}` : "아직 보낸 보고서가 없어요"}</span>
                   </span>
-                  <UnreadBadge clientId={c.id} />
+                  <UnreadBadge n={unread.get(c.id) ?? 0} />
                   <span aria-hidden className="text-xl font-bold text-muted">
                     ›
                   </span>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { myBoard, myClient, requireCaregiver } from "../../../_data";
-import { commentAsCaregiver } from "../../../_actions";
+import { commentAsCaregiver, markReadAsCaregiver } from "../../../_actions";
 import { CommentThread, PostSummary } from "../../../_components/Board";
 import { Screen, TopBar } from "../../../_components/ui";
 import { contactTitle, NO_CONTACT } from "../../../_types";
@@ -21,7 +21,7 @@ export default async function PostPage({ params }: PageProps<"/v1120/chats/[clie
         names={names}
         fullHref={post.period ? `/v1120/client/${clientId}/documents/summary?from=${post.period.from}&to=${post.period.to}` : `/v1120/g/${post.shareToken}?from=board`}
       />
-      <CommentThread post={post} me="caregiver" names={names} clientId={clientId} send={commentAsCaregiver} />
+      <CommentThread post={post} me="caregiver" names={names} send={commentAsCaregiver} markRead={markReadAsCaregiver} />
     </Screen>
   );
 }

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { myClients } from "../_data";
+import { myClients, myUnreadByClient } from "../_data";
 import { restoreClient } from "../_actions";
 import { ChatLabel } from "../_components/Unread";
 import { Avatar, Card, Chip, LinkButton, Screen } from "../_components/ui";
 
 // 수급자 탭: 담당 수급자 목록 (기존 C-09 관리 화면을 합침). 삭제한 수급자은 아래에서 되살린다.
 export default async function ClientsPage() {
-  const clients = await myClients();
+  const [clients, unread] = await Promise.all([myClients(), myUnreadByClient()]);
   const active = clients.filter((c) => c.isActive);
   const removed = clients.filter((c) => !c.isActive);
   return (
@@ -37,7 +37,7 @@ export default async function ClientsPage() {
                   [
                     ["방문 기록", `/v1120/client/${c.id}/history`],
                     ["서류 만들기", `/v1120/client/${c.id}/documents`],
-                    [<ChatLabel key="chat" clientId={c.id} />, `/v1120/chats/${c.id}`],
+                    [<ChatLabel key="chat" n={unread.get(c.id) ?? 0} />, `/v1120/chats/${c.id}`],
                   ] as const
                 ).map(([label, href]) => (
                   <Link

@@ -140,8 +140,8 @@ export const boardByClient: Record<string, BoardPost[]> = {
       kind: "report",
       period: null,
       comments: [
-        { id: "m5", from: "guardian", at: "2026-10-07T20:41:00+09:00", text: "식사를 반만 드셨네요. 내일 반찬을 좀 보낼게요." },
-        { id: "m6", from: "guardian", at: "2026-10-07T20:42:00+09:00", text: "감사합니다." },
+        { id: "m5", from: "guardian", at: "2026-10-07T20:41:00+09:00", text: "식사를 반만 드셨네요. 내일 반찬을 좀 보낼게요.", readAt: null },
+        { id: "m6", from: "guardian", at: "2026-10-07T20:42:00+09:00", text: "감사합니다.", readAt: null },
       ],
     },
     {
@@ -153,8 +153,8 @@ export const boardByClient: Record<string, BoardPost[]> = {
       kind: "report",
       period: null,
       comments: [
-        { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?" },
-        { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요." },
+        { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?", readAt: null },
+        { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요.", readAt: null },
       ],
     },
   ],
@@ -168,7 +168,7 @@ export const boardByClient: Record<string, BoardPost[]> = {
       physicalNote: null,
       kind: "report",
       period: null,
-      comments: [{ id: "l2", from: "guardian", at: "2026-10-08T21:00:00+09:00", text: "저녁은 잘 드셨나요?" }],
+      comments: [{ id: "l2", from: "guardian", at: "2026-10-08T21:00:00+09:00", text: "저녁은 잘 드셨나요?", readAt: null }],
     },
   ],
 };

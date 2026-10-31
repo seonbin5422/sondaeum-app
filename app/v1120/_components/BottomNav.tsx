@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTotalUnread } from "../_unread";
+import { useEffect, useState } from "react";
+import { myUnreadTotal } from "../_actions";
 
 // 하단 메뉴바 (1120.ver 제안안, 와이어 없음). 아이콘만 두지 않고 항상 글자를 붙인다.
 const TABS = [
@@ -24,7 +25,12 @@ function guardianTabs(token: string) {
 
 export function BottomNav({ guardianToken }: { guardianToken?: string }) {
   const pathname = usePathname();
-  const unread = useTotalUnread();
+  const [unread, setUnread] = useState(0);
+  // 요양보호사 메뉴만: 화면이 바뀔 때마다 서버에 안 읽은 보호자 댓글 수를 묻는다
+  useEffect(() => {
+    if (guardianToken) return;
+    myUnreadTotal().then(setUnread, () => {});
+  }, [pathname, guardianToken]);
   const tabs = guardianToken ? guardianTabs(guardianToken) : TABS;
   return (
     <nav aria-label="메뉴" className="border-t border-(--line) bg-white">

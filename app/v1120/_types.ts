@@ -49,6 +49,7 @@ export type TodayVisit = {
   scheduleLabel: string;
   status: VisitStatus;
   interrupted: boolean; // 녹음이 중간에 멈춤 (D-27)
+  unread?: number; // 보호자 새 댓글 수 (DIF-5)
 };
 
 export type GuardianReportProps = {
@@ -117,7 +118,7 @@ export type Stroke = [number, number][];
 export type Signatures = { recipient: Stroke[]; caregiver: Stroke[]; reason: string };
 
 // 수급자 게시판(DIF-5, D-15 261101.ver): 보낸 보고서 하나가 게시글 하나, 이야기는 댓글로
-export type BoardComment = { id: string; from: "caregiver" | "guardian"; at: string; text: string }; // at: ISO
+export type BoardComment = { id: string; from: "caregiver" | "guardian"; at: string; text: string; readAt: string | null }; // at·readAt: ISO, readAt은 상대가 읽은 시각
 export type BoardPost = {
   shareToken: string; // 보고서 링크 /g/[shareToken]이자 댓글을 달 게시글 키
   title: string;

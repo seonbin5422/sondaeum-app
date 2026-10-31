@@ -29,7 +29,7 @@ export default async function BoardPage({ params }: PageProps<"/v1120/chats/[cli
           <ol className="flex flex-col gap-4">
             {posts.map((p) => (
               <li key={p.shareToken}>
-                <PostCard post={p} names={names} href={`/v1120/chats/${clientId}/${p.shareToken}`} />
+                <PostCard post={p} names={names} me="caregiver" href={`/v1120/chats/${clientId}/${p.shareToken}`} />
               </li>
             ))}
           </ol>

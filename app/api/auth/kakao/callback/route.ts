@@ -8,13 +8,20 @@ import { setEditGrantCookie } from "@/lib/editGrant";
 
 export const runtime = "nodejs";
 
+// 아이폰 카카오 로그인 실패 원인을 찾으려고 실패마다 이유를 남긴다 (Vercel 로그에서 "kakao-login" 검색).
+// 로그인 화면 주소에도 ?kakao=<이유>를 붙여 휴대폰 화면 캡처로도 알 수 있게 한다. code·state 값은 남기지 않는다
+function fail(req: NextRequest, reason: string, extra: Record<string, unknown> = {}) {
+  console.warn("kakao-login", JSON.stringify({ reason, host: req.headers.get("host"), ua: req.headers.get("user-agent"), ...extra }));
+  return NextResponse.redirect(absoluteUrl(`/login?kakao=${reason}`, req), 303);
+}
+
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
   const error = req.nextUrl.searchParams.get("error");
 
   if (error || !code) {
-    return NextResponse.redirect(absoluteUrl("/login", req), 303);
+    return fail(req, error ? "kakao_error" : "no_code", { error, errorDescription: req.nextUrl.searchParams.get("error_description") });
   }
 
   const host = req.headers.get("host") ?? req.nextUrl.host;
@@ -27,8 +34,7 @@ export async function GET(req: NextRequest) {
     accessToken = await exchangeCodeForToken(code, redirectUri);
     kakaoUser = await fetchKakaoUser(accessToken);
   } catch (err) {
-    console.error(err);
-    return NextResponse.redirect(absoluteUrl("/login", req), 303);
+    return fail(req, "token_or_user", { message: err instanceof Error ? err.message : String(err), redirectUri });
   }
 
   const pendingEdit = await readPendingEditCookie();

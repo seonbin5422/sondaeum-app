@@ -49,7 +49,7 @@ export function GuardianReport({ token, order, sent, fromBoard = false }: { toke
       <ReportSections record={record} order={order} />
 
       {/* 게시판의 "보고서 전체 보기"로 들어왔으면 게시판으로 돌아가는 버튼은 안 보인다(뒤로가기로 돌아감) */}
-      {sent && !fromBoard && <LinkButton href={`/v1120/g/${token}/board`}>게시판에서 댓글 보기</LinkButton>}
+      {sent && !fromBoard && <LinkButton href={`/v1120/g/${token}/board`}>게시판으로 이동하기</LinkButton>}
 
       <p className="rounded-xl bg-(--neutral-soft) px-4 py-3 text-base text-muted">
         {head.caregiverName} 요양보호사가 작성하고 확인한 기록이에요. 의료적 판단이 아니에요. 궁금한 점은 담당 기관에

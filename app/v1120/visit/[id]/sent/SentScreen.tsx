@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { LinkButton, Screen } from "../../../_components/ui";
+import { preloadKakao, shareKakaoCard } from "../../../_components/kakaoShare";
+import { caregiverTitle, maskName } from "../../../_types";
 
 // C-16 보호자에게 보내기 (와이어 263:334). ① 저장 완료 → ② 카카오톡으로 보내기, 보낸 뒤 누구에게 언제 보냈는지 초록으로.
 
@@ -18,6 +20,7 @@ export function SentScreen({
   guardianTitle,
   noContact,
   date,
+  caregiverName,
 }: {
   visitId: string;
   shareToken: string;
@@ -26,6 +29,7 @@ export function SentScreen({
   guardianTitle: string;
   noContact: boolean; // 보호자가 없는 수급자 (D-49)
   date: string;
+  caregiverName: string;
 }) {
   const [sharedAt, setSharedAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
@@ -36,6 +40,7 @@ export function SentScreen({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- build the absolute link once window is available
     setLink(`${window.location.origin}/v1120/g/${shareToken}`);
+    preloadKakao();
     try {
       const saved = JSON.parse(localStorage.getItem(key) ?? "null") as { at: string; copied: boolean } | null;
       if (saved) {
@@ -56,6 +61,10 @@ export function SentScreen({
 
   async function shareKakao() {
     const text = `${clientName} 어르신 ${date} 방문 보고서예요.`;
+    if (shareKakaoCard({ title: `${date} 방문 보고서`, description: `${maskName(clientName)} 어르신 · ${caregiverTitle(caregiverName)}가 보냈어요`, image: "report", url: link, button: "보고서 보기" })) {
+      markShared(false);
+      return;
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title: "손다음 방문 보고서", text, url: link });

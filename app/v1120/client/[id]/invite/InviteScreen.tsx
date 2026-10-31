@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { LinkButton, Screen, TopBar } from "../../../_components/ui";
+import { preloadKakao, shareKakaoCard } from "../../../_components/kakaoShare";
+import { maskName } from "../../../_types";
 
 export function InviteScreen({
   justRegistered = false,
@@ -29,12 +31,17 @@ export function InviteScreen({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- build the absolute link once window is available
     setLink(`${window.location.origin}${chatPath}`);
+    preloadKakao();
   }, [chatPath]);
 
   // 보호자가 읽는 글이라 "어르신"을 쓴다 (D-31)
   const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서는 이 게시판에 올라오고 댓글로 이야기할 수 있어요. 따로 가입하지 않아도 돼요.`;
 
   async function kakao() {
+    if (shareKakaoCard({ title: `${maskName(clientName)} 어르신 게시판`, description: "방문 보고서를 받아 보고 댓글로 이야기해요", image: "board", url: link, button: "게시판 열기" })) {
+      setSent("kakao");
+      return;
+    }
     try {
       if (navigator.share) {
         await navigator.share({ title: "손다음 게시판 초대", text: message, url: link });

@@ -74,6 +74,9 @@ export function contactTitle(relation: string) {
 // "박○○ 요양보호사". 체험 계정 이름("체험 요양보호사")처럼 이미 붙어 있으면 다시 붙이지 않는다
 export const caregiverTitle = (name: string) => (name.endsWith("요양보호사") ? name : `${name} 요양보호사`);
 
+// 카카오 공유 카드처럼 앱 밖으로 나가는 글에 쓰는 이름: "홍길순" → "홍○○"
+export const maskName = (name: string) => (name ? `${name.slice(0, 1)}○○` : name);
+
 export const CARE_GRADES =["1등급", "2등급", "3등급", "4등급", "5등급", "인지지원등급"] as const;
 export type CareGrade = (typeof CARE_GRADES)[number];
 

@@ -1,10 +1,10 @@
 import { notFound, redirect } from "next/navigation";
-import { myClient, requireCaregiver } from "../../../_data";
+import { myBoardToken, myClient, requireCaregiver } from "../../../_data";
 import { contactTitle, NO_CONTACT } from "../../../_types";
 import { InviteScreen } from "./InviteScreen";
 
-// 보호자 대화방 초대 (와이어 없음, 제안안). 수급자를 등록하면 바로 이 화면으로 오고(?new=1),
-// 아직 들어오지 않은 보호자에게는 수급자 정보·대화방에서 다시 보낼 수 있다.
+// C-23 보호자 게시판 초대 (Figma "카카오 공유 카드/게시판 초대"). 수급자를 등록하면 바로 이 화면으로 오고(?new=1),
+// 보고서를 보내기 전에도 수급자별 게시판 링크(/v1120/g/[boardToken]/board)로 초대할 수 있다 (D-34 (b)안, 11/1).
 export default async function InvitePage({ params, searchParams }: PageProps<"/v1120/client/[id]/invite">) {
   const { id } = await params;
   const { new: justRegistered } = await searchParams;
@@ -20,8 +20,7 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/v
       guardianTitle={contactTitle(c.guardianRelation)}
       guardianPhone={c.guardianPhone}
       caregiverName={caregiver.name}
-      // shortcut: 보호자 입장 토큰은 대화방(DIF-5, 개발 1)에서 만든다, 그 전까지 링크는 열리지 않는다
-      chatPath={`/v1120/c/pending-${c.id}`}
+      chatPath={`/v1120/g/${await myBoardToken(c.id)}/board`}
       doneHref={justRegistered === "1" ? "/v1120/clients" : `/v1120/client/${c.id}`}
     />
   );

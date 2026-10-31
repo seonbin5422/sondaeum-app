@@ -218,22 +218,47 @@ export async function myBoardSummary(): Promise<Map<string, { title: string; com
   return latest;
 }
 
-// 보호자 게시판 (G-02): 보고서·서류 링크 하나를 가진 보호자가 그 수급자의 게시판을 모두 본다. 로그인 없음
+// 보호자 게시판 (G-02): 보고서·서류 링크나 게시판 초대 링크 하나를 가진 보호자가 그 수급자의 게시판을 모두 본다. 로그인 없음
 // shortcut: 링크만 있으면 누구나 그 수급자 게시판을 본다, 보호자 로그인(D-44)·링크 만료(STB-5)가 생기면 그걸로 막는다
 export async function guardianBoard(shareToken: string) {
   const clientSelect = { id: true, name: true, guardianName: true, guardianRelation: true, isActive: true, purgeAt: true, scheduleLabel: true };
-  const [r, doc] = await Promise.all([
+  const [r, doc, invited] = await Promise.all([
     prisma.report.findUnique({ where: { shareToken }, select: { sentAt: true, visit: { select: { caregiver: { select: { name: true } }, client: { select: clientSelect } } } } }),
     prisma.sharedDocument.findUnique({ where: { shareToken }, select: { caregiverId: true, client: { select: clientSelect } } }),
+    prisma.client.findUnique({ where: { boardToken: shareToken }, select: { ...clientSelect, caregiver: { select: { name: true } } } }),
   ]);
-  const c = r?.sentAt ? r.visit.client : doc?.client;
+  const c = r?.sentAt ? r.visit.client : (doc?.client ?? invited);
   if (!c?.isActive || c.purgeAt) return null;
-  const caregiverName = r?.sentAt ? r.visit.caregiver.name : ((await prisma.caregiver.findUnique({ where: { id: doc!.caregiverId }, select: { name: true } }))?.name ?? "");
+  const caregiverId = doc?.caregiverId;
+  const caregiverName = r?.sentAt
+    ? r.visit.caregiver.name
+    : caregiverId
+      ? ((await prisma.caregiver.findUnique({ where: { id: caregiverId }, select: { name: true } }))?.name ?? "")
+      : (invited?.caregiver?.name ?? "");
   const [visits, docs] = await Promise.all([
     prisma.visit.findMany({ where: { clientId: c.id, status: "SENT" }, select: postSelect }),
     prisma.sharedDocument.findMany({ where: { clientId: c.id }, select: docSelect }),
   ]);
-  return { clientId: c.id, clientName: c.name, guardianName: c.guardianName, guardianRelation: c.guardianRelation, caregiverName, posts: newestFirst([...toPosts(visits), ...docsToPosts(docs)]) };
+  return {
+    clientId: c.id,
+    clientName: c.name,
+    guardianName: c.guardianName,
+    guardianRelation: c.guardianRelation,
+    caregiverName,
+    viaInvite: !r?.sentAt && !doc, // 게시판 초대 링크로 들어옴 (돌아갈 보고서 화면이 없음)
+    posts: newestFirst([...toPosts(visits), ...docsToPosts(docs)]),
+  };
+}
+
+// 게시판 초대 링크 토큰. 처음 부를 때 만든다 (내 수급자만)
+export async function myBoardToken(clientId: string): Promise<string | null> {
+  const caregiver = await requireCaregiver();
+  const c = await prisma.client.findFirst({ where: { id: clientId, caregiverId: caregiver.id }, select: { boardToken: true } });
+  if (!c) return null;
+  if (c.boardToken) return c.boardToken;
+  const boardToken = crypto.randomUUID().replaceAll("-", "");
+  await prisma.client.update({ where: { id: clientId }, data: { boardToken } });
+  return boardToken;
 }
 
 // 보호자가 게시판에 올라온 서류를 볼 때 쓰는 방문 기록 (보낸 것만). 링크 확인은 guardianBoard에서 먼저 한다

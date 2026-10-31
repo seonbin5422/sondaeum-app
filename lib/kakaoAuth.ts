@@ -45,7 +45,11 @@ export async function exchangeCodeForToken(code: string, redirectUri: string): P
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
   });
-  if (!res.ok) throw new Error("카카오 토큰 교환에 실패했습니다.");
+  if (!res.ok) {
+    // 카카오 오류 응답(error·error_code=KOE…)은 토큰을 담지 않아 로그에 남겨도 된다
+    const body = (await res.json().catch(() => ({}))) as { error?: string; error_code?: string };
+    throw new Error(`카카오 토큰 교환에 실패했습니다. (${res.status} ${body.error ?? ""} ${body.error_code ?? ""})`);
+  }
   const data = await res.json();
   return data.access_token as string;
 }

@@ -1,6 +1,6 @@
 # 02. 데이터 모델
 
-모델은 5개(`Caregiver`, `Client`, `Visit`, `Report`, `AiUsage`)다. 대화방(DIF-5) 모델 3개는 아래 "대화방" 절에 초안으로 있다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
+모델은 5개(`Caregiver`, `Client`, `Visit`, `Report`, `AiUsage`)다. 게시판 댓글(DIF-5) `Comment`는 아래 "게시판" 절에 있다. 원본은 `prisma/schema.prisma`이고, 바꿀 때는 `npx prisma migrate dev --name <이름>`으로 마이그레이션을 만든다.
 
 ## 관계
 
@@ -36,7 +36,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `allergies`, `medicalHistory`, `medicationNotes` | String? | 알레르기, 병력, 복용약 | 아니오 (SEC-5) |
 | `personalNotes` | String? | 요양보호사의 지속 메모(특이사항) | 아니오 |
 | `guardianName`, `guardianRelation` | String | 보고서 받을 사람(보호자) 이름, 관계. 관계는 딸·아들·배우자·이웃·친척·기타 또는 기관 사회복지사·주민센터 담당자·후견인, 받을 사람이 없으면 `없음`이고 이때 이름은 빈 글자 (D-49) | 아니오 |
-| `guardianPhone` | String? | 보호자 전화번호. 대화방 초대 문자에 씀 (D-33) | 아니오 (SEC-5) |
+| `guardianPhone` | String? | 보호자 전화번호. 게시판 초대 문자에 씀 (D-33) | 아니오 (SEC-5) |
 | `careRegistrationNumber` | String? | 장기요양인정번호. 등록·수정(C-07·C-08)에서 필수 (D-31) | 아니오 (SEC-5) |
 | `careGrade` | String? | 장기요양등급 `"1등급"`~`"5등급"`, `"인지지원등급"` (LAW-4, D-31) | 아니오 |
 | `caregiverId` | String? | 담당 요양보호사 (SEC-2, D-35) | |
@@ -230,86 +230,57 @@ type PeriodSummaryProps = {
 - 제공한 돌봄(체크·제공시간) 요약을 맨 뒤에 넣을지 뺄지 (기획)
 - 기간 안에 `careRecord`가 없는 옛 보고서가 섞이면 특이사항만 보여 줄지 (개발 1)
 
-## 대화방 (DIF-5, D-45 초안)
+## 게시판 (DIF-5, D-15 261101.ver)
 
-수급자마다 대화방 하나에서 요양보호사와 보호자가 말을 주고받고, 보낸 방문 보고서가 카드로 올라온다 (D-25). 대화방은 대화만 한다 (D-44). 화면(C-18·G-02, `app/v1120/_components/ChatRoom.tsx`)은 이미 아래 화면 값으로 임시 데이터(`app/v1120/_mock.ts`의 `chatByClient`)를 쓰고 있다. 개발 1은 DB 모델과 액션을, 개발 2는 보호자 카카오 로그인·암호화·링크 만료(LAW-11)를 맞춘다.
+대화방 대신 수급자마다 게시판을 둔다. 보낸 방문 보고서 하나가 글 하나이고, 요양보호사와 보호자는 글마다 댓글로 이야기한다. 새 글 모델은 없다: `Visit.status = SENT`인 `Report`가 곧 글이다. D-45의 `Guardian`·`ChatRoom`·`Message` 초안은 쓰지 않는다.
 
 ### 저장 모양
 
 ```prisma
-model Guardian {               // 보호자 계정 (D-44: 처음 한 번 카카오 로그인)
+model Comment {
   id        String   @id @default(cuid())
-  kakaoId   String   @unique
+  reportId  String   // 댓글을 단 글(보낸 보고서)
+  author    String   // "caregiver" | "guardian"
+  body      String   // 암호화 (LAW-11)
   createdAt DateTime @default(now())
-  rooms     ChatRoom[]
-}
-
-model ChatRoom {               // 수급자당 하나
-  id               String    @id @default(cuid())
-  clientId         String    @unique
-  guardianId       String?   // 초대를 받아 카카오 로그인한 보호자. 비어 있으면 아직 안 들어옴
-  inviteToken      String    @unique @default(cuid()) // 초대 링크 /c/[inviteToken]
-  inviteExpiresAt  DateTime? // LAW-11·STB-5. "초대 다시 보내기"(D-33)는 새 토큰 + 새 만료
-  guardianJoinedAt DateTime? // 보호자 첫 입장 = 초대 수락 (D-33)
-  messages         Message[]
-}
-
-model Message {
-  id        String    @id @default(cuid())
-  roomId    String
-  sender    String    // "CAREGIVER" | "GUARDIAN"
-  body      String?   // 글, 암호화 (LAW-11). 보고서 카드면 null
-  reportId  String?   // 보고서 카드면 Report.id
-  createdAt DateTime  @default(now())
-  readAt    DateTime? // 상대가 읽은 시각. 안 읽은 수 = 상대가 보낸 것 중 readAt 없음
-  @@index([roomId, createdAt])
 }
 ```
 
-- 대화방은 수급자를 등록할 때 같이 만든다. 그래야 등록 직후 초대 화면(C-23)에 링크가 있다.
-- 보호자 이름·관계·전화번호는 지금처럼 `Client`에 둔다(요양보호사가 등록, D-31·D-33). `Guardian`은 로그인 계정만 맡는다.
-- 보고서 카드는 `sendReport`(→ `SENT`)가 같은 트랜잭션에서 `Message`를 하나 만든다.
+- 댓글은 보낸 보고서(`reportId`) 또는 게시판에 올린 서류(`documentId`) 중 하나에 단다 (11/1 저녁, 마이그레이션 `20261101180000_shared_documents`).
+- `SharedDocument`(clientId, caregiverId, kind="summary", from·to YYYY-MM-DD, shareToken): 진료 참고용 요약(C-20)의 "게시판에 올리기". 내용은 저장하지 않고 볼 때 그 기간 기록으로 다시 만든다. 같은 수급자·기간은 한 번만. 보호자는 `/v1120/g/[shareToken]/post`·`/document`로 본다.
+- 수급자를 완전히 지우거나(`purgeExpiredClients`) 체험 계정을 지울 때 보고서·서류보다 먼저 지운다. FK도 `ON DELETE CASCADE`.
+- 마이그레이션: `prisma/migrations/20261101120000_board_comments`.
 
 ### 화면이 받는 값
 
 ```ts
-type ChatMessage = {
-  id: string;
-  from: "caregiver" | "guardian"; // Message.sender를 소문자로
-  at: string;                     // ISO, Message.createdAt
-  text?: string;                  // 복호화한 body
-  report?: { shareToken: string; title: string }; // 보고서 카드
-};
+type BoardComment = { id: string; from: "caregiver" | "guardian"; at: string; text: string };
+type BoardPost = { shareToken: string; title: string; at: string; notes: string | null; physicalNote: string | null; comments: BoardComment[] };
 ```
 
-| 화면 | 값 | 규칙 |
+| 화면 | 받는 값 | 비고 |
 | --- | --- | --- |
-| 대화방 C-18·G-02 | `ChatMessage[]` 오래된 순 | 내 말은 오른쪽. 날짜가 바뀌면 날짜 줄 |
-| 보고서 카드 | `report.title`, `report.shareToken` | 제목은 "10월 7일 방문 보고서"(방문한 날). 누르면 `/g/[shareToken]` (G-01) |
-| 대화 목록·홈 C-03·하단 메뉴 | 수급자별 안 읽은 수, 마지막 메시지 | 카드면 "📄 10월 7일 방문 보고서" |
-| 수급자 정보·대화방의 "초대 다시 보내기" | `guardianJoinedAt`이 비었는지 | 지금 `ClientProfile.guardianJoined`(임시로 늘 `false`)를 이 값으로 |
+| 게시판 탭 (`/v1120/chats`) | `myBoardSummary()` | 수급자별 최근 글 제목과 댓글 수 |
+| C-18 수급자 게시판 (`/v1120/chats/[clientId]`) | `myBoard(clientId)` 최신 글이 위 | 글 카드 목록. 내 수급자의 보낸 보고서만 |
+| C-18 게시글 상세 (`/v1120/chats/[clientId]/[shareToken]`) | `myBoard(clientId)`에서 그 글 | 보고서 요약(`physicalNote`·`notes`) + 댓글, 입력칸은 아래 고정 |
+| G-02 보호자 게시판 (`/v1120/g/[shareToken]/board`) | `guardianBoard(shareToken)` | 받은 보고서 링크 하나로 그 수급자의 보낸 보고서를 모두 본다. 로그인 없음 |
+| G-02 게시글 상세 (`/v1120/g/[shareToken]/post`) | `guardianBoard(shareToken)`에서 그 글 | C-18 상세와 같은 모양 |
 
-**카드 id 맞추기**: 지금 코드의 카드는 `report.visitId`로 `/v1120/g/[visitId]`를 여는데, 실제 G-01은 `Report.shareToken`으로 연다. DB는 `Message.reportId`로 보고서를 가리키고, 화면에는 링크용 `shareToken`과 `title`만 넘긴다. 코드의 `ChatMessage` 타입은 연결할 때 이 모양으로 바꾼다.
+`notes`는 보호자 보고서에 보인 특이사항(`guardianNotes`, 없으면 `notes`)이다. 화면(`app/v1120/_components/Board.tsx`의 `PostCard`·`PostSummary`·`CommentThread`)은 열어 둔 동안 5초마다 `router.refresh()`로 글·댓글을 다시 받는다 (D-34 폴링). 디자인은 Figma wireframe-1120 "와이어 · C-18 수급자 게시판"·"게시글 상세"·"G-02 보호자 게시판".
 
-### 액션 (개발 1, 1120 서버 액션 방식)
+### 액션 (`app/v1120/_actions.ts`)
 
-| 액션 | 누가 | 하는 일 |
+| 액션 | 누가 | 확인 |
 | --- | --- | --- |
-| `sendMessage(clientId, text)` | 둘 다 | 내 방인지 확인(요양보호사 = 담당 수급자, 보호자 = `guardianId`) → 암호화해 저장 → `ChatMessage` 돌려줌 |
-| `messagesSince(clientId, afterId?)` | 둘 다 | `afterId` 뒤 메시지만. 대화방을 열어 둔 동안 5초마다 부른다 (폴링, D-34) |
-| `markRead(clientId)` | 둘 다 | 대화방을 열 때 상대가 보낸 메시지의 `readAt`을 채움 |
-| `unreadCounts()` | 요양보호사 | `{ [clientId]: number }`. 홈·대화 목록·하단 메뉴 숫자 (지금 `app/v1120/_unread.ts`의 임시 값 대신) |
-| `reissueInvite(clientId)` | 요양보호사 | 새 `inviteToken`·`inviteExpiresAt` (D-33 초대 다시 보내기) |
+| `commentAsCaregiver(shareToken, text)` | 요양보호사 | 내가 보낸 보고서인지, 수급자가 지워지지 않았는지 |
+| `commentAsGuardian(shareToken, text)` | 보호자 | 보낸 보고서인지, 수급자가 활성인지. 링크만 있으면 쓸 수 있음 |
 
-보호자 쪽 흐름: 초대 링크 `/c/[inviteToken]` → 카카오 로그인(개발 2) → `guardianId`·`guardianJoinedAt` 채움 → 그 뒤로는 로그인 세션으로 들어온다(토큰이 만료돼도 대화 가능).
+댓글은 1~500자.
 
-### 정할 것
+### 남은 것
 
-- 보호자가 여러 명(딸·아들)일 때. 이 초안은 대화방당 보호자 한 명 (기획)
-- 초대 링크 만료 기간 (개발 2, LAW-11)
-- 폴링 간격 5초가 무료 플랜 호출 수에 괜찮은지, 화면을 떠나면 멈추기 (개발 1)
-- 지난 메시지를 한 번에 다 불러올지, 최근 50개씩 끊을지 (개발 1)
-- 웹 푸시 알림(개발 2, 11/13)이 `Message`를 만들 때 같이 보낼지
+- 안 읽은 댓글 수: 지금은 늘 0 (`_unread.ts`). `Comment`에 읽은 시각을 두고 서버 값으로 바꾼다.
+- 보호자 확인: 링크만 있으면 누구나 보호자로 보고 쓴다. 보호자 로그인(D-44)이나 링크 만료(STB-5)로 막는다.
 
 ## 방문 상태 전이
 

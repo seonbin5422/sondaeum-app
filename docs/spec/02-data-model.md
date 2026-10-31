@@ -248,6 +248,7 @@ model Comment {
 
 - 댓글은 보낸 보고서(`reportId`) 또는 게시판에 올린 서류(`documentId`) 중 하나에 단다 (11/1 저녁, 마이그레이션 `20261101180000_shared_documents`).
 - `SharedDocument`(clientId, caregiverId, kind="summary", from·to YYYY-MM-DD, shareToken): 진료 참고용 요약(C-20)의 "게시판에 올리기". 내용은 저장하지 않고 볼 때 그 기간 기록으로 다시 만든다. 같은 수급자·기간은 한 번만. 보호자는 `/v1120/g/[shareToken]/post`·`/document`로 본다.
+- `Client.boardToken`(11/1, 마이그레이션 `20261101210000_client_board_token`): 보호자 게시판 초대 링크 `/v1120/g/[boardToken]/board`. 초대 화면(C-23)을 처음 열 때 `myBoardToken`이 만든다. 보고서를 보내기 전에도 들어올 수 있다. `guardianBoard`는 보고서·서류·초대 토큰을 모두 받는다.
 - 수급자를 완전히 지우거나(`purgeExpiredClients`) 체험 계정을 지울 때 보고서·서류보다 먼저 지운다. FK도 `ON DELETE CASCADE`.
 - 마이그레이션: `prisma/migrations/20261101120000_board_comments`.
 

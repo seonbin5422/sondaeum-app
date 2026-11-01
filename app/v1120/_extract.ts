@@ -185,3 +185,53 @@ export function keepFilled(old: CareRecord, next: CareRecord, edited: boolean): 
   }
   return merged;
 }
+
+// 기록 확인(C-14)에서 녹음(C-12)으로 돌아와 고쳐 말했을 때: 처음 들어올 때의 녹음 글과 지금 녹음 글을 낱말 찾기로 비교해
+// 값이 달라진 칸만 "고쳐 말한 칸"으로 본다. 그 칸은 새로 말한 값을, 나머지는 기록 확인 값(직접 고친 값 포함)을 쓴다 (D-42 261101.ver)
+const GROUPS = ["physical", "cognitive", "household", "change", "bowel"] as const;
+type Group = (typeof GROUPS)[number];
+
+export function changedFields(base: CareRecord, next: CareRecord): string[] {
+  const out: string[] = [];
+  for (const g of GROUPS) {
+    const b = base[g] as Record<string, unknown>;
+    const n = next[g] as Record<string, unknown>;
+    for (const k of Object.keys(n)) if (b[k] !== n[k]) out.push(`${g}.${k}`);
+  }
+  if (base.notes !== next.notes) out.push("notes");
+  return out;
+}
+
+// 서버에서 받은 칸 이름 목록이 진짜 칸인지 확인한다 (클라이언트에서 오는 값)
+export function isField(r: CareRecord, f: string) {
+  if (f === "notes") return true;
+  const [g, k, extra] = f.split(".");
+  return extra === undefined && (GROUPS as readonly string[]).includes(g) && Object.hasOwn(r[g as Group], k);
+}
+
+function setField(r: CareRecord, f: string, from: CareRecord | null) {
+  if (f === "notes") {
+    r.notes = from ? from.notes : null;
+    r.guardianNotes = from ? from.guardianNotes ?? null : null;
+    r.notesNoAction = from ? from.notesNoAction ?? false : false;
+    r.notesAsk = from ? from.notesAsk ?? null : null;
+    return;
+  }
+  const [g, k] = f.split(".") as [Group, string];
+  (r[g] as Record<string, unknown>)[k] = from ? (from[g] as Record<string, unknown>)[k] : null;
+  if (g === "physical") r.physicalNote = from ? from.physicalNote : null;
+}
+
+// 녹음 화면 체크 목록: 고쳐 말한 칸은 지금 녹음 글의 값으로
+export function overlayFields(saved: CareRecord, next: CareRecord, fields: string[]): CareRecord {
+  const r = structuredClone(saved);
+  for (const f of fields) setField(r, f, next);
+  return r;
+}
+
+// 다시 정리하기 전: 고쳐 말한 칸을 비워 두면 summarizeVisit의 keepFilled가 그 칸만 새 AI 값으로 채운다
+export function clearFields(saved: CareRecord, fields: string[]): CareRecord {
+  const r = structuredClone(saved);
+  for (const f of fields) if (isField(r, f)) setField(r, f, null);
+  return r;
+}

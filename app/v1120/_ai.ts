@@ -26,11 +26,11 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
 - physicalNote: 신체활동으로 한 일을 가족이 읽기 쉽게 1~2문장. 없으면 null.
 - cognitive(인지·정서, 각각 분): stimulation=인지자극활동(사진·퍼즐·노래·그림), dailyLiving=일상생활 함께하기(같이 요리·정리), behaviorManagement=인지행동변화 관리(배회·불안 돌봄), emotional=의사소통·말벗·격려. 노래 같이 부르기·사진 보며 얘기 나누기처럼 함께 한 활동에 시간을 말했으면 notes에만 쓰지 말고 이 칸에 넣습니다. 했다고 말했지만 시간을 말하지 않았으면 그 칸은 null로 두되, quotes.cognitive에는 그 문장을 넣습니다(요양보호사가 확인 화면에서 시간을 채웁니다).
 - household(가사·일상생활지원): mealPrepCleaningLaundry=식사준비·청소·세탁·설거지, personalActivity=외출 동행·장보기. 하나라도 말했으면 한 것 true, 말하지 않은 것 false. 하나도 없으면 모두 null. minutes=가사에 걸린 시간(분). 활동마다 시간을 말했으면 모두 더합니다(예: '식사준비 30분 도와드리고 외출동행 15분'→45).
-- change(지난 방문과 비교한 변화): physical=신체기능, meal=식사기능, cognitive=인지기능. 좋아졌다="improved", 비슷하다="same", 나빠졌다·줄었다="worse". '지난번엔 알아보셨는데 오늘은 못 알아보셨어요'처럼 지난번과 다르다고 말한 것도 변화입니다. 비교를 말하지 않았으면 null.
+- change(지난 방문과 비교한 변화): physical=신체기능, meal=식사기능, cognitive=인지기능. 좋아졌다="improved", 비슷하다="same", 나빠졌다·줄었다="worse". '지난번엔 알아보셨는데 오늘은 못 알아보셨어요'처럼 지난번과 다르다고 말한 것도 변화입니다. '상태는 그대로입니다'·'전반적으로 비슷해요'처럼 영역 없이 전체 상태를 말했으면 세 칸 모두 그 값으로 채우고 notes에는 쓰지 않습니다. 비교를 말하지 않았으면 null.
 - bowel: stoolAccidents=대변 실수 횟수, urineAccidents=소변 실수 횟수, diaperChanges=기저귀 교환 횟수. "실수 없었다"는 0. 말하지 않았으면 null.
 - notes(특이사항, 급여제공기록지 칸): 급여 제공 중 확인한 사항과 조치사항입니다. 혈압·복약·통증·낙상·어지럼·병원·기분, 식사량과 음식 반응(예: '한 숟갈 드심', '짜다고 안 드심'), 반복해서 하신 말처럼 위 칸에 들어가지 않는 관찰. 한 문장이 다른 칸의 근거여도 이런 관찰이 있으면 notes에도 씁니다.
 - 한 활동의 시간은 가장 맞는 칸 하나에만 넣습니다(예: '사진 보며 말벗 30분'은 emotional에만). '삼십 분'·'한 시간 반'처럼 말한 시간도 분 숫자로 바꿉니다. 군말과 반복을 빼고 한 가지 사실을 한 문장으로, 최대 5문장. 숫자는 들은 그대로. 없으면 null.
-- notes는 기록지 문체로 씁니다: '~함'·'~음'·'~섭취'처럼 짧게 끝내고 주어는 뺍니다. notes에는 '~요'로 끝나는 문장이 하나도 없어야 합니다. '상태 안 좋음'·'세면 도움 줌'처럼 뭉뚱그리지 말고, 말한 수치·양·부위·횟수·좌우·장소·준비물을 그대로 넣어 구체적으로 씁니다. 말하지 않은 좌우·횟수·수치는 예시를 따라 붙이지 않습니다(예: '무릎 아프다고' → '무릎 통증 호소함', '우측'을 붙이면 지어낸 것. '기침 좀' → '기침 보임', '몇 회'를 붙이지 않음). '드셨고'·'드렸음'처럼 말을 그대로 옮기지 말고 '섭취'·'도움'·'진행함'처럼 기록지 말로 바꿉니다. 객관적 사실만 쓰고, 요양보호사가 진단하거나 치료한 것처럼 쓰지 않습니다(예: '감기 기운 있음'이 아니라 '기침 2회, 이마가 뜨겁다고 하심').
+- notes는 기록지 문체로 씁니다: '~함'·'~음'·'~섭취'처럼 짧게 끝내고 주어는 뺍니다. notes에는 '~요'로 끝나는 문장이 하나도 없어야 합니다. '상태 안 좋음'·'세면 도움 줌'처럼 뭉뚱그리지 말고, 말한 수치·양·부위·횟수·좌우·장소·준비물을 그대로 넣어 구체적으로 씁니다. 말하지 않은 좌우·횟수·수치는 예시를 따라 붙이지 않습니다(예: '무릎 아프다고' → '무릎 통증 호소함', '우측'을 붙이면 지어낸 것. '기침 좀' → '기침 보임', '몇 회'를 붙이지 않음). '~입니다'·'~ㅂ니다'로 끝난 말은 받침을 떼고 원래 낱말로 바꿉니다(예: '그대롭니다' → '그대로임'('그대롭음' X), '괜찮습니다' → '괜찮음', '아닙니다' → '아님', '마찬가지입니다' → '마찬가지임'). '드셨고'·'드렸음'처럼 말을 그대로 옮기지 말고 '섭취'·'도움'·'진행함'처럼 기록지 말로 바꿉니다. 객관적 사실만 쓰고, 요양보호사가 진단하거나 치료한 것처럼 쓰지 않습니다(예: '감기 기운 있음'이 아니라 '기침 2회, 이마가 뜨겁다고 하심').
   예: '어 점심은 반 공기? 드시다가 기침을 두 번 하셔서 천천히 드시라고 옆에서 도와드렸고 따님한테 전화로 말씀드렸어요' → '점심 식사 1/2 공기 섭취. 식사 중 기침 2회 보여 천천히 드시도록 옆에서 도움. 보호자에게 전화로 전달함.'
   예: '오른쪽 무릎 아프다 하셔서 걸으실 때 부축했어요' → '우측 무릎 통증 호소하여 이동 시 부축함.'
   자주 쓰는 문장 예(문체만 참고하고 내용은 말한 것만): '일반식 2/3 섭취. 소화 상태 양호하며 식후 따뜻한 물 복용 도움.' / '체위 변경 2시간 간격으로 시행(좌측→우측). 엉덩이 피부 발적 없음 확인.' / '오전 중 산책 후 말벗 서비스 20분 진행. 기분 양호하시며 옛날 이야기 나누심.'
@@ -86,7 +86,7 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
     household: { mealPrepCleaningLaundry: bool(h.mealPrepCleaningLaundry), personalActivity: bool(h.personalActivity), minutes: int(h.minutes, 600) },
     change: { physical: change(cg.physical), meal: change(cg.meal), cognitive: change(cg.cognitive) },
     bowel: { stoolAccidents: int(bw.stoolAccidents, 50), urineAccidents: int(bw.urineAccidents, 50), diaperChanges: int(bw.diaperChanges, 50) },
-    notes: str(r.notes),
+    notes: fixEumForm(str(r.notes)),
     guardianNotes: str(r.guardianNotes),
     notesNoAction: r.notesNoAction === true,
     notesAsk: r.notesNoAction === true ? str(r.notesAsk) : null,
@@ -138,6 +138,18 @@ async function askAi(redacted: string) {
   const raw = completion.choices[0]?.message?.content;
   if (!raw) throw new Error("AI 정리 응답이 비어 있어요.");
   return JSON.parse(raw) as unknown;
+}
+
+// 지시문에 적어도 AI가 '그대롭니다'에 '음'만 붙여 '그대롭음'을 가끔 만든다(11/1, 3번 중 1번). 자주 나오는 꼴만 고친다
+// shortcut: 정해 둔 낱말만 고친다, 다른 '~ㅂ음'이 나오면 여기에 더한다
+const EUM_FIX: [RegExp, string][] = [
+  [/그대롭음/g, "그대로임"],
+  [/마찬가집음/g, "마찬가지임"],
+  [/괜찮습음/g, "괜찮음"],
+  [/아닙음/g, "아님"],
+];
+export function fixEumForm(t: string | null) {
+  return t && EUM_FIX.reduce((acc, [re, to]) => acc.replace(re, to), t);
 }
 
 export async function fillRecord(redacted: string) {

@@ -45,10 +45,15 @@ function guide(r: CareRecord): { title: string; ask: string; say: string; found:
 // 질문을 소리로 읽는다. 브라우저에 없으면 글로만 보여 준다. 아이폰은 누른 순간에 불러야 소리가 나서 클릭 처리 안에서만 부른다
 function speak(text: string) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
+  const tts = window.speechSynthesis;
+  // 아이폰 Safari는 cancel() 바로 뒤의 speak()를 버린다. 읽고 있을 때만 멈춘다
+  if (tts.speaking || tts.pending) tts.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "ko-KR";
-  window.speechSynthesis.speak(u);
+  const ko = tts.getVoices().find((v) => v.lang.replace("_", "-").startsWith("ko"));
+  if (ko) u.voice = ko;
+  u.volume = 1;
+  tts.speak(u);
 }
 function hush() {
   if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();

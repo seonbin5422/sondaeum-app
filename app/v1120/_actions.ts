@@ -6,7 +6,7 @@ import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText, openPII, sealPII } from "@/lib/crypto";
 import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
-import { extractRecord, keepFilled } from "./_extract";
+import { clearFields, extractRecord, keepFilled } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
@@ -144,9 +144,14 @@ export async function saveTranscript(visitId: string, transcript: string) {
 }
 
 // "다 말했어요": 녹음을 끝내고 정리 화면으로
-export async function finishRecording(visitId: string, transcript: string) {
-  await ownVisitOrThrow(visitId);
+export async function finishRecording(visitId: string, transcript: string, changed: string[] = []) {
+  const v = await ownVisitOrThrow(visitId);
   if (!transcript.trim()) throw new Error("녹음 내용이 없어요.");
+  // 기록 확인에서 돌아와 고쳐 말한 칸은 비워 둔다 → 다시 정리할 때 그 칸만 새로 말한 값으로 채워진다 (D-42 261101.ver)
+  if (v.report?.careRecord && changed.length) {
+    const cleared = clearFields(JSON.parse(decryptText(v.report.careRecord)) as CareRecord, changed.slice(0, 50).map(String));
+    await prisma.report.update({ where: { visitId }, data: { careRecord: encryptText(JSON.stringify(cleared)) } });
+  }
   await prisma.visit.update({
     where: { id: visitId },
     data: { transcript: encryptText(transcript), status: "RECORDED", endedAt: new Date() },

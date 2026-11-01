@@ -6,7 +6,7 @@ import { Button, Screen, TopBar } from "../../../_components/ui";
 import { useSpeech } from "../../../_components/useSpeech";
 import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
-import { extractRecord, keepFilled } from "../../../_extract";
+import { changedFields, extractRecord, overlayFields } from "../../../_extract";
 import type { CareRecord, Change } from "../../../_types";
 import { AUDIO_TOO_LARGE_MESSAGE, MAX_AUDIO_UPLOAD_BYTES } from "@/lib/audioUpload";
 
@@ -85,14 +85,12 @@ export function RecordScreen({
   clientName,
   initialTranscript,
   saved,
-  edited,
   showSample,
 }: {
   visitId: string;
   clientName: string;
   initialTranscript: string;
   saved: CareRecord | null; // "더 말하기"로 돌아왔을 때 이미 정리·확인한 기록
-  edited: boolean;
   showSample: boolean; // 체험 계정만 "예시 내용 넣기"를 보여 준다
 }) {
   const router = useRouter();
@@ -156,7 +154,11 @@ export function RecordScreen({
   // 인식 중인 글자까지 넣으면 칸이 흔들려서, 인식이 끝난 문장으로만 채운다
   // 더 말하기로 돌아왔으면 기록 확인에서 고친 값도 보여 준다. 다시 정리할 때(summarizeVisit)와 같은 규칙으로 합친다
   const live = extractRecord(transcript).record;
-  const sections = guide(saved ? keepFilled(saved, live, edited) : live);
+  // 돌아와서 고쳐 말한 칸(처음 녹음 글과 낱말 찾기 값이 달라진 칸)은 지금 말한 값으로, 나머지는 기록 확인 값으로 (D-42 261101.ver)
+  // shortcut: 기준은 이 화면에 들어올 때의 녹음 글이라, 고치다 나갔다 다시 들어오면 그때 글이 기준이 된다
+  const [base] = useState(() => extractRecord(initialTranscript).record);
+  const changed = saved ? changedFields(base, live) : [];
+  const sections = guide(saved ? overlayFields(saved, live, changed) : live);
   const resumed = transcript.length > 0 && !speech.recording;
   // D-51 "다 말했어요" 뒤 빠진 칸을 하나씩 소리로 묻는다. 답은 녹음 내용 끝에 붙어 AI 정리에 그대로 들어간다
   // shortcut: 빠진 칸은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다, 질문이 헛돌면 AI 정리 뒤에 묻도록 옮긴다
@@ -201,7 +203,7 @@ export function RecordScreen({
     clearTimeout(typingTimer.current);
     setFinishing(true);
     try {
-      await finishRecording(visitId, transcript);
+      await finishRecording(visitId, transcript, changed);
       router.push(`/v1120/visit/${visitId}/processing`);
     } catch {
       setSaveError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");

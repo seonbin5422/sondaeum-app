@@ -10,5 +10,5 @@ export default async function RecordPage({ params }: PageProps<"/v1120/visit/[id
   if (visit.status === "SENT") redirect(`/v1120/visit/${id}/sent`);
   // 예시 내용 넣기는 체험 계정에만. 실제 기록에 예시를 모르고 보낼 수 있다
   const { isDemo } = await requireCaregiver();
-  return <RecordScreen showSample={isDemo} visitId={visit.id} clientName={visit.client.name} initialTranscript={visit.transcript} saved={visit.record} edited={visit.edited} />;
+  return <RecordScreen showSample={isDemo} visitId={visit.id} clientName={visit.client.name} initialTranscript={visit.transcript} saved={visit.record} />;
 }

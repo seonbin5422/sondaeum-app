@@ -43,9 +43,17 @@ function guide(r: CareRecord): { title: string; ask: string; say: string; found:
 }
 
 // 질문을 소리로 읽는다. 브라우저에 없으면 글로만 보여 준다. 아이폰은 누른 순간에 불러야 소리가 나서 클릭 처리 안에서만 부른다
-function speak(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+// 아이폰은 무음 스위치가 켜져 있으면 읽기 소리가 안 난다. iOS 17+ Safari는 audioSession을 "playback"으로 바꾸면 소리가 난다
+type AudioSessionLike = { type: string };
+function setAudioSession(type: "playback" | "auto") {
+  const as = (navigator as Navigator & { audioSession?: AudioSessionLike }).audioSession;
+  if (as) as.type = type;
+}
+// status: 읽기가 시작됐는지·끝났는지·실패했는지 화면에 보여 준다 (소리가 안 날 때 원인을 가르려고)
+function speak(text: string, status: (s: string) => void) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return status("이 브라우저는 소리로 읽기를 지원하지 않아요.");
   const tts = window.speechSynthesis;
+  setAudioSession("playback");
   // 아이폰 Safari는 cancel() 바로 뒤의 speak()를 버린다. 읽고 있을 때만 멈춘다
   if (tts.speaking || tts.pending) tts.cancel();
   const u = new SpeechSynthesisUtterance(text);
@@ -53,10 +61,15 @@ function speak(text: string) {
   const ko = tts.getVoices().find((v) => v.lang.replace("_", "-").startsWith("ko"));
   if (ko) u.voice = ko;
   u.volume = 1;
+  u.onstart = () => status("읽는 중…");
+  u.onend = () => status("다 읽었어요.");
+  u.onerror = (e) => status(`소리를 내지 못했어요 (${e.error})`);
+  status(`읽기 준비 중… (한국어 목소리 ${ko ? "있음" : "없음"})`);
   tts.speak(u);
 }
 function hush() {
   if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  if (typeof window !== "undefined") setAudioSession("auto"); // 마이크를 쓰려면 원래대로
 }
 
 function formatTime(sec: number) {
@@ -145,6 +158,7 @@ export function RecordScreen({
   // shortcut: 빠진 칸은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다, 질문이 헛돌면 AI 정리 뒤에 묻도록 옮긴다
   const [questions, setQuestions] = useState<{ title: string; say: string }[] | null>(null);
   const [qi, setQi] = useState(0);
+  const [ttsStatus, setTtsStatus] = useState("");
   useEffect(() => hush, []); // 화면을 떠나면 읽던 질문을 멈춘다
 
   function askAt(list: { title: string; say: string }[], i: number) {
@@ -157,7 +171,7 @@ export function RecordScreen({
     }
     setQuestions(list);
     setQi(i);
-    speak(list[i].say);
+    speak(list[i].say, setTtsStatus);
   }
 
   function onDone() {
@@ -210,9 +224,10 @@ export function RecordScreen({
             빠진 내용을 여쭤볼게요 ({qi + 1}/{questions.length}) · {questions[qi].title}
           </p>
           <p className="text-xl font-bold">{questions[qi].say}</p>
-          <button type="button" className="self-start text-base font-bold underline underline-offset-4" onClick={() => speak(questions[qi].say)}>
+          <button type="button" className="self-start text-base font-bold underline underline-offset-4" onClick={() => speak(questions[qi].say, setTtsStatus)}>
             🔊 다시 듣기
           </button>
+          {ttsStatus && <p className="text-base text-muted">{ttsStatus}</p>}
           <p className="text-base text-muted">아래 녹음을 눌러 답해 주세요. 없으면 &quot;다음 질문&quot;을 눌러요.</p>
         </div>
       ) : (

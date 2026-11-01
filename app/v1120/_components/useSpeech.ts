@@ -39,6 +39,7 @@ export function useSpeech(onFinal: (text: string) => void) {
   const recRef = useRef<RecognitionLike | null>(null);
   const keepRef = useRef(false);
   const onFinalRef = useRef(onFinal);
+  const failsRef = useRef(0); // 자동으로 다시 켜다 연달아 실패한 횟수
 
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -65,40 +66,64 @@ export function useSpeech(onFinal: (text: string) => void) {
     };
   }, []);
 
-  function create(): RecognitionLike | null {
+  // first: 사용자가 누른 시작. 아니면 안드로이드가 말이 멈출 때마다 끝내서 자동으로 다시 켠 것
+  function create(first: boolean): RecognitionLike | null {
     const C = getCtor();
     if (!C) return null;
     const rec = new C();
     rec.lang = "ko-KR";
     rec.continuous = true;
     rec.interimResults = true;
+    // 안드로이드 크롬은 확정 문장마다 앞서 확정된 말까지 다시 붙여 보낸다("기저귀" → "기저귀 5분" …). 새로 붙은 뒤쪽만 넘긴다
+    const android = /Android/i.test(navigator.userAgent);
+    let last = "";
     rec.onresult = (e) => {
+      failsRef.current = 0;
       let text = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) onFinalRef.current(r[0].transcript.trim());
-        else text += r[0].transcript;
+        if (!r.isFinal) {
+          text += r[0].transcript;
+          continue;
+        }
+        const full = r[0].transcript.trim();
+        const add = android && last && full.startsWith(last) ? full.slice(last.length).trim() : full;
+        last = full;
+        if (add) onFinalRef.current(add);
       }
+      if (android && last && text.trim().startsWith(last)) text = text.trim().slice(last.length);
       setInterim(text);
     };
     rec.onerror = (e) => {
       setInterim("");
-      if (e.error === "no-speech") return;
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      // 자동으로 다시 켤 때는 앞 세션이 마이크를 늦게 놓아 not-allowed·audio-capture가 잠깐 날 수 있다. 몇 번은 조용히 다시 켠다
+      if (!first && ++failsRef.current <= 3) return;
       keepRef.current = false;
       setError(
-        e.error === "not-allowed" || e.error === "service-not-allowed"
+        first && (e.error === "not-allowed" || e.error === "service-not-allowed")
           ? "마이크 권한이 꺼져 있어요. 설정에서 마이크를 허용해 주세요."
-          : "음성 인식에 문제가 생겼어요. 다시 눌러 주세요.",
+          : `마이크가 끊겼어요. 다시 눌러 이어서 말해 주세요. (${e.error})`,
       );
     };
     rec.onend = () => {
       setInterim("");
       if (recRef.current !== rec) return;
       if (keepRef.current) {
-        const next = create();
+        const next = create(false);
         if (next) {
           recRef.current = next;
-          next.start();
+          // 실패 뒤에는 마이크가 풀릴 틈을 조금 준다
+          setTimeout(() => {
+            if (recRef.current !== next) return;
+            try {
+              next.start();
+            } catch {
+              // 시작 자체가 거절되면 실패로 세고 다음 시도로 (3번 넘으면 onerror가 멈춘다)
+              next.onerror?.({ error: "start-failed" });
+              next.onend?.();
+            }
+          }, failsRef.current ? 400 : 0);
           return;
         }
       }
@@ -109,9 +134,10 @@ export function useSpeech(onFinal: (text: string) => void) {
   }
 
   function start() {
-    const rec = create();
+    const rec = create(true);
     if (!rec) return;
     setError(null);
+    failsRef.current = 0;
     keepRef.current = true;
     recRef.current = rec;
     rec.start();

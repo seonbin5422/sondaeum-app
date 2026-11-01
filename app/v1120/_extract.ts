@@ -9,7 +9,8 @@ const KO_NUM: Record<string, number> = { 한: 1, 두: 2, 세: 3, 네: 4, 다섯:
 
 function sentences(text: string) {
   return text
-    .split(/(?<=[.!?])\s+|(?<=요|니다|었다|았다|했다)\s+|\n+/)
+    // 음성 인식은 마침표가 없어 "샤워 10분 도와드렸고 이야기 10분 해드렸고 …"가 한 문장이 된다 → "~했고"에서도 나눈다
+    .split(/(?<=[.!?])\s+|(?<=요|니다|었다|았다|했다)\s+|(?<=[었았였렸했셨갔왔봤줬졌켰]고|드리고),?\s+|\n+/)
     .map((s) => s.trim())
     .filter(Boolean);
 }
@@ -30,7 +31,7 @@ export function minutesIn(s: string): number | null {
 
 // "한 번", "2번", "두 차례" → 횟수. "없었" → 0
 function countIn(s: string): number | null {
-  if (/없었|없어|안 했|없음/.test(s)) return 0;
+  if (/없었|없어|없습|없고|없이|안 했|없음/.test(s)) return 0;
   const d = s.match(/(\d+)\s*(번|회|차례)/);
   if (d) return Number(d[1]);
   const k = s.match(/(한|두|세|네|다섯)\s*(번|회|차례)/);
@@ -69,8 +70,8 @@ const RE = {
   outing: /외출|병원\s?동행|장보|같이 나가/,
   better: /좋아졌|나아졌|호전|더 잘/,
   worse: /나빠졌|안 좋아|줄었|악화|못 드셨|힘들어하/,
-  same: /비슷|똑같|그대로|변화 없/,
-  stool: /대변|변을/,
+  same: /비슷|똑같|그대로|그대롭|변화 없|변함없/,
+  stool: /대변|대소변|변을/,
   urine: /소변|오줌/,
   diaper: /기저귀/,
   notes: /혈압|약|아프|통증|넘어|열이|기침|병원|어지러/,
@@ -108,8 +109,10 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   // 변화상태: 영역 + 좋아짐/나빠짐/비슷 낱말이 같은 문장에 있을 때만
   const changeOf = (area: RegExp): Change | null => {
     const s = ss.find((x) => area.test(x) && (RE.better.test(x) || RE.worse.test(x) || RE.same.test(x)));
-    if (!s) return null;
-    return RE.worse.test(s) ? "worse" : RE.better.test(s) ? "improved" : "same";
+    const general = ss.find((x) => /상태|컨디션|전반|전부|모두/.test(x) && isChange(x));
+    const pickS = s ?? general;
+    if (!pickS) return null;
+    return RE.worse.test(pickS) ? "worse" : RE.better.test(pickS) ? "improved" : "same";
   };
   const changeSentences = ss.filter((x) => RE.better.test(x) || RE.worse.test(x) || RE.same.test(x));
 
@@ -117,6 +120,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const countFor = (re: RegExp) => {
     const s = ss.find((x) => re.test(x) && /실수|지렸|못 가리/.test(x)) ?? ss.find((x) => re.test(x) && /없었/.test(x));
     if (!s) return null;
+    if (/대소변/.test(s)) return countIn(s); // "대소변 실수 없어요"는 둘 다
     // "소변 실수 한 번, 대변 실수는 없었어요"처럼 한 문장에 둘이 있으면 그 낱말 뒤만 본다
     const part = s.slice(s.search(re));
     const cut = part.search(re === RE.stool ? RE.urine : RE.stool);

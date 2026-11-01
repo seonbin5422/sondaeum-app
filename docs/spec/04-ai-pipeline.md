@@ -21,6 +21,24 @@ POST summarize ─→ decrypt → classifyCareNote() → Groq gpt-oss-120b (구�
 [검토 화면] 누락 항목 알림 → 요양보호사 수정 → 전송
 ```
 
+## 1120 녹음 직후 되묻기 (D-51)
+
+`app/v1120/visit/[id]/record/RecordScreen.tsx`. AI를 부르지 않고 화면 안에서 끝난다.
+
+```
+"다 말했어요" → 낱말 찾기(_extract.ts)로 빈 칸 찾기
+   ├─ 빈 칸마다 정해 둔 질문 (guide()의 say, 1~6번)
+   └─ 특이사항에 문제 낱말이 있는데 그 뒤에 조치·전달 낱말이 없으면 7·8번 질문
+        ↓ 질문 글 + public/v1120/ask/{번호}.mp3 재생 (클릭 처리 안에서만, 아이폰)
+   요양보호사가 녹음 버튼을 눌러 답 → 녹음 글(Visit.transcript) 끝에 붙음
+        ↓ 질문이 끝나거나 "그만 묻고 정리하기"
+   finishRecording → 아래 AI 정리로 (답도 같은 전사문이라 따로 처리 없음)
+```
+
+- 음성 파일은 Edge 음성(ko-KR-SunHiNeural, 속도 -5%)으로 미리 만든 정적 파일이다. 질문 문장에 개인정보가 없어 밖으로 나가는 데이터가 없다. 문장을 바꾸면 코드 주석의 edge-tts 명령으로 다시 만든다.
+- 브라우저 읽기(speechSynthesis)는 아이폰 Safari·크롬에서 "다 읽음"까지 가는데 소리가 나지 않아 쓰지 않는다(11/1 실기기).
+- 빈 칸 판단은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다. 놓친 조치 질문은 C-14의 AI 질문(notesAsk)이 다시 잡는다.
+
 ## 요약 출력 (`lib/careNoteAi.ts`)
 
 | 필드 | 뜻 |

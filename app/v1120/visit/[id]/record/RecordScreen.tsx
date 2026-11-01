@@ -42,35 +42,39 @@ function guide(r: CareRecord): { title: string; ask: string; say: string; found:
   ];
 }
 
-// 질문을 소리로 읽는다. 브라우저에 없으면 글로만 보여 준다. 아이폰은 누른 순간에 불러야 소리가 나서 클릭 처리 안에서만 부른다
-// 아이폰은 무음 스위치가 켜져 있으면 읽기 소리가 안 난다. iOS 17+ Safari는 audioSession을 "playback"으로 바꾸면 소리가 난다
+// 질문 소리는 미리 만든 파일(public/v1120/ask/1~6.mp3, guide() 순서)을 튼다. 아이폰에서 브라우저 읽기(speechSynthesis)는
+// "다 읽었어요"까지 가는데 소리가 안 나서 바꿨다(11/1). 아이폰은 누른 순간에 틀어야 해서 클릭 처리 안에서만 부른다
+// shortcut: say 문장을 바꾸면 mp3를 다시 만든다: edge-tts --voice ko-KR-SunHiNeural --rate=-5% --text "<문장>" --write-media public/v1120/ask/<번호>.mp3
 type AudioSessionLike = { type: string };
 function setAudioSession(type: "playback" | "auto") {
   const as = (navigator as Navigator & { audioSession?: AudioSessionLike }).audioSession;
-  if (as) as.type = type;
+  if (as) as.type = type; // iOS 17+: 무음 스위치가 켜져 있어도 소리가 나게, 마이크를 쓸 때는 원래대로
 }
-// status: 읽기가 시작됐는지·끝났는지·실패했는지 화면에 보여 준다 (소리가 안 날 때 원인을 가르려고)
-function speak(text: string, status: (s: string) => void) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return status("이 브라우저는 소리로 읽기를 지원하지 않아요.");
-  const tts = window.speechSynthesis;
+let player: HTMLAudioElement | null = null;
+function speak(src: string, onError: (s: string) => void) {
+  player?.pause();
   setAudioSession("playback");
-  // 아이폰 Safari는 cancel() 바로 뒤의 speak()를 버린다. 읽고 있을 때만 멈춘다
-  if (tts.speaking || tts.pending) tts.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "ko-KR";
-  const ko = tts.getVoices().find((v) => v.lang.replace("_", "-").startsWith("ko"));
-  if (ko) u.voice = ko;
-  u.volume = 1;
-  u.onstart = () => status("읽는 중…");
-  u.onend = () => status("다 읽었어요.");
-  u.onerror = (e) => status(`소리를 내지 못했어요 (${e.error})`);
-  status(`읽기 준비 중… (한국어 목소리 ${ko ? "있음" : "없음"})`);
-  tts.speak(u);
+  player = new Audio(src);
+  player.play().then(
+    () => onError(""),
+    (e: Error) => onError(`소리를 틀지 못했어요 (${e.name}). 질문은 위 글로 봐 주세요.`),
+  );
 }
 function hush() {
-  if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-  if (typeof window !== "undefined") setAudioSession("auto"); // 마이크를 쓰려면 원래대로
+  player?.pause();
+  player = null;
+  if (typeof window !== "undefined") setAudioSession("auto");
 }
+
+// 특이사항을 말했는데 도와드린 것·알린 사람이 빠졌으면 녹음 직후 함께 묻는다 (기록 확인 C-14의 notesAsk·"누구에게 알렸나요?"를 앞당김).
+// 문제 낱말이 있을 때만 묻는다("아침 약 드셨어요"처럼 조치가 필요 없는 말에는 묻지 않음). 정확한 판단은 AI 정리 뒤 C-14가 다시 한다
+const NOTE_PROBLEM = /아프|통증|넘어|열이|기침|어지러|높|낮|못 드|토하|구토|붓|상처|멍|숨이|가래|설사|변비/;
+const NOTE_ACTION = /도와|드렸|해 ?드|쉬시게|찜질|모셔|부축|닦아|드시게|확인했|다시 ?(재|쟀|측정)|살펴|눕혀|물 드/;
+const NOTE_TOLD = /알렸|알려|전화|연락|보고|전달|말씀드|문자/;
+const NOTE_ASKS = {
+  action: { title: "특이사항 · 도와드린 것", say: "그때 어떻게 도와드렸나요? 쉬시게 했다, 찜질해 드렸다처럼 말씀해 주세요.", audio: "/v1120/ask/7.mp3" },
+  told: { title: "특이사항 · 알린 사람", say: "이 일을 보호자나 기관에 알리셨나요? 알리지 않았으면 지켜보았다고 말씀해 주세요.", audio: "/v1120/ask/8.mp3" },
+};
 
 function formatTime(sec: number) {
   return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
@@ -156,12 +160,12 @@ export function RecordScreen({
   const resumed = transcript.length > 0 && !speech.recording;
   // D-51 "다 말했어요" 뒤 빠진 칸을 하나씩 소리로 묻는다. 답은 녹음 내용 끝에 붙어 AI 정리에 그대로 들어간다
   // shortcut: 빠진 칸은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다, 질문이 헛돌면 AI 정리 뒤에 묻도록 옮긴다
-  const [questions, setQuestions] = useState<{ title: string; say: string }[] | null>(null);
+  const [questions, setQuestions] = useState<{ title: string; say: string; audio: string; said?: string }[] | null>(null);
   const [qi, setQi] = useState(0);
   const [ttsStatus, setTtsStatus] = useState("");
   useEffect(() => hush, []); // 화면을 떠나면 읽던 질문을 멈춘다
 
-  function askAt(list: { title: string; say: string }[], i: number) {
+  function askAt(list: { title: string; say: string; audio: string; said?: string }[], i: number) {
     if (speech.recording) speech.stop();
     if (i >= list.length) {
       hush();
@@ -171,11 +175,22 @@ export function RecordScreen({
     }
     setQuestions(list);
     setQi(i);
-    speak(list[i].say, setTtsStatus);
+    speak(list[i].audio, setTtsStatus);
   }
 
   function onDone() {
-    const left = sections.filter((s) => !s.found.length || s.found.includes(mins(null)));
+    const left = sections
+      .map((s, i) => ({ ...s, audio: `/v1120/ask/${i + 1}.mp3` }))
+      .filter((s) => !s.found.length || s.found.includes(mins(null)))
+      .map((s): { title: string; say: string; audio: string; said?: string } => s);
+    const notes = sections.at(-1)!.found.join(" ");
+    if (NOTE_PROBLEM.test(notes)) {
+      // 조치·전달은 문제를 말한 뒤에 나온다. "~했고"에서 문장을 나눠 특이사항 칸 밖에 있을 수 있어 녹음 글에서 그 뒤를 본다
+      const at = transcript.search(NOTE_PROBLEM);
+      const all = at >= 0 ? transcript.slice(at) : notes;
+      if (!NOTE_ACTION.test(all)) left.push({ ...NOTE_ASKS.action, said: notes });
+      if (!NOTE_TOLD.test(all)) left.push({ ...NOTE_ASKS.told, said: notes });
+    }
     if (questions === null && left.length) askAt(left, 0);
     else finish();
   }
@@ -223,11 +238,12 @@ export function RecordScreen({
           <p className="text-base font-bold text-muted">
             빠진 내용을 여쭤볼게요 ({qi + 1}/{questions.length}) · {questions[qi].title}
           </p>
+          {questions[qi].said && <p className="text-base">말씀하신 내용: {questions[qi].said}</p>}
           <p className="text-xl font-bold">{questions[qi].say}</p>
-          <button type="button" className="self-start text-base font-bold underline underline-offset-4" onClick={() => speak(questions[qi].say, setTtsStatus)}>
+          <button type="button" className="self-start text-base font-bold underline underline-offset-4" onClick={() => speak(questions[qi].audio, setTtsStatus)}>
             🔊 다시 듣기
           </button>
-          {ttsStatus && <p className="text-base text-muted">{ttsStatus}</p>}
+          {ttsStatus && <p className="text-base font-bold text-(--danger)">{ttsStatus}</p>}
           <p className="text-base text-muted">아래 녹음을 눌러 답해 주세요. 없으면 &quot;다음 질문&quot;을 눌러요.</p>
         </div>
       ) : (

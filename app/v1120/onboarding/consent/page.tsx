@@ -1,0 +1,77 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button, Screen } from "../../_components/ui";
+import { ConsentDetails } from "../../_components/ConsentDetails";
+import { CONSENT_ITEMS as ITEMS } from "../../_consent";
+
+// C-21 동의 (LAW-3). 개인정보 / 건강정보(민감) / 보호자 제공 / 국외 이전(Groq)을 따로 받는다. 항목은 _consent.ts.
+
+export default function ConsentPage() {
+  const router = useRouter();
+  const [agreed, setAgreed] = useState<Record<string, boolean>>({});
+  const all = ITEMS.every((i) => agreed[i.key]);
+  // 동의하고 시작하기: 1단계에서 받아 둔 이름·자격번호를 실어 보내 실제로 저장한다
+  function submit(e: FormEvent<HTMLFormElement>) {
+    const saved = sessionStorage.getItem("v1120-onboarding");
+    if (!saved) {
+      // 1단계를 거치지 않고 들어왔으면 저장할 값이 없으니 1단계로 돌려보낸다
+      e.preventDefault();
+      router.replace("/v1120/onboarding");
+      return;
+    }
+    const { name, licenseNumber } = JSON.parse(saved);
+    const form = e.currentTarget;
+    (form.elements.namedItem("name") as HTMLInputElement).value = name;
+    (form.elements.namedItem("licenseNumber") as HTMLInputElement).value = licenseNumber;
+    sessionStorage.removeItem("v1120-onboarding");
+  }
+  return (
+    <Screen>
+      <p className="text-base font-bold text-muted">2 / 2</p>
+      <h1 className="-mt-4 text-2xl font-bold">동의가 필요해요</h1>
+      <p className="-mt-3 text-lg text-muted">하나씩 읽고 눌러 주세요. 모두 필요한 항목이에요.</p>
+
+      <button
+        type="button"
+        aria-pressed={all}
+        onClick={() => setAgreed(Object.fromEntries(ITEMS.map((i) => [i.key, !all])))}
+        className={`flex min-h-16 items-center gap-3 rounded-[15px] px-4 text-lg font-bold ${all ? "bg-accent-soft ring-2 ring-accent" : "border border-border"}`}
+      >
+        <span className={`flex h-7 w-7 items-center justify-center rounded-md ${all ? "bg-accent" : "border-2 border-border"}`}>{all ? "✓" : ""}</span>
+        모두 동의하기
+      </button>
+
+      <ul className="flex flex-col gap-3">
+        {ITEMS.map((i) => (
+          <li key={i.key} className="flex flex-col gap-1 rounded-[15px] border border-(--line) p-4">
+            <label className="flex min-h-12 items-center gap-3 text-lg font-bold">
+              <input
+                type="checkbox"
+                className="h-6 w-6 accent-[var(--accent)]"
+                checked={!!agreed[i.key]}
+                onChange={(e) => setAgreed({ ...agreed, [i.key]: e.target.checked })}
+              />
+              (필수) {i.title}
+            </label>
+            <ConsentDetails item={i} />
+          </li>
+        ))}
+      </ul>
+      <Link href="/v1120/privacy" className="inline-flex min-h-12 w-fit items-center text-lg font-bold underline underline-offset-4">
+        개인정보 처리방침 전체 보기
+      </Link>
+      <form action="/api/caregivers/onboard" method="post" onSubmit={submit}>
+        <input type="hidden" name="name" />
+        <input type="hidden" name="licenseNumber" />
+        <input type="hidden" name="next" value="/v1120" />
+        <input type="hidden" name="consent" value={ITEMS.filter((i) => agreed[i.key]).map((i) => i.key).join(",")} />
+        <Button type="submit" disabled={!all} disabledReason="모든 항목에 동의해야 쓸 수 있어요">
+          동의하고 시작하기
+        </Button>
+      </form>
+    </Screen>
+  );
+}

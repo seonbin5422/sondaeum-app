@@ -1,0 +1,20 @@
+/* 1120.ver 토큰. app/v1120 안에서만 쓴다. 값은 Figma "손다음" 변수(10/18) 기준 */
+.v1120 {
+  --muted: #5c5c5c;
+  --border: #8c8c8c;
+  --line: #e3e3e3;
+  --neutral-soft: #f4f4f4;
+  --danger: #e20000;
+  --danger-soft: #ffe8e8;
+  --success: #016bff;
+  --success-soft: #e4efff;
+  /* 연한 바탕(*-soft) 위 글자. status 색은 -soft 위 대비가 4.5:1 미만이라 따로 둔다 */
+  --text-success: #0559d2;
+  --text-danger: #ba0c09;
+  /* 주 버튼 글자는 본문 글자와 같게 (Figma text/primary) */
+  --accent-foreground: #222222;
+  --memo: #fff6c7;
+
+  font-size: 18px;
+  line-height: 1.6;
+}

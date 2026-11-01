@@ -8,16 +8,35 @@ datasource db {
 }
 
 model Caregiver {
-  id            String  @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
   licenseNumber String?
-  kakaoId       String? @unique
+  kakaoId       String?   @unique
+  // OPS-1 체험 계정: demoExpiresAt이 지나면 수급자·방문 기록과 함께 지운다
+  isDemo        Boolean   @default(false)
+  demoExpiresAt DateTime?
+  // LAW-3 동의 기록: 동의한 시각과 항목 키(쉼표로 이음, app/v1120/_consent.ts)
+  consentedAt   DateTime?
+  consentItems  String?
   visits        Visit[]
+  clients       Client[]
+  aiUsages      AiUsage[]
+}
+
+// SEC-3 AI 호출 기록. 요양보호사마다 시간당·하루 호출 수를 센다 (lib/aiLimit.ts)
+model AiUsage {
+  id          String    @id @default(cuid())
+  caregiverId String
+  caregiver   Caregiver @relation(fields: [caregiverId], references: [id])
+  kind        String
+  createdAt   DateTime  @default(now())
+
+  @@index([caregiverId, createdAt])
 }
 
 model Client {
-  id                     String   @id @default(cuid())
-  name                   String
+  id                     String           @id @default(cuid())
+  name                   String // SEC-5: 암호화 (lib/crypto sealPII·openPII, 예전 평문도 읽음)
   age                    Int?
   gender                 String?
   allergies              String?
@@ -25,13 +44,21 @@ model Client {
   medicationNotes        String?
   personalNotes          String?
   guardianName           String
-  guardianRelation       String   @default("기타")
+  guardianRelation       String           @default("기타")
+  guardianPhone          String? // SEC-5: 암호화
   careRegistrationNumber String?
-  phone                  String?
+  careGrade              String?
+  phone                  String? // SEC-5: 암호화
   scheduleLabel          String?
-  isActive               Boolean  @default(true)
+  isActive               Boolean          @default(true)
   purgeAt                DateTime?
+  // SEC-2: 담당 요양보호사. 1120 화면은 이 값으로 거른다. 옛 화면이 만든 수급자는 비어 있을 수 있다
+  caregiverId            String?
+  caregiver              Caregiver?       @relation(fields: [caregiverId], references: [id])
   visits                 Visit[]
+  documents              SharedDocument[]
+  // 보호자 게시판 초대 링크 (/v1120/g/[boardToken]/board, D-34·D-15 261101.ver). 초대 화면을 처음 열 때 만든다
+  boardToken             String?  @unique
 }
 
 model Visit {
@@ -58,21 +85,59 @@ enum VisitStatus {
 }
 
 model Report {
-  id         String    @id @default(cuid())
-  visitId    String    @unique
-  visit      Visit     @relation(fields: [visitId], references: [id])
-  meals      String
-  medication String
-  notes      String
-  medicationMorning Boolean @default(false)
-  medicationLunch   Boolean @default(false)
-  medicationEvening Boolean @default(false)
-  medicationBedtime Boolean @default(false)
-  medicationNone    Boolean @default(false)
-  aiRawJson  String?
-  wasEdited  Boolean   @default(false)
-  shareToken String    @unique @default(cuid())
-  sentAt     DateTime?
-  viewedAt   DateTime?
-  viewCount  Int       @default(0)
+  id                String    @id @default(cuid())
+  visitId           String    @unique
+  visit             Visit     @relation(fields: [visitId], references: [id])
+  meals             String
+  medication        String
+  notes             String
+  medicationMorning Boolean   @default(false)
+  medicationLunch   Boolean   @default(false)
+  medicationEvening Boolean   @default(false)
+  medicationBedtime Boolean   @default(false)
+  medicationNone    Boolean   @default(false)
+  aiRawJson         String?
+  // D-24·DIF-2: 급여제공기록지 모양(CareRecord) JSON, 암호화. 1120 화면은 이 칸을 쓴다
+  careRecord        String?
+  // LAW-9: 급여제공기록지 서명(수급자·보호자, 요양보호사 선 좌표와 서명 불가 사유) JSON, 암호화
+  signatures        String?
+  wasEdited         Boolean   @default(false)
+  shareToken        String    @unique @default(cuid())
+  sentAt            DateTime?
+  viewedAt          DateTime?
+  viewCount         Int       @default(0)
+  comments          Comment[]
+}
+
+// DIF-5 수급자 게시판 (D-15 261101.ver): 보낸 보고서가 게시글, 요양보호사·보호자는 댓글로 이야기한다
+model Comment {
+  id         String          @id @default(cuid())
+  // 글은 보낸 보고서이거나 게시판에 올린 서류, 둘 중 하나
+  reportId   String?
+  report     Report?         @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  documentId String?
+  document   SharedDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author     String // "caregiver" | "guardian"
+  body       String // LAW-11: 암호화
+  createdAt  DateTime        @default(now())
+  readAt     DateTime? // 상대가 그 글을 연 시각. 비어 있으면 안 읽은 댓글
+
+  @@index([reportId])
+  @@index([documentId])
+}
+
+// 게시판에 올린 서류 (DIF-4 진료 참고용 요약). 내용은 저장하지 않고 볼 때마다 그 기간의 기록으로 다시 만든다
+model SharedDocument {
+  id          String    @id @default(cuid())
+  shareToken  String    @unique @default(cuid())
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
+  caregiverId String
+  kind        String // "summary"
+  from        String // YYYY-MM-DD
+  to          String // YYYY-MM-DD
+  createdAt   DateTime  @default(now())
+  comments    Comment[]
+
+  @@index([clientId])
 }

@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { cleanEnv } from "@/lib/env";
 import { MAX_AUDIO_UPLOAD_BYTES, AUDIO_TOO_LARGE_MESSAGE } from "@/lib/audioUpload";
+import { apiCaregiverId, notFound, ownsVisit, unauthorized } from "@/lib/apiAuth";
+import { AI_LIMIT_MESSAGE, takeAiCall } from "@/lib/aiLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const groq = new Groq({ apiKey: cleanEnv(process.env.GROQ_API_KEY) });
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const me = await apiCaregiverId();
+  if (!me) return unauthorized();
+  if (!(await ownsVisit(id, me))) return notFound();
+  if (!(await takeAiCall(me, "transcribe"))) return NextResponse.json({ error: AI_LIMIT_MESSAGE }, { status: 429 });
   const contentLength = Number(req.headers.get("content-length") ?? 0);
   if (contentLength > MAX_AUDIO_UPLOAD_BYTES) {
     return NextResponse.json({ error: AUDIO_TOO_LARGE_MESSAGE }, { status: 400 });

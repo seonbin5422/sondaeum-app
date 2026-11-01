@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/absoluteUrl";
+import { apiCaregiverId, notFound, ownsClient, unauthorized } from "@/lib/apiAuth";
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -9,6 +10,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const me = await apiCaregiverId();
+  if (!me) return unauthorized();
+  if (!(await ownsClient(id, me))) return notFound();
 
   // 즉시 지우지 않고 유예기간을 둔다 — 악의적 기록 은폐를 막기 위해 서버에는
   // 실제로 2주간 원본이 남아있는다(화면에는 노출하지 않음).

@@ -35,7 +35,7 @@ POST summarize ─→ decrypt → classifyCareNote() → Groq gpt-oss-120b (구�
    finishRecording → 아래 AI 정리로 (답도 같은 전사문이라 따로 처리 없음)
 ```
 
-- 음성 파일은 Edge 음성(ko-KR-SunHiNeural, 속도 -5%)으로 미리 만든 정적 파일이다. 질문 문장에 개인정보가 없어 밖으로 나가는 데이터가 없다. 문장을 바꾸면 코드 주석의 edge-tts 명령으로 다시 만든다.
+- 음성 파일은 Edge 음성(ko-KR-SunHiNeural, 속도 -5%)으로 미리 만든 정적 파일이다. 질문 문장에 개인정보가 없어 밖으로 나가는 데이터가 없다. 아이폰 Safari 실기기에서 소리 확인(11/1). 문장을 바꾸면 코드 주석의 edge-tts 명령으로 다시 만든다.
 - 브라우저 읽기(speechSynthesis)는 아이폰 Safari·크롬에서 "다 읽음"까지 가는데 소리가 나지 않아 쓰지 않는다(11/1 실기기).
 - 빈 칸 판단은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다. 놓친 조치 질문은 C-14의 AI 질문(notesAsk)이 다시 잡는다.
 

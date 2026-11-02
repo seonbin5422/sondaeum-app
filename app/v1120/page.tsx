@@ -4,6 +4,7 @@ import { startVisit } from "./_actions";
 import { UnreadMessageLink } from "./_components/Unread";
 import { ScheduleSheet } from "./_components/ScheduleSheet";
 import type { TodayVisit } from "./_types";
+import { isNowInSchedule } from "@/lib/schedule";
 import { Avatar, Button, Card, Chip, LinkButton, Screen, StatusBadge } from "./_components/ui";
 
 // C-03 홈: 오늘의 돌봄 (와이어 263:397)
@@ -13,6 +14,11 @@ export default async function HomePage() {
   const [visits, unread] = await Promise.all([myTodayVisits(), myUnreadByClient()]);
   // 서버(Vercel)는 UTC라서 한국 시간 기준 요일로 센다. 오늘 요일이 아니어도 오늘 기록을 시작했으면 보여 준다
   const today = kstWeekday();
+  // shortcut: 페이지를 연(새로고침한) 시각 기준이라 켜 둔 채 시간이 지나면 갱신 안 됨, 필요하면 클라이언트 타이머로
+  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .format(new Date())
+    .split(":")
+    .map(Number);
   const todayVisits: TodayVisit[] = clients
     .filter((c) => c.isActive && (c.scheduleDays.includes(today) || visits.has(c.id)))
     .map((c) => {
@@ -25,6 +31,7 @@ export default async function HomePage() {
         status: v?.status ?? "NOT_STARTED",
         interrupted: v?.status === "RECORDING" && !!v.transcript, // 녹음이 중간에 멈춤 (D-27)
         unread: unread.get(c.id) ?? 0,
+        isNow: c.scheduleDays.includes(today) && isNowInSchedule(c.scheduleLabel, h * 60 + m),
       };
     });
   return (
@@ -59,7 +66,13 @@ function VisitCard({ visit }: { visit: TodayVisit }) {
       ? "기록하기"
       : "기록 확인하고 보내기";
   return (
-    <Card>
+    // 지금 방문 시간인 카드는 브랜드색 테두리 + 알약으로 표시 (브랜드색은 글자 대신 면적으로)
+    <Card className={visit.isNow ? "ring-4 ring-accent" : ""}>
+      {visit.isNow && (
+        <span className="self-start rounded-full bg-accent px-3 py-1 text-base font-bold text-accent-foreground">
+          지금 방문 시간
+        </span>
+      )}
       <div className="flex items-center gap-4">
         <Avatar name={visit.clientName} />
         <div className="flex flex-col items-start gap-1">

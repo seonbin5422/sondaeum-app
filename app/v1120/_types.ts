@@ -50,6 +50,7 @@ export type TodayVisit = {
   status: VisitStatus;
   interrupted: boolean; // 녹음이 중간에 멈춤 (D-27)
   unread?: number; // 보호자 새 댓글 수 (DIF-5)
+  isNow?: boolean; // 지금(한국 시간)이 이 수급자 방문 시간 안
 };
 
 export type GuardianReportProps = {

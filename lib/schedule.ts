@@ -39,3 +39,12 @@ export function isVisibleOn(scheduleLabel: string | null, date: Date): boolean {
   if (!scheduleLabel) return true;
   return matchesScheduleDay(scheduleLabel, date);
 }
+
+/** 지금(nowMinutes = 0시부터 분)이 일정 시간 안인지. 화면용 "09:00–11:00"(en dash)도 받는다. 끝 시각은 포함하지 않는다. */
+export function isNowInSchedule(scheduleLabel: string | null, nowMinutes: number): boolean {
+  const m = scheduleLabel?.match(/(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})$/);
+  if (!m) return false;
+  const start = Number(m[1]) * 60 + Number(m[2]);
+  const end = Number(m[3]) * 60 + Number(m[4]);
+  return start <= nowMinutes && nowMinutes < end;
+}

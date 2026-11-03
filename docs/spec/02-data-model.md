@@ -140,6 +140,9 @@ type CareRecord = {
   guardianNotes?: string | null;     // notes와 같은 문장을 보호자용 '~요'체로. 특이사항을 직접 고치면 null → notes를 보여 줌
   notesNoAction?: boolean;           // AI 판단: 관찰만 있고 요양보호사가 한 도움·조치가 없음 → C-14에서 더 말하도록 안내
   notesAsk?: string | null;          // notesNoAction일 때 무엇을 더 말할지 묻는 한 문장 (예: "무릎이 아프다고 하셨을 때 어떻게 도와드렸나요? (예: 쉬시게 함, 찜질, 보호자에게 알림)")
+
+  // 기록 확인(C-14)에서 직접 고친 칸 ("physical.mobility" · "bowel.stoolAccidents" · "notes"). 녹음으로 돌아가 다시 정리해도 이 칸만 지킨다 (D-42 261103.ver). 서버가 진짜 칸 이름만 최대 50개 받는다
+  handEdited?: string[];
 };
 ```
 

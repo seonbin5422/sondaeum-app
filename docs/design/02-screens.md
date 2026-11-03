@@ -51,6 +51,28 @@
 - 요양보호사 화면 호칭은 "수급자", 보호자 화면은 "어르신" (D-31)
 - 접근성 버전 와이어: Figma wireframe-1120 페이지의 ["접근성 버전 (WCAG 2.1 AA)" 줄](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=359-942)과 [기준·색 대비표](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=361-4). 색은 브랜드 귤색 `#ffb133`을 유지하되 다시 검토 예정 (10/9)
 
+## 1128.ver 통일 와이어 (D-53·D-54·D-55, 코드 반영 11/3)
+
+요양보호사 화면을 "손다음 테마 1" 기준으로 다시 그린 와이어. Figma [wireframe-1128](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=498-1995) 페이지, 컴포넌트는 [컴포넌트 · 손다음 1128](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=507-98). 기준 프레임은 [손다음 테마 1](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=498-2045)·[알림](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=498-1996). `app/v1120` 코드에 반영했다(feature/v1120 43c24c1·fc55597·6f837bf, 개인 미리보기 배포 11/3). 새 글자는 Noto Sans KR이라 Pretendard로 바꿔야 한다.
+
+- 처음 들어올 때: [C-01 로그인](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=510-120) · [C-02 처음 설정](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=510-160) · [C-21 동의](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=510-188)
+- 홈·일정·알림: [C-03 홈](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=511-696) · [C-04 일정 달력](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=511-885) · [알림 (D-55)](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=511-1154)
+- 방문 기록: [C-12 녹음 전](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=512-352) · [C-12 녹음 중](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=512-417) · [빠진 항목 되묻기 (D-51)](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=512-474) · [C-13 정리 중](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=512-511) · [C-13 정리 실패](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=512-528) · [C-14 기록 확인](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=513-395) · [C-15 보낼 내용](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=513-486) · [C-16 보내기](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=513-545)
+- 수급자 관리: [수급자 탭](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=514-422) · [C-05 수급자 정보](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=514-520) · [C-07 등록](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=514-604) · [C-23 게시판 초대](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=514-739) · [C-22 방문 기록](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=515-569) · [C-10 삭제](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=515-640) · [C-11 완전히 지우기](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=515-671)
+- 서류: [C-19 서류 만들기](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=516-607) · [C-20 진료 참고용 요약](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=516-663) · [급여제공기록지](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=516-766)
+- 게시판·내 정보: [게시판 탭](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=517-635) · [C-18 수급자 게시판](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=517-702) · [C-18 게시글 상세](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=517-762) · [내 정보 탭](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=517-829) · [C-06 내 정보 고치기](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=517-908) · [동의한 내용](https://www.figma.com/design/OFZIKhGWAAxCUoL9dNtgJb/?node-id=517-931)
+- 보호자 화면(G-01·G-02·G-04 등)과 개인정보 처리방침은 아직 1128로 다시 그리지 않음
+
+코드에서 Figma와 다르게 한 것 (Figma에는 아직 반영 안 함):
+
+- 흰 상단 바·댓글 입력 바: 흰 면을 화면 가로 끝까지, 내용은 가운데 칸 (D-54 261103.ver)
+- 빈 목록 안내(회색 느낌표 + 한 줄): 수급자 탭·게시판 탭·수급자 게시판·알림 (D-57)
+- C-18 글 목록·댓글 최신순/과거순 드롭다운 (D-57), C-21 "모두 동의하기" 회색 테두리 상자 (D-57)
+- C-05 바로가기 4줄: 아이콘·화살표를 화면 양옆 20px 선에 맞춤(Figma는 40px)
+- C-19 날짜칸: 선택지 칸과 같은 폭·12px 간격, 높이 56px (C-19 Figma에 펼친 모습 없음)
+- C-12 버튼 "다 말했어요", C-14 버튼 "다음으로"·제목 "○○ 기록 확인", 홈 마무리 못 한 기록에 수급자·날짜
+- G-01 보호자 보고서: C-15와 같은 모양(회색 바탕·흰 상단 바·그림자 없는 흰 카드), 안내 상자 → 인사·제목 순 (1128 보호자 와이어 없음)
+
 ## 화면 흐름
 
 ```

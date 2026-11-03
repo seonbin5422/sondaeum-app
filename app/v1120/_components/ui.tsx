@@ -1,64 +1,24 @@
-import Link from "next/link";
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type { CSSProperties, InputHTMLAttributes, ReactNode } from "react";
 import type { VisitStatus } from "../_types";
 import { BottomNav } from "./BottomNav";
+import { Icon } from "./Icon";
+import { PressLink } from "./Pressable";
 
 // 1120.ver 공용 컴포넌트. 기준: 본문 18px, 가장 작은 글자 16px, 터치 48px 이상, 아이콘만 있는 버튼 없음, 비활성 버튼에는 이유 한 줄.
 
-type Variant = "primary" | "secondary" | "danger";
+export { Button, LinkButton } from "./Pressable";
+export { Icon } from "./Icon";
 
-const variantClasses: Record<Variant, string> = {
-  primary: "bg-accent text-accent-foreground active:bg-accent-dark",
-  secondary: "bg-white text-foreground border border-border active:bg-accent-soft",
-  danger: "bg-(--danger) text-white active:opacity-90",
-};
-
-const base =
-  "flex w-full items-center justify-center gap-2 rounded-[15px] h-16 text-lg font-bold transition-colors disabled:bg-(--neutral-soft) disabled:text-muted disabled:border-transparent disabled:pointer-events-none";
-
-export function Button({
-  variant = "primary",
-  className = "",
-  disabledReason,
-  children,
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; disabledReason?: string; children: ReactNode }) {
-  return (
-    <div className="flex w-full flex-col gap-2">
-      {props.disabled && disabledReason && <p className="text-center text-base text-muted">{disabledReason}</p>}
-      <button className={`${base} ${variantClasses[variant]} ${className}`} {...props}>
-        {children}
-      </button>
-    </div>
-  );
-}
-
-export function LinkButton({
-  href,
-  variant = "primary",
-  className = "",
-  children,
-}: {
-  href: string;
-  variant?: Variant;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <Link href={href} className={`${base} ${variantClasses[variant]} ${className}`}>
-      {children}
-    </Link>
-  );
-}
-
+// 작은 보조 링크(뒤로·바로가기). 테두리 없이 연한 회색 면 (1128)
 export function SmallLinkButton({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link
+    <PressLink
       href={href}
-      className="inline-flex min-h-12 items-center rounded-xl border border-border bg-white px-4 text-base font-bold active:bg-accent-soft"
+      pendingText={false}
+      className="inline-flex min-h-12 items-center gap-1 rounded-xl bg-(--bg-secondary) px-4 text-base font-bold active:bg-(--line)"
     >
       {children}
-    </Link>
+    </PressLink>
   );
 }
 
@@ -68,42 +28,120 @@ export function Screen({
   bottom,
   nav = false,
   guardianToken,
+  white = false,
 }: {
   children: ReactNode;
   bottom?: ReactNode;
   nav?: boolean;
   guardianToken?: string;
+  white?: boolean; // Figma에서 바탕이 흰 화면(예: C-13 기록 정리)
 }) {
+  const bg = white ? "white" : "var(--bg-secondary)";
   const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
   return (
-    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 ${pad}`}>
+    <div className="flex flex-1 flex-col overflow-x-clip" style={{ background: bg, "--screen-bg": bg } as CSSProperties}>
+    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-5 ${pad}`}>
       {children}
       {(bottom || nav) && (
         <div className="fixed inset-x-0 bottom-0 z-10">
           {bottom && (
-            <div className="bg-gradient-to-t from-white via-white to-white/0 pt-6">
-              <div className="mx-auto flex w-full max-w-md flex-col gap-3 p-6 pt-0">{bottom}</div>
+            <div className="bg-gradient-to-t from-(--screen-bg) via-(--screen-bg) to-transparent pt-6">
+              <div className="mx-auto flex w-full max-w-md flex-col gap-3 p-5 pt-0">{bottom}</div>
             </div>
           )}
           {nav && <BottomNav guardianToken={guardianToken} />}
         </div>
       )}
     </main>
-  );
-}
-
-export function TopBar({ backHref, title }: { backHref: string; title?: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <SmallLinkButton href={backHref}>← 뒤로</SmallLinkButton>
-      {title && <h1 className="text-xl font-bold">{title}</h1>}
     </div>
   );
 }
 
+// 공통/상단 바 (Figma 508:100): 흰 64px, 뒤로 48px 왼쪽 고정, 제목 22px 가운데. 화면 맨 위에 붙도록 Screen 여백을 되돌린다
+// 상단 바 뒤로 버튼 자리 (내용 칸 왼쪽). BackButton icon도 같은 자리를 쓴다
+export const TOP_BACK =
+  "absolute left-[max(0.5rem,calc(50%-13.5rem))] top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full active:bg-(--bg-secondary)";
+
+// back: 링크 대신 다른 뒤로 버튼(예: 들어온 화면으로 돌아가는 BackButton)을 넣을 때
+export function TopBar({ backHref, title, back }: { backHref?: string; title?: string; back?: ReactNode }) {
+  return (
+    <div className="sticky top-0 z-10 full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16 print:hidden">
+      {back ?? (
+        <PressLink href={backHref ?? "/v1120"} pendingText={false} className={TOP_BACK}>
+          <Icon name="arrow_back" size={28} />
+          <span className="sr-only">뒤로</span>
+        </PressLink>
+      )}
+      {title && <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">{title}</h1>}
+    </div>
+  );
+}
+
+// 공통/귤색 머리 (Figma 508:148): 하단 메뉴 탭 화면(수급자·게시판·내 정보) 맨 위
+export function OrangeHeader({ title, sub, children }: { title: string; sub?: ReactNode; children?: ReactNode }) {
+  return (
+    <header className="enter-down -mx-5 -mt-5 flex flex-col gap-1 rounded-b-3xl bg-accent px-6 pb-7 pt-8 text-foreground">
+      <h1 className="text-[28px] font-bold leading-[1.4] tracking-[-0.02em]">{title}</h1>
+      {sub && <p className="text-lg">{sub}</p>}
+      {children}
+    </header>
+  );
+}
+
+// 공통/목록 행 (Figma 508:119): 회색 원 아이콘 · 제목 18 · 설명 16 · 오른쪽 화살표
+export function ListRow({
+  href,
+  icon,
+  title,
+  desc,
+  chevron = true,
+}: {
+  href?: string;
+  icon?: ReactNode;
+  title: ReactNode;
+  desc?: ReactNode;
+  chevron?: boolean;
+}) {
+  const inner = (
+    <>
+      {icon && (
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary)">{icon}</span>
+      )}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-[1.4]">
+        <span className="text-lg font-bold">{title}</span>
+        {desc && <span className="text-base text-muted">{desc}</span>}
+      </span>
+      {chevron && href && <Icon name="chevron_right" className="text-muted" />}
+    </>
+  );
+  const cls = "flex min-h-16 items-center gap-3 px-4 py-3.5";
+  return href ? (
+    <PressLink href={href} pendingText={false} className={`${cls} active:bg-(--bg-secondary)`}>
+      {inner}
+    </PressLink>
+  ) : (
+    <div className={cls}>{inner}</div>
+  );
+}
+
+// 공통/단계 (Figma 508:151): "1 / 2"
+// 빈 목록 안내: 회색 느낌표 + 문구 (수급자·게시판이 비었을 때)
+export function EmptyState({ children }: { children: ReactNode }) {
+  return (
+    <div className="enter flex flex-col items-center gap-3 py-10 text-center text-lg leading-[1.4] text-muted">
+      <Icon name="error" size={48} />
+      <p>{children}</p>
+    </div>
+  );
+}
+
+export function StepBadge({ children }: { children: ReactNode }) {
+  return <span className="w-fit rounded-full bg-(--bg-secondary) px-3 py-1 text-base font-bold text-muted">{children}</span>;
+}
+
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <section className={`flex flex-col gap-4 rounded-[15px] bg-white p-5 shadow-[var(--shadow-card)] ${className}`}>
+    <section className={`flex flex-col gap-4 enter rounded-2xl bg-white p-5 ${className}`}>
       {children}
     </section>
   );
@@ -111,7 +149,7 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 export function Callout({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
+    <div className="flex flex-col gap-1 rounded-xl bg-(--bg-brand) px-4 py-3 text-base text-(--text-brand)">
       {title && <p className="font-bold">{title}</p>}
       <div>{children}</div>
     </div>
@@ -136,14 +174,14 @@ export function Chip({ children, tone = "schedule" }: { children: ReactNode; ton
   const tones = {
     schedule: "bg-chip-schedule text-foreground",
     done: "bg-(--success-soft) text-(--text-success)",
-    outline: "border border-border bg-white text-foreground",
+    outline: "bg-(--bg-secondary) text-foreground",
   };
   return <span className={`inline-flex rounded-full px-3 py-1 text-base font-medium ${tones[tone]}`}>{children}</span>;
 }
 
 export function Avatar({ name }: { name: string }) {
   return (
-    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-soft text-2xl font-bold text-accent-soft-foreground">
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary) text-2xl font-bold text-muted">
       {name.slice(0, 1)}
     </span>
   );
@@ -158,7 +196,7 @@ export function Field({
     <label className="flex flex-col gap-2">
       <span className="text-lg font-bold">{label}</span>
       <input
-        className="h-14 rounded-[15px] border border-border px-4 text-lg placeholder:text-muted focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/50"
+        className="h-14 rounded-[15px] bg-(--bg-secondary) px-4 text-lg transition-shadow placeholder:text-muted focus:bg-white focus:outline-none focus:ring-[3px] focus:ring-accent/50"
         {...props}
       />
       {hint && <span className="text-base text-muted">{hint}</span>}
@@ -168,4 +206,12 @@ export function Field({
 
 export function SectionTitle({ children }: { children: ReactNode }) {
   return <h2 className="text-lg font-bold">{children}</h2>;
+}
+
+// 공통/선택 칩 (Figma 508:132): 고른 것=브랜드 귤색 면+본문색 굵은 글자, 안 고른 것=연한 회색 면. 테두리 없음
+// 사용자 11/3: 연한 귤색은 고령자에게 안 고른 것과 차이가 작아 보여서 브랜드 메인색(#ffb133)으로 바꿈
+export function selectChipClass(selected: boolean) {
+  return `press inline-flex h-12 items-center justify-center rounded-full px-[18px] text-lg ${
+    selected ? "bg-accent font-bold text-foreground" : "bg-(--bg-secondary) text-foreground"
+  }`;
 }

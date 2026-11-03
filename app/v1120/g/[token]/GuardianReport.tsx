@@ -3,7 +3,7 @@
 import { ReportSections } from "../../_components/ReportView";
 import { chatTokenToClient, historyByClient, sampleGuardianReport } from "../../_mock";
 import { BackButton } from "../../_components/BackButton";
-import { LinkButton } from "../../_components/ui";
+import { LinkButton, Screen, TopBar, TOP_BACK } from "../../_components/ui";
 import type { GuardianReportProps } from "../../_types";
 
 // G-01 보호자 보고서 (와이어 263:692). ?order=improved 를 붙이면 개선안(263:822, PR #9 머지 보류) 순서로 본다.
@@ -33,28 +33,37 @@ export function GuardianReport({ token, order, sent, fromBoard = false }: { toke
   const chatToken = Object.keys(chatTokenToClient).find((t) => chatTokenToClient[t] === clientId);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
-      <BackButton fallback={sent ? `/v1120/g/${token}/board` : chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />
-      <header className="flex flex-col gap-1">
-        <p className="text-base text-muted">안녕하세요, {head.guardianName} {head.guardianTitle ?? "보호자"}님</p>
-        <h1 className="text-2xl font-bold">{head.clientName} 어르신 방문 보고서</h1>
-        <p className="text-lg text-muted">{formatVisit(head.startedAt, head.endedAt)}</p>
-      </header>
-
-      <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
+    // 1128 테마: C-15 "보낼 내용 보기"와 같은 모양 (회색 바탕·흰 상단 바·흰 면 카드)
+    <Screen>
+      <TopBar
+        title="방문 보고서"
+        back={<BackButton icon className={TOP_BACK} fallback={sent ? `/v1120/g/${token}/board` : chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />}
+      />
+      <div className="enter flex flex-col gap-1 rounded-2xl bg-(--bg-brand) p-5 text-base leading-[1.4] text-(--text-brand)">
         <p className="font-bold">급여제공기록지와 같은 항목으로 정리했어요</p>
         <p>요양보호사가 방문 중 한 일을 확인하고 보낸 기록이에요.</p>
       </div>
 
-      <ReportSections record={record} order={order} />
+      {/* 제목은 카드 없이 바탕 위에 */}
+      <header className="enter flex flex-col gap-1 pt-2 leading-[1.4]">
+        <p className="text-base text-muted">
+          안녕하세요, <span className="whitespace-nowrap">{head.guardianName} {head.guardianTitle ?? "보호자"}님</span>
+        </p>
+        <h1 className="text-[22px] font-bold tracking-[-0.02em]">
+          <span className="whitespace-nowrap">{head.clientName} 어르신</span> 방문 보고서
+        </h1>
+        <p className="text-base text-muted">{formatVisit(head.startedAt, head.endedAt)}</p>
+      </header>
+
+      <ReportSections record={record} order={order} flat />
 
       {/* 게시판의 "보고서 전체 보기"로 들어왔으면 게시판으로 돌아가는 버튼은 안 보인다(뒤로가기로 돌아감) */}
       {sent && !fromBoard && <LinkButton href={`/v1120/g/${token}/board`}>게시판으로 이동하기</LinkButton>}
 
-      <p className="rounded-xl bg-(--neutral-soft) px-4 py-3 text-base text-muted">
+      <p className="rounded-2xl bg-white p-5 text-base leading-[1.4] text-muted">
         {head.caregiverName} 요양보호사가 작성하고 확인한 기록이에요. 의료적 판단이 아니에요. 궁금한 점은 담당 기관에
         물어봐 주세요.
       </p>
-    </main>
+    </Screen>
   );
 }

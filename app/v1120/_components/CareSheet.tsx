@@ -1,28 +1,31 @@
 import type { CareRecord, Change, Signatures } from "../_types";
 import { SignatureSection } from "./SignatureBox";
+import { Card } from "./ui";
 
 // 급여제공기록지(별지 제12호) 형식으로 하루 기록을 보여 준다. C-17 기관 서류 탭과 서류 만들기 결과가 같이 쓴다.
 // 기관이 발급하는 공식 사본이 아니다 (D-29 초안).
 
 const CH: Record<Change, string> = { improved: "호전", same: "유지", worse: "악화" };
-const mark = (v: boolean | null) => (v ? "✓" : "");
+const mark = (v: boolean | null) => (v ? "✓" : "—");
 
-function Row({ label, value }: { label: string; value: string }) {
+// 한 줄: 왼쪽 항목(회색), 오른쪽 값(굵게). 안 한 항목(—, 0분)은 줄 전체를 회색으로 (Figma 516:784)
+function Row({ label, value, tone }: { label: string; value: string; tone?: "off" | "danger" }) {
   return (
-    <tr className="border-t border-(--line)">
-      <th className="w-1/2 py-2 pr-2 text-left text-base font-normal">{label}</th>
-      <td className="py-2 text-right text-base font-bold">{value}</td>
-    </tr>
+    <div className={`flex items-start gap-3 py-1.5 ${tone === "off" ? "text-muted" : ""}`}>
+      <span className="min-w-0 flex-1 text-muted">{label}</span>
+      <span className={`shrink-0 whitespace-nowrap font-bold ${tone === "danger" ? "text-(--text-danger)" : ""}`}>{value}</span>
+    </div>
   );
 }
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
+function Block({ title, extra, children }: { title: string; extra?: string; children: React.ReactNode }) {
   return (
-    <section className="break-inside-avoid">
-      <h3 className="bg-(--neutral-soft) px-2 py-1 text-base font-bold">{title}</h3>
-      <table className="w-full px-2">
-        <tbody>{children}</tbody>
-      </table>
+    <section className="flex flex-col break-inside-avoid text-lg">
+      <h3 className="flex items-start justify-between gap-3 pb-1 font-bold">
+        {title}
+        {extra && <span className="whitespace-nowrap text-(--text-brand)">{extra}</span>}
+      </h3>
+      {children}
     </section>
   );
 }
@@ -48,56 +51,59 @@ export function CareSheet({
 }) {
   const min = (n: number | null) => (n === null ? "확인 필요" : `${n}분`);
   const cnt = (n: number | null) => (n === null ? "확인 필요" : `${n}회`);
+  const check = (label: string, v: boolean | null) => <Row label={label} value={mark(v)} tone={v ? undefined : "off"} />;
+  const minutes = (label: string, n: number | null) => <Row label={label} value={min(n)} tone={n === 0 ? "off" : undefined} />;
+  const change = (label: string, v: Change | null) => <Row label={label} value={v ? CH[v] : "확인 필요"} tone={v === "worse" ? "danger" : undefined} />;
   return (
-    <article className="flex flex-col gap-3 rounded-md border border-border bg-white p-4 print:border-0 print:p-0">
-      <header className="flex flex-col gap-0.5">
-        <p className="text-base text-muted">장기요양급여 제공기록지(방문요양) 형식 · 공식 사본 아님</p>
-        <h2 className="text-xl font-bold">{date}</h2>
-        <p className="text-base">
-          수급자 {clientName} · 요양보호사 {caregiverName} · 서비스 시간 {time}
+    <Card className="gap-4 leading-[1.4] print:animate-none! print:rounded-none print:p-0">
+      <header className="flex flex-col gap-1">
+        <h2 className="text-[22px] font-bold tracking-[-0.02em]">{date}</h2>
+        <p className="text-base font-medium text-muted">
+          <span className="whitespace-nowrap">수급자 {clientName}</span> · <span className="whitespace-nowrap">요양보호사 {caregiverName}</span> ·{" "}
+          <span className="whitespace-nowrap">서비스 시간 {time}</span>
         </p>
+        <p className="hidden text-base text-muted print:block">장기요양급여 제공기록지(방문요양) 형식 · 공식 사본 아님</p>
       </header>
 
-      <Block title="신체활동지원">
-        <Row label="개인위생 (세면·구강·몸단장 등)" value={mark(r.physical.personalHygiene)} />
-        <Row label="몸 씻기 도움" value={mark(r.physical.bathing)} />
-        <Row label="식사 도움" value={mark(r.physical.mealAssist)} />
-        <Row label="체위변경" value={mark(r.physical.repositioning)} />
-        <Row label="이동 도움" value={mark(r.physical.mobility)} />
-        <Row label="화장실 이용하기" value={mark(r.physical.toileting)} />
-        <Row label="제공시간" value={min(r.physical.minutes)} />
+      <Block title="신체활동지원" extra={r.physical.minutes === null ? "시간 확인 필요" : `${r.physical.minutes}분`}>
+        {check("개인위생 (세면·구강·몸단장 등)", r.physical.personalHygiene)}
+        {check("몸 씻기 도움", r.physical.bathing)}
+        {check("식사 도움", r.physical.mealAssist)}
+        {check("체위변경", r.physical.repositioning)}
+        {check("이동 도움", r.physical.mobility)}
+        {check("화장실 이용하기", r.physical.toileting)}
       </Block>
       <Block title="인지·정서 지원">
-        <Row label="인지자극활동" value={min(r.cognitive.stimulation)} />
-        <Row label="일상생활 함께하기" value={min(r.cognitive.dailyLiving)} />
-        <Row label="인지행동변화 관리" value={min(r.cognitive.behaviorManagement)} />
-        <Row label="의사소통 도움·말벗·격려" value={min(r.cognitive.emotional)} />
+        {minutes("인지자극활동", r.cognitive.stimulation)}
+        {minutes("일상생활 함께하기", r.cognitive.dailyLiving)}
+        {minutes("인지행동변화 관리", r.cognitive.behaviorManagement)}
+        {minutes("의사소통 도움·말벗·격려", r.cognitive.emotional)}
       </Block>
-      <Block title="가사 및 일상생활지원">
-        <Row label="식사준비·청소·세탁 등" value={mark(r.household.mealPrepCleaningLaundry)} />
-        <Row label="개인활동지원 (외출 동행 등)" value={mark(r.household.personalActivity)} />
-        <Row label="제공시간" value={min(r.household.minutes)} />
+      <Block title="가사 및 일상생활지원" extra={r.household.minutes === null ? "시간 확인 필요" : `${r.household.minutes}분`}>
+        {check("식사준비·청소·세탁 등", r.household.mealPrepCleaningLaundry)}
+        {check("개인활동지원 (외출 동행 등)", r.household.personalActivity)}
       </Block>
       <Block title="변화상태">
-        <Row label="신체기능" value={r.change.physical ? CH[r.change.physical] : "확인 필요"} />
-        <Row label="식사기능" value={r.change.meal ? CH[r.change.meal] : "확인 필요"} />
-        <Row label="인지기능" value={r.change.cognitive ? CH[r.change.cognitive] : "확인 필요"} />
-        <Row label="배변변화: 대변 실수" value={cnt(r.bowel.stoolAccidents)} />
-        <Row label="배변변화: 소변 실수" value={cnt(r.bowel.urineAccidents)} />
+        {change("신체기능", r.change.physical)}
+        {change("식사기능", r.change.meal)}
+        {change("인지기능", r.change.cognitive)}
+      </Block>
+      <Block title="배변변화">
+        <Row label="대변 실수" value={cnt(r.bowel.stoolAccidents)} />
+        <Row label="소변 실수" value={cnt(r.bowel.urineAccidents)} />
         {r.bowel.diaperChanges !== null && <Row label="기저귀 교환" value={cnt(r.bowel.diaperChanges)} />}
       </Block>
-      <Block title="특이사항">
-        <tr className="border-t border-(--line)">
-          <td className="py-2 text-base">{r.notes ?? "없음"}</td>
-        </tr>
-      </Block>
+      <section className="flex flex-col gap-1 break-inside-avoid text-lg">
+        <h3 className="font-bold">특이사항</h3>
+        <p>{r.notes ?? "없음"}</p>
+      </section>
 
       {signature && (
         <section className="flex flex-col gap-2 break-inside-avoid">
-          <h3 className="bg-(--neutral-soft) px-2 py-1 text-base font-bold">확인 서명 (LAW-9)</h3>
+          <h3 className="text-lg font-bold">확인 서명</h3>
           <SignatureSection visitId={visitId} initial={signatures} caregiverName={caregiverName} />
         </section>
       )}
-    </article>
+    </Card>
   );
 }

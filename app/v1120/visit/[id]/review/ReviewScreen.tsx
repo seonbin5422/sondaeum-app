@@ -2,7 +2,8 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Button, LinkButton, Screen, TopBar } from "../../../_components/ui";
+import { Button, Icon, LinkButton, Screen, TopBar, selectChipClass } from "../../../_components/ui";
+import { Spinner } from "../../../_components/Pressable";
 import { addToNotes, saveRecord } from "../../../_actions";
 import { useSpeech } from "../../../_components/useSpeech";
 import type { SaidQuotes } from "../../../_extract";
@@ -13,13 +14,14 @@ import type { CareRecord, Change } from "../../../_types";
 
 function NeedsCheck() {
   return (
-    <span className="rounded-full bg-accent-soft px-3 py-0.5 text-base font-bold text-accent-soft-foreground ring-1 ring-accent">
+    <span className="shrink-0 whitespace-nowrap rounded-full bg-(--bg-brand) px-3 py-0.5 text-base font-bold text-(--text-brand)">
       확인 필요
     </span>
   );
 }
 
 // 섹션은 하나씩 나타난다. 머리를 누르면 이름·시간만 남기고 접히고, 다시 누르면 펼쳐진다.
+// 접힌 머리 (Figma 513:411): 확인한 섹션은 귤색 체크, 이름 아래 시간이나 한 줄 요약
 function Section({
   id,
   title,
@@ -28,6 +30,7 @@ function Section({
   hint,
   missing,
   said,
+  done,
   open,
   onToggle,
   children,
@@ -39,28 +42,34 @@ function Section({
   hint?: string;
   missing?: boolean;
   said?: string;
+  done: boolean;
   open: boolean;
   onToggle: () => void;
   children: ReactNode;
 }) {
+  const sub = time ?? summary;
   return (
-    <section id={id} className="flex scroll-mt-4 flex-col gap-3 rounded-[15px] border border-(--line) bg-white p-5">
-      <button type="button" aria-expanded={open} onClick={onToggle} className="flex min-h-12 items-center justify-between gap-2 text-left">
-        <h2 className="text-lg font-bold">{title}</h2>
-        <span className="flex items-center gap-2">
-          {missing && <NeedsCheck />}
-          {time && <span className="text-lg font-bold">{time}</span>}
-          <span aria-hidden className={`text-muted transition-transform ${open ? "rotate-180" : ""}`}>
-            ▾
-          </span>
+    <section id={id} className={`enter flex scroll-mt-4 flex-col rounded-2xl bg-white ${open ? "gap-4 p-5" : "px-5 py-4"}`}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className="press -m-2 flex min-h-12 items-center gap-3 rounded-xl p-2 text-left active:bg-(--bg-secondary)"
+      >
+        {done && <Icon name="check_circle" size={28} className="pop text-(--brand-secondary)" />}
+        <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
+          <h2 className={`font-bold ${open ? "text-xl" : "text-lg"}`}>{title}</h2>
+          {!open && sub && <span className="truncate text-base text-muted">{sub}</span>}
         </span>
+        {missing && <NeedsCheck />}
+        <Icon name={open ? "expand_less" : "expand_more"} size={28} />
+        <span className="sr-only">{open ? "접기" : "펼치기"}</span>
       </button>
-      {!open && summary && <p className="-mt-2 truncate text-base text-muted">{summary}</p>}
       {open && (
         <>
-              {hint && <p className="-mt-2 text-base text-muted">{hint}</p>}
-              {children}
-              {said && <p className="text-base text-muted">내가 한 말: &quot;{said}&quot;</p>}
+          {hint && <p className="-mt-1 text-base text-muted">{hint}</p>}
+          {children}
+          {said && <p className="text-base text-muted">내가 한 말: &quot;{said}&quot;</p>}
         </>
       )}
     </section>
@@ -73,9 +82,7 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       type="button"
       aria-pressed={on}
       onClick={() => onChange(!on)}
-      className={`min-h-12 rounded-xl px-3 text-base font-bold ${
-        on ? "bg-(--success-soft) text-(--text-success) ring-1 ring-(--success)" : "border border-border bg-white"
-      }`}
+      className={`${selectChipClass(on)} px-3! text-base!`}
     >
       {on ? `✓ ${label}` : label}
     </button>
@@ -85,11 +92,16 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
 function NumberRow({ label, unit, value, onChange }: { label: string; unit: string; value: number | null; onChange: (v: number | null) => void }) {
   return (
     <label className="flex items-center justify-between gap-3 text-lg">
-      <span>{label}</span>
-      <span className="flex items-center gap-2">
+      <span className="font-medium">{label}</span>
+      {/* 분 입력 (Figma 513:437): 비어 있으면 연한 귤색 면 + "—" */}
+      <span
+        className={`flex h-[52px] w-[120px] shrink-0 items-center gap-1 rounded-xl px-4 transition-colors focus-within:ring-[3px] focus-within:ring-accent/50 ${
+          value === null ? "bg-(--bg-brand)" : "bg-(--bg-secondary)"
+        }`}
+      >
         <input
           inputMode="numeric"
-          className={`h-12 w-20 rounded-xl border text-center text-xl font-bold ${value === null ? "border-accent ring-[3px] ring-accent/30" : "border-border"}`}
+          className="w-full min-w-0 bg-transparent text-right text-lg font-bold outline-none placeholder:text-(--text-brand)"
           placeholder="—"
           value={value ?? ""}
           onChange={(e) => {
@@ -97,7 +109,7 @@ function NumberRow({ label, unit, value, onChange }: { label: string; unit: stri
             onChange(v === "" ? null : Number(v));
           }}
         />
-        <span className="w-4 text-base text-muted">{unit}</span>
+        <span className="text-lg text-muted">{unit}</span>
       </span>
     </label>
   );
@@ -130,9 +142,7 @@ function ChangeRow({ label, value, onChange }: { label: string; value: Change | 
             type="button"
             aria-pressed={value === v}
             onClick={() => onChange(v)}
-            className={`h-12 w-16 rounded-xl text-base font-bold ${
-              value === v ? "bg-accent text-accent-foreground" : "border border-border bg-white"
-            }`}
+            className={`${selectChipClass(value === v)} w-16 px-0! text-base!`}
           >
             {l}
           </button>
@@ -361,7 +371,7 @@ export function ReviewScreen({
       body: (
         <>
           <textarea
-            className="min-h-24 w-full rounded-xl border border-border p-3 text-lg font-bold"
+            className="min-h-24 w-full rounded-xl bg-(--bg-secondary) p-3 text-lg outline-none focus:ring-[3px] focus:ring-accent/50"
             value={r.notes ?? ""}
             placeholder="혈압, 복약, 아픈 곳처럼 보호자가 알아야 할 것"
             // 직접 고치면 보호자용 글은 옛 내용이 되므로 지우고, 보호자 보고서도 고친 글을 보여 준다
@@ -374,7 +384,7 @@ export function ReviewScreen({
           )}
           {/* 말로 더하기는 조치가 빠졌을 때만. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
           {(r.notesNoAction || speech.recording || adding || heardText) && (
-          <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction ? "bg-accent-soft text-accent-soft-foreground" : "bg-(--neutral-soft)"}`}>
+          <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction ? "bg-(--bg-brand) text-(--text-brand)" : "bg-(--bg-secondary)"}`}>
             {r.notesNoAction && (
               <>
                 <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>
@@ -388,13 +398,21 @@ export function ReviewScreen({
               </p>
             )}
             {adding ? (
-              <p className="text-base font-bold">특이사항에 넣는 중이에요…</p>
+              <p className="flex items-center gap-2 text-base font-bold" aria-live="polite">
+                <Spinner />
+                특이사항에 넣는 중이에요
+              </p>
             ) : (
-              <Button variant="secondary" onClick={speech.recording ? finishTalk : speech.start} disabled={speech.supported === false}>
+              <Button
+                variant={speech.recording ? "danger" : "secondary"}
+                className={speech.recording ? "" : "bg-white! active:bg-(--line)!"}
+                onClick={speech.recording ? finishTalk : speech.start}
+                disabled={speech.supported === false}
+              >
                 {speech.recording ? "● 다 말했어요" : "🎤 말로 더하기"}
               </Button>
             )}
-            {speech.error && <p className="text-base font-bold text-(--danger)">{speech.error}</p>}
+            {speech.error && <p className="text-base font-bold text-(--text-danger)">{speech.error}</p>}
           </div>
           )}
           {r.notes && r.notes !== "특이사항 없음." && !REPORTED.test(r.notes) && (
@@ -425,15 +443,15 @@ export function ReviewScreen({
           disabled={confirmed < steps.length}
           disabledReason={`항목을 하나씩 확인해 주세요 (${confirmed}/${steps.length})`}
         >
-          다음: 보낼 내용 보기
+          다음으로
         </Button>
       }
     >
       {/* 방금 녹음하고 왔으면 뒤로가 곧 "더 말하기"라 버튼을 따로 두지 않는다 */}
       <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title="기록 확인" />
-      {saveError && <p className="text-base font-bold text-(--danger)">{saveError}</p>}
+      {saveError && <p className="text-base font-bold text-(--text-danger)" role="alert">{saveError}</p>}
 
-      <div role="tablist" className="grid grid-cols-2 rounded-xl bg-(--neutral-soft) p-1">
+      <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-white p-1">
         {(
           [
             ["check", "기록 확인"],
@@ -445,7 +463,7 @@ export function ReviewScreen({
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`min-h-12 rounded-lg text-base font-bold ${tab === k ? "bg-white shadow-sm" : "text-muted"}`}
+            className={`press min-h-12 rounded-xl text-base font-bold ${tab === k ? "bg-(--bg-brand) text-(--text-brand)" : "text-muted active:bg-(--bg-secondary)"}`}
           >
             {l}
           </button>
@@ -474,18 +492,29 @@ export function ReviewScreen({
         </>
       ) : (
       <>
-      <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
+      <div className="enter flex flex-col gap-1 rounded-2xl bg-white p-5 leading-[1.4]">
         <p className="text-lg font-bold">AI가 급여제공기록지에 맞춰 적었어요</p>
-        <p className="text-base">&quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. 비워 두었으니 채워 주세요.</p>
+        <p className="text-base">
+          &quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. <span className="whitespace-nowrap">비워 두었으니</span> 채워 주세요.
+        </p>
       </div>
       {resumed && (
-        <Button variant="secondary" onClick={talkMore}>
+        <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={talkMore}>
           🎤 빠진 내용 더 말하기
         </Button>
       )}
 
+      <div className="flex flex-col gap-2 py-1">
+        <p className="text-lg font-bold">
+          항목을 하나씩 확인해 주세요 <span className="whitespace-nowrap">({confirmed}/{steps.length})</span>
+        </p>
+        <div className="h-2.5 overflow-hidden rounded-full bg-(--line)" role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={confirmed} aria-label="확인한 항목">
+          <div className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${(confirmed / steps.length) * 100}%` }} />
+        </div>
+      </div>
+
       {steps.slice(0, confirmed + 1).map((st, i) => (
-        <Section key={st.title} id={`step-${i}`} {...st} open={open.has(i)} onToggle={() => toggle(i)}>
+        <Section key={st.title} id={`step-${i}`} {...st} done={i < confirmed} open={open.has(i)} onToggle={() => toggle(i)}>
           {st.body}
           {i === confirmed && (
             <Button onClick={() => next(i)}>{i === steps.length - 1 ? "다 확인했어요" : "확인했어요, 다음"}</Button>
@@ -495,7 +524,7 @@ export function ReviewScreen({
       </>
       )}
 
-      <LinkButton href="/v1120" variant="secondary">
+      <LinkButton href="/v1120" variant="secondary" className="bg-white! active:bg-(--line)!">
         나중에 하기 (홈으로)
       </LinkButton>
     </Screen>

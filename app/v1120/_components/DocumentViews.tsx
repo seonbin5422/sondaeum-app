@@ -1,11 +1,15 @@
 import type { Change, ClientProfile, HistoryVisit } from "../_types";
 import { CareSheet } from "./CareSheet";
 import { PrintActions } from "./PrintActions";
-import { SmallLinkButton } from "./ui";
+import { Card, TopBar, TOP_BACK } from "./ui";
+import { BackButton } from "./BackButton";
 
 // 서류 만들기 결과 화면. 요양보호사(C-20)와 보호자(G-03)가 같이 쓴다. 인쇄하면 A4로 버튼 없이 나온다.
 
 const fmt = (iso: string) => iso.replaceAll("-", ".");
+const WD = "일월화수목금토";
+// 2026.10.28 (수)
+const fmtDay = (iso: string) => `${fmt(iso)} (${WD[new Date(`${iso}T12:00:00+09:00`).getUTCDay()]})`;
 const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8))}`;
 
 function visitsIn(history: HistoryVisit[], from: string, to: string): HistoryVisit[] {
@@ -15,20 +19,55 @@ function visitsIn(history: HistoryVisit[], from: string, to: string): HistoryVis
 }
 
 const SYM: Record<Change, { s: string; c: string }> = {
-  improved: { s: "▲", c: "text-(--success)" },
+  improved: { s: "▲", c: "text-(--text-success)" },
   same: { s: "●", c: "text-muted" },
-  worse: { s: "▼", c: "text-(--danger)" },
+  worse: { s: "▼", c: "text-(--text-danger)" },
 };
 
-function Shell({ backHref, children, share }: { backHref: string; children: React.ReactNode; share?: () => Promise<void> }) {
+// 회색 바탕 + 상단 바(Figma 공통/상단 바) + 흰 서류 카드 + 아래 버튼. 인쇄하면 흰 종이에 서류만 나온다
+function Shell({ backHref, title, children, share }: { backHref: string; title: string; children: React.ReactNode; share?: () => Promise<void> }) {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-4 pb-10 print:max-w-none print:p-0">
-      <div className="print:hidden">
-        <SmallLinkButton href={backHref}>← 뒤로</SmallLinkButton>
-      </div>
-      {children}
-      <PrintActions share={share} />
-    </main>
+    <div className="flex flex-1 flex-col bg-(--bg-secondary) print:bg-white">
+      <main className="mx-auto flex w-full max-w-md flex-col gap-4 p-5 pb-10 print:max-w-none print:p-0">
+        {/* 들어온 화면(서류 만들기·게시글)으로 돌아간다. 링크로 바로 열었으면 backHref로 */}
+        <TopBar back={<BackButton icon className={TOP_BACK} fallback={backHref} />} title={title} />
+        {children}
+        <PrintActions share={share} />
+      </main>
+    </div>
+  );
+}
+
+// 서류 카드: 흰 카드 r16 (Figma 요약 A4). 인쇄할 때는 여백·애니메이션 없이
+const paper = "print:animate-none! print:rounded-none print:p-0";
+
+// 표: 연한 회색 면 r12, 머리 줄은 --line 면 (Figma 516:690). 줄 사이 선 없음
+function Trend({ head, rows }: { head: string[]; rows: { label: string; cells: { v: React.ReactNode; c: string }[] }[] }) {
+  return (
+    <table className="w-full table-fixed overflow-hidden rounded-xl bg-(--bg-secondary) text-center text-base print:bg-white">
+      <thead className="bg-(--line) font-bold print:bg-(--bg-secondary)">
+        <tr>
+          <th className="w-14 p-2" />
+          {head.map((h, i) => (
+            <th key={i} className="py-2">
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.label}>
+            <th className="p-2 text-left font-bold">{r.label}</th>
+            {r.cells.map((x, i) => (
+              <td key={i} className={`py-2 font-medium ${x.c}`}>
+                {x.v}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -82,131 +121,103 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
   const notes = visits.filter((v) => v.record.notes).reverse();
 
   return (
-    <Shell backHref={backHref} share={share}>
-      <article className="flex flex-col gap-4 rounded-md border border-border bg-white p-4 print:border-0">
-        <header className="flex flex-col gap-0.5">
-          <h1 className="text-2xl font-bold">진료 참고용 기록 요약</h1>
-          <p className="text-lg font-bold">
-            {[c.name, c.age && `${c.age}세`, c.gender, `장기요양 ${c.careGrade ?? "등급 미입력"}`].filter(Boolean).join(" · ")}
+    <Shell backHref={backHref} title="진료 참고용 요약" share={share}>
+      <Card className={`gap-4 leading-[1.4] ${paper}`}>
+        <header className="flex flex-col gap-1">
+          <h1 className="text-[22px] font-bold tracking-[-0.02em]">진료 참고용 기록 요약</h1>
+          <p className="text-base font-medium text-muted">
+            {[`${c.name} 수급자`, c.age && `${c.age}세`, c.gender, `장기요양 ${c.careGrade ?? "등급 미입력"}`].filter(Boolean).join(" · ")}
           </p>
           <p className="text-base text-muted">
-            {fmt(from)} ~ {fmt(to)} · 방문 {visits.length}번
+            <span className="whitespace-nowrap">{fmt(from)} ~ {fmt(to)}</span> · <span className="whitespace-nowrap">방문 {visits.length}번</span>
           </p>
-          {c.medicationNotes && <p className="text-base text-muted">복용 중인 약: {c.medicationNotes}</p>}
         </header>
+        {c.medicationNotes && (
+          <p className="rounded-2xl bg-(--bg-secondary) p-3 text-base font-medium print:bg-white print:p-0">복용 중인 약: {c.medicationNotes}</p>
+        )}
 
-        <section className="flex flex-col gap-2 border-t border-(--line) pt-3">
+        <section className="flex flex-col gap-1 break-inside-avoid">
           <h2 className="text-lg font-bold">1. 기간 중 달라진 점</h2>
           {worse.length === 0 && <p className="text-base text-muted">기간 중 나빠진 기록이 없어요.</p>}
           {worse.map((w) => (
-            <p key={w.date + w.k} className="flex items-center gap-2 text-base font-bold">
-              <span className="rounded-full bg-(--danger-soft) px-3 py-0.5 text-(--text-danger)">▼ 나빠졌어요</span>
-              {Number(w.date.slice(5, 7))}월 {Number(w.date.slice(8))}일 · {w.k}
+            <p key={w.date + w.k} className="flex items-start gap-3 py-1.5 text-lg">
+              <span className="min-w-0 flex-1 text-muted">
+                <span className="whitespace-nowrap">{Number(w.date.slice(5, 7))}월 {Number(w.date.slice(8))}일</span> · {w.k}
+              </span>
+              <span className="shrink-0 font-bold text-(--text-danger)">▼ 나빠졌어요</span>
             </p>
           ))}
           {worse.length > 0 && <p className="text-base text-muted">그 밖의 방문은 비슷하거나 좋아졌어요.</p>}
         </section>
 
-        <section className="flex flex-col gap-2 border-t border-(--line) pt-3">
-          <h2 className="text-lg font-bold">2. 변화상태 추이</h2>
-          <table className="w-full table-fixed text-center text-base">
-            <thead className="bg-(--neutral-soft) text-muted">
-              <tr>
-                <th className="w-14" />
-                {recent.map((v) => (
-                  <th key={v.date} className="py-1">
-                    {md(v.date)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(
-                [
-                  ["신체", "physical"],
-                  ["식사", "meal"],
-                  ["인지", "cognitive"],
-                ] as const
-              ).map(([l, k]) => (
-                <tr key={k} className="border-t border-(--line)">
-                  <th className="py-2 text-left font-bold">{l}</th>
-                  {recent.map((v) => {
-                    const x = v.record.change[k];
-                    return (
-                      <td key={v.date} className={`text-lg ${x ? SYM[x].c : "text-muted"}`}>
-                        {x ? SYM[x].s : "-"}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="text-base text-muted">▲ 좋아졌어요 ● 비슷해요 ▼ 나빠졌어요 · 최근 방문 {recent.length}번</p>
+        <section className="flex flex-col gap-2 break-inside-avoid">
+          <h2 className="text-lg font-bold">
+            2. 변화상태 추이 <span className="whitespace-nowrap">(최근 방문 {recent.length}번)</span>
+          </h2>
+          <Trend
+            head={recent.map((v) => md(v.date))}
+            rows={(
+              [
+                ["신체", "physical"],
+                ["식사", "meal"],
+                ["인지", "cognitive"],
+              ] as const
+            ).map(([label, k]) => ({
+              label,
+              cells: recent.map((v) => {
+                const x = v.record.change[k];
+                return { v: x ? SYM[x].s : "-", c: x ? SYM[x].c : "text-muted" };
+              }),
+            }))}
+          />
+          <p className="whitespace-pre-wrap text-base text-muted">{"▲ 좋아졌어요  ● 비슷해요  ▼ 나빠졌어요"}</p>
         </section>
 
-        <section className="flex flex-col gap-2 border-t border-(--line) pt-3">
+        <section className="flex flex-col gap-2 break-inside-avoid">
           <h2 className="text-lg font-bold">3. 배변 변화 (실수 횟수)</h2>
-          <table className="w-full table-fixed text-center text-base">
-            <thead className="bg-(--neutral-soft) text-muted">
-              <tr>
-                <th className="w-14" />
-                {recent.map((v) => (
-                  <th key={v.date} className="py-1">
-                    {md(v.date)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(
-                [
-                  ["대변", "stoolAccidents"],
-                  ["소변", "urineAccidents"],
-                ] as const
-              ).map(([l, k]) => (
-                <tr key={k} className="border-t border-(--line)">
-                  <th className="py-2 text-left font-bold">{l}</th>
-                  {recent.map((v) => {
-                    const n = v.record.bowel[k];
-                    return (
-                      <td key={v.date} className={n ? "font-bold" : "text-muted"}>
-                        {n ?? "-"}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Trend
+            head={recent.map((v) => md(v.date))}
+            rows={(
+              [
+                ["대변", "stoolAccidents"],
+                ["소변", "urineAccidents"],
+              ] as const
+            ).map(([label, k]) => ({
+              label,
+              cells: recent.map((v) => {
+                const n = v.record.bowel[k];
+                return { v: n ?? "-", c: n === null ? "text-muted" : "" };
+              }),
+            }))}
+          />
         </section>
 
-        <section className="flex flex-col gap-2 border-t border-(--line) pt-3">
+        <section className="flex flex-col gap-1">
           <h2 className="text-lg font-bold">4. 특이사항</h2>
           {notes.length === 0 && <p className="text-base text-muted">적힌 특이사항이 없어요.</p>}
           {notes.map((v) => (
-            <div key={v.date}>
+            <div key={v.date} className="break-inside-avoid py-1">
               <p className="text-base font-bold text-muted">
                 {Number(v.date.slice(5, 7))}월 {Number(v.date.slice(8))}일
               </p>
-              <p className="text-base">{v.record.notes}</p>
+              <p className="text-lg">{v.record.notes}</p>
             </div>
           ))}
         </section>
 
-        <section className="flex flex-col gap-1 border-t border-(--line) pt-3">
+        <section className="flex flex-col gap-1 break-inside-avoid">
           <h2 className="text-lg font-bold">5. 기간 요약</h2>
-          <p className="text-base">{periodSummary(visits)}</p>
-          <p className="text-base text-muted">위 기록의 횟수를 센 요약이에요.</p>
+          <p className="text-lg">{periodSummary(visits)}</p>
+          <p className="text-base text-muted">보낸 기록의 횟수를 모아 정리한 요약이에요. 진단이 아니에요.</p>
         </section>
 
-        <footer className="rounded-md bg-(--neutral-soft) px-3 py-2 text-base text-muted">
+        <footer className="rounded-xl bg-(--bg-secondary) px-3 py-2 text-base text-muted print:bg-white print:px-0">
           <p className="font-bold">요양보호사가 보고 적은 기록과 AI가 모아 쓴 요약이에요. 의료적 진단이 아니니, 건강 상태는 꼭 의료진과 상담해 주세요.</p>
           <p>
             작성 {caregiverName} 요양보호사 · 작성일 {fmt(today)}
           </p>
         </footer>
-      </article>
+      </Card>
     </Shell>
   );
 }
@@ -215,18 +226,18 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
 export function CareSheetView({ client: c, history, caregiverName, today, from, to, backHref, role }: ViewProps) {
   const visits = visitsIn(history, from, to);
   return (
-    <Shell backHref={backHref}>
-      <header className="print:hidden">
-        <h1 className="text-2xl font-bold">급여제공기록지</h1>
-        <p className="text-base text-muted">
+    <Shell backHref={backHref} title="급여제공기록지">
+      <p className="text-base text-muted print:hidden">
+        장기요양급여 제공기록지(방문요양) 형식이에요. 기관이 발급하는 공식 사본은 아니에요.{" "}
+        <span className="whitespace-nowrap">
           {fmt(from)} ~ {fmt(to)} · {visits.length}장
-        </p>
-      </header>
+        </span>
+      </p>
       {visits.map((v) => (
         <div key={v.date} className="print:break-after-page">
           <CareSheet
             record={v.record}
-            date={`${fmt(v.date)}`}
+            date={fmtDay(v.date)}
             time={`${v.start}~${v.end}`}
             clientName={c.name}
             caregiverName={caregiverName}
@@ -235,7 +246,7 @@ export function CareSheetView({ client: c, history, caregiverName, today, from, 
           />
         </div>
       ))}
-      <footer className="rounded-md bg-(--neutral-soft) px-3 py-2 text-base text-muted">
+      <footer className="rounded-xl bg-white px-4 py-3 text-base text-muted print:px-0">
         <p className="font-bold">
           요양보호사가 손다음에 보낸 기록으로 만든 참고용 기록지예요. 기관이 발급하는 공식 사본이 아니어서 국민건강보험공단 제출 같은 공식 용도로는 쓸 수 없어요. 공식 기록은 소속 기관에 요청해 주세요.
         </p>

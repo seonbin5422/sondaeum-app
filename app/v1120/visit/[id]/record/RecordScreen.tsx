@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Screen, TopBar } from "../../../_components/ui";
+import { Button, Card, Icon, Screen, TopBar } from "../../../_components/ui";
+import { buzz, Spinner } from "../../../_components/Pressable";
 import { useSpeech } from "../../../_components/useSpeech";
 import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
@@ -166,6 +167,14 @@ export function RecordScreen({
   const [qi, setQi] = useState(0);
   const [ttsStatus, setTtsStatus] = useState("");
   useEffect(() => hush, []); // 화면을 떠나면 읽던 질문을 멈춘다
+  // 질문이 뜨거나 다음 질문으로 넘어가면 질문 카드가 보이게 올린다
+  const questionCard = useRef<HTMLElement>(null);
+  const asking = questions !== null;
+  useEffect(() => {
+    if (!asking) return;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    questionCard.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, [asking, qi]);
 
   function askAt(list: { title: string; say: string; audio: string; said?: string }[], i: number) {
     if (speech.recording) speech.stop();
@@ -211,23 +220,25 @@ export function RecordScreen({
     }
   }
 
+  const recordButtonLabel = speech.recording ? "눌러서 끝내기" : resumed ? "눌러서 이어서 녹음" : "눌러서 녹음";
+
   return (
     <Screen
       bottom={
         !speech.recording &&
         transcript && (
           (questions ? (
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => askAt(questions, qi + 1)} disabled={finishing}>
-                {qi + 1 < questions.length ? "다음 질문" : "다 답했어요: AI로 정리하기"}
+            <>
+              <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={() => askAt(questions, qi + 1)} disabled={finishing}>
+                {qi + 1 < questions.length ? "다음 질문" : "다 답했어요"}
               </Button>
-              <Button variant="secondary" onClick={() => askAt(questions, questions.length)} disabled={finishing}>
-                그만 묻고 정리하기
+              <Button onClick={() => askAt(questions, questions.length)} disabled={finishing}>
+                {finishing ? <><Spinner />잠시만요</> : "그만 묻고 정리하기"}
               </Button>
-            </div>
+            </>
           ) : (
             <Button onClick={onDone} disabled={finishing}>
-              다 말했어요: AI로 정리하기
+              {finishing ? <><Spinner />잠시만요</> : "다 말했어요"}
             </Button>
           ))
         )
@@ -235,66 +246,77 @@ export function RecordScreen({
     >
       <TopBar backHref="/v1120" title={`${clientName} 기록`} />
 
-      {questions ? (
-        <div className="flex flex-col gap-2 rounded-[15px] border-2 border-accent p-4" aria-live="polite">
-          <p className="text-base font-bold text-muted">
-            빠진 내용을 여쭤볼게요 ({qi + 1}/{questions.length}) · {questions[qi].title}
-          </p>
-          {questions[qi].said && <p className="text-base">말씀하신 내용: {questions[qi].said}</p>}
-          <p className="text-xl font-bold">{questions[qi].say}</p>
-          <button type="button" className="self-start text-base font-bold underline underline-offset-4" onClick={() => speak(questions[qi].audio, setTtsStatus)}>
-            🔊 다시 듣기
-          </button>
-          {ttsStatus && <p className="text-base font-bold text-(--danger)">{ttsStatus}</p>}
-          <p className="text-base text-muted">아래 녹음을 눌러 답해 주세요. 없으면 &quot;다음 질문&quot;을 눌러요.</p>
-        </div>
-      ) : (
-        <>
-          <p className="text-xl font-bold">
-            {speech.recording ? "듣고 있어요. 편하게 계속 말씀하세요." : "오늘 돌봄 내용을 편하게 말씀해 주세요."}
-          </p>
+      <div className="flex flex-col gap-1 leading-[1.4]">
+        <p className="text-[22px] font-bold tracking-[-0.02em]">오늘 돌봄 내용을 편하게 말씀해 주세요.</p>
+        <p className="text-lg text-muted">아래 순서대로 말하면 칸이 채워져요. 순서는 바뀌어도 괜찮아요.</p>
+      </div>
 
-          <p className="-mt-3 text-lg text-muted">아래 순서대로 하나씩 말하면 칸이 채워져요. 순서는 바뀌어도 괜찮아요.</p>
-        </>
+      {questions && (
+        <section ref={questionCard} className="enter flex scroll-mt-5 flex-col gap-3 rounded-2xl bg-(--bg-brand) p-6" aria-live="polite">
+          <span className="w-fit rounded-full bg-white px-3 py-1 text-base font-bold text-(--text-brand)">
+            빠진 항목 <span className="whitespace-nowrap">{qi + 1} / {questions.length}</span>
+          </span>
+          <p className="text-base font-bold text-(--text-brand)">{questions[qi].title}</p>
+          {questions[qi].said && <p className="text-base">말씀하신 내용: {questions[qi].said}</p>}
+          <p className="text-[26px] font-bold leading-[1.4] tracking-[-0.02em]">{questions[qi].say}</p>
+          <p className="text-lg">
+            질문을 소리로 들려 드려요. 녹음 버튼을 눌러 답해 주세요.{" "}
+            {/* 마지막 질문에는 "다음 질문" 버튼이 없으니 실제 버튼 이름으로 안내한다 */}
+            {qi + 1 < questions.length ? (
+              <>없으면 <span className="whitespace-nowrap">&quot;다음 질문&quot;을</span> 눌러요.</>
+            ) : (
+              <>없으면 <span className="whitespace-nowrap">&quot;다 답했어요&quot; 버튼을</span> 눌러 주세요.</>
+            )}
+          </p>
+          <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={() => speak(questions[qi].audio, setTtsStatus)}>
+            질문 다시 듣기
+          </Button>
+          {ttsStatus && <p className="text-base font-bold text-(--text-danger)">{ttsStatus}</p>}
+        </section>
       )}
 
-      <div className="flex flex-col items-center gap-2">
+      <Card className="items-center gap-3! py-7 text-center">
+        {speech.recording && (
+          <p className="flex items-center gap-2 rounded-full bg-(--danger-soft) px-3.5 py-1 text-base font-bold text-(--text-danger)">
+            <span aria-hidden className="size-2.5 animate-pulse rounded-full bg-record" />
+            녹음 중 {formatTime(seconds)}
+          </p>
+        )}
         <button
           type="button"
+          onPointerDown={buzz}
           onClick={speech.recording ? speech.stop : () => (hush(), speech.start())}
           disabled={speech.supported === false}
-          className={`flex h-40 w-40 items-center justify-center rounded-full bg-record text-2xl font-bold text-white disabled:opacity-40 ${
-            speech.recording ? "ring-[14px] ring-record/25" : ""
+          className={`press relative flex size-40 items-center justify-center rounded-full text-white disabled:opacity-40 ${
+            speech.recording ? "bg-record active:bg-[#e04424]" : "bg-(--muted) active:bg-foreground"
           }`}
         >
-          {speech.recording ? "끝내기" : "녹음"}
+          {/* 녹음 중: 버튼 둘레가 퍼져 나가며 듣고 있다는 걸 보여 준다 */}
+          {speech.recording && <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-record/40 motion-reduce:hidden" />}
+          {speech.recording ? (
+            <Icon name="stop" size={72} className="relative" />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- Figma 녹음 아이콘(흰색 고정 SVG)
+            <img src="/v1120/mic.svg" alt="" width={72} height={72} />
+          )}
+          <span className="sr-only">{speech.recording ? "녹음 끝내기" : "녹음 시작"}</span>
         </button>
-        {speech.recording ? (
-          <>
-            <p className="flex items-center gap-2 text-xl font-bold">
-              <span className="h-4 w-4 animate-pulse rounded-full bg-record" />
-              녹음 중 {formatTime(seconds)}
-            </p>
-            <p className="text-lg font-bold">눌러서 끝내기</p>
-          </>
-        ) : (
-          <>
-            <p className="text-xl font-bold">{resumed ? "눌러서 이어서 녹음" : "눌러서 녹음"}</p>
-            <p className="text-base text-muted">말을 다 하면 한 번 더 눌러 끝내요</p>
-          </>
-        )}
+        <p aria-hidden className="text-[22px] font-bold leading-[1.4]">{recordButtonLabel}</p>
+        <p className="text-base text-muted">
+          {speech.recording ? "듣고 있어요. 편하게 계속 말씀하세요." : "말을 다 하면 한 번 더 눌러 끝내요"}
+        </p>
         {speech.supported === false && (
           <p className="text-base text-muted">이 브라우저는 음성 인식이 안 돼요. 아래 &quot;글로 쓰기&quot;를 눌러 주세요.</p>
         )}
-        {speech.error && <p className="text-base font-bold text-(--danger)">{speech.error}</p>}
-        {saveError && <p className="text-base font-bold text-(--danger)">{saveError}</p>}
-      </div>
+        {speech.error && <p className="text-base font-bold text-(--text-danger)">{speech.error}</p>}
+        {saveError && <p className="text-base font-bold text-(--text-danger)">{saveError}</p>}
+      </Card>
 
-      <div className="flex flex-col gap-1 rounded-[15px] border border-border p-4">
-        <p className="text-base font-bold text-muted">녹음 내용</p>
+      <Card className="gap-2!">
+        <p className="text-lg font-bold">녹음 내용</p>
         {typing ? (
           <textarea
-            className="min-h-32 w-full resize-y text-lg outline-none"
+            className="min-h-32 w-full resize-y rounded-xl bg-(--bg-secondary) p-3 text-lg outline-none focus:ring-[3px] focus:ring-accent/50"
             value={transcript}
             placeholder="오늘 한 일을 적어 주세요."
             onChange={(e) => {
@@ -312,72 +334,83 @@ export function RecordScreen({
           </p>
         ) : (
           <>
-            <p className="text-lg text-muted">녹음을 시작하면 여기에 글자로 적혀요.</p>
+            <p className="text-base text-muted">녹음을 시작하면 여기에 글자로 적혀요.</p>
             {/* 체험 계정용: 마이크 없이 흐름을 보려고 예시 내용을 넣는다 */}
             {showSample && (
               <button
                 type="button"
-                className="mt-1 self-start text-base font-bold text-accent-soft-foreground underline underline-offset-4"
+                className="press -my-2 min-h-12 self-start text-base font-medium text-(--text-brand) active:opacity-60"
                 onClick={() => {
                   setTranscript(sampleTranscript);
                   persist(sampleTranscript);
                 }}
               >
-                미리보기: 예시 내용 넣기
+                미리보기: 예시 내용 넣기 ›
               </button>
             )}
           </>
         )}
-      </div>
+      </Card>
 
-      <ol className="flex flex-col gap-2">
-        {sections.map((sec, i) => {
-          const done = sec.found.length > 0;
-          return (
-            <li key={sec.title} className={`rounded-xl border p-3 ${done ? "border-(--success) bg-(--success-soft)" : "border-border"}`}>
-              <p className="flex items-center gap-2 text-lg font-bold">
-                <span className={done ? "text-(--text-success)" : "text-muted"}>{done ? "✓" : `${i + 1}`}</span>
-                {sec.title}
-              </p>
-              {done ? (
-                <p className="text-lg">{sec.found.join(" · ")}</p>
-              ) : (
-                <p className="text-base text-muted">{sec.ask}</p>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-      <p className="-mt-3 text-base text-muted">
-        {saved
-          ? "기록 확인에서 고친 내용도 위 칸에 함께 보여요. 녹음 내용에는 말한 것만 있어요."
-          : "빠진 칸은 다음 화면에서 직접 채울 수 있어요."}
-      </p>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-bold">급여제공기록지 순서</h2>
+        <ol className="flex flex-col gap-2">
+          {sections.map((sec, i) => {
+            const done = sec.found.length > 0;
+            return (
+              <li
+                key={sec.title}
+                className={`flex items-start gap-3 rounded-xl px-5 py-3 transition-colors ${done ? "bg-(--bg-brand)" : "bg-white"}`}
+              >
+                {done ? (
+                  <Icon name="check_circle" size={28} className="pop text-(--brand-secondary)" />
+                ) : (
+                  <Icon name="radio_button_unchecked" size={28} className="text-(--line)" />
+                )}
+                <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
+                  <span className="text-lg font-bold">
+                    {i + 1}. {sec.title}
+                    {done && <span className="sr-only"> (채워짐)</span>}
+                  </span>
+                  <span className={`text-base ${done ? "" : "text-muted"}`}>{done ? sec.found.join(" · ") : sec.ask}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <p className="text-base text-muted">
+          {saved
+            ? "기록 확인에서 고친 내용도 위 칸에 함께 보여요. 녹음 내용에는 말한 것만 있어요."
+            : "빠진 칸은 다음 화면에서 직접 채울 수 있어요."}
+        </p>
+      </section>
 
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant="secondary" disabled={speech.recording} onClick={() => setTyping(true)}>
-          글로 쓰기
-        </Button>
-        <Button variant="secondary" disabled={speech.recording || uploading} onClick={() => fileInput.current?.click()}>
-          {uploading ? "글로 바꾸는 중…" : "음성 파일 올리기"}
-        </Button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept="audio/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = "";
-            if (file) uploadAudio(file);
-          }}
-        />
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording} onClick={() => setTyping(true)}>
+            글로 쓰기
+          </Button>
+          <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording || uploading} onClick={() => fileInput.current?.click()}>
+            {uploading ? <><Spinner />글로 바꾸는 중</> : "음성 파일 올리기"}
+          </Button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) uploadAudio(file);
+            }}
+          />
+        </div>
+        <p className={`text-base ${uploadError ? "text-(--text-danger)" : "text-muted"}`} role={uploadError ? "alert" : undefined}>
+          {speech.recording
+            ? "녹음을 끝내면 글로 쓰기·음성 파일 올리기를 쓸 수 있어요."
+            : uploadError || "휴대폰 녹음 앱으로 녹음한 파일을 올리면 글로 바꿔 드려요."}
+        </p>
       </div>
-      <p className={`-mt-3 text-base ${uploadError ? "text-(--text-danger)" : "text-muted"}`} role={uploadError ? "alert" : undefined}>
-        {speech.recording
-          ? "녹음을 끝내면 글로 쓰기·음성 파일 올리기를 쓸 수 있어요."
-          : uploadError || "휴대폰 녹음 앱으로 녹음한 파일을 올리면 글로 바꿔 드려요."}
-      </p>
     </Screen>
   );
 }

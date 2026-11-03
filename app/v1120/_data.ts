@@ -379,3 +379,60 @@ function readSignatures(enc: string | null | undefined): Signatures | undefined 
     return undefined;
   }
 }
+
+// ---- 알림·홈 "마무리 못 한 기록" (1128) ----
+
+// 한국 시간 기준 최근 7일(오늘 포함)의 시작 시각
+function kstSevenDaysStart() {
+  return new Date(kstTodayRange().start.getTime() - 6 * 24 * 60 * 60 * 1000);
+}
+
+// 최근 7일 동안 시작했지만 아직 안 보낸 방문 (최근 것부터). 삭제·완전히 지우기 예약된 수급자는 뺀다
+export async function myRecentUnsentVisits() {
+  const caregiver = await requireCaregiver();
+  const rows = await prisma.visit.findMany({
+    where: {
+      caregiverId: caregiver.id,
+      createdAt: { gte: kstSevenDaysStart() },
+      status: { notIn: ["NOT_STARTED", "SENT"] },
+      client: { caregiverId: caregiver.id, isActive: true, purgeAt: null },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, clientId: true, status: true, transcript: true, startedAt: true, endedAt: true, createdAt: true, client: { select: { name: true } } },
+  });
+  return rows.map((v) => ({
+    visitId: v.id,
+    clientId: v.clientId,
+    clientName: openPII(v.client.name),
+    status: v.status,
+    hasTranscript: !!v.transcript,
+    day: v.startedAt ?? v.createdAt, // 방문한 날
+    at: v.endedAt ?? v.startedAt ?? v.createdAt, // 알림 시각: 녹음을 끝낸(멈춘) 때, 없으면 시작한 때
+  }));
+}
+
+// 최근 7일 동안 보호자가 남긴 댓글 (최근 것부터). 읽음(readAt)과 상관없이 모두
+export async function myRecentGuardianComments() {
+  const caregiver = await requireCaregiver();
+  const mine = { caregiverId: caregiver.id, isActive: true, purgeAt: null };
+  const rows = await prisma.comment.findMany({
+    where: {
+      author: "guardian",
+      createdAt: { gte: kstSevenDaysStart() },
+      OR: [{ report: { visit: { client: mine } } }, { document: { client: mine } }],
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      body: true,
+      createdAt: true,
+      report: { select: { visit: { select: { clientId: true, client: { select: { name: true } } } } } },
+      document: { select: { clientId: true, client: { select: { name: true } } } },
+    },
+  });
+  return rows.flatMap((r) => {
+    const owner = r.report?.visit ?? r.document;
+    if (!owner) return [];
+    return [{ id: r.id, clientId: owner.clientId, clientName: openPII(owner.client.name), text: safeDecryptText(r.body, "(읽을 수 없는 댓글)"), at: r.createdAt }];
+  });
+}

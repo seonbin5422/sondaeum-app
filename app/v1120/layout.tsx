@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function V1120Layout({ children }: LayoutProps<"/v1120">) {
-  return <div className="v1120 flex min-h-full flex-1 flex-col bg-background">{children}</div>;
+  return <div className="v1120 flex min-h-full flex-1 flex-col bg-(--bg-secondary)">{children}</div>;
 }

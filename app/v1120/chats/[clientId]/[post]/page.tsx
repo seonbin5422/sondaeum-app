@@ -19,7 +19,7 @@ export default async function PostPage({ params }: PageProps<"/v1120/chats/[clie
       <PostSummary
         post={post}
         names={names}
-        fullHref={post.period ? `/v1120/client/${clientId}/documents/summary?from=${post.period.from}&to=${post.period.to}` : `/v1120/g/${post.shareToken}?from=board`}
+        fullHref={post.period ? `/v1120/client/${clientId}/documents/summary?from=${post.period.from}&to=${post.period.to}&board=${post.shareToken}` : `/v1120/g/${post.shareToken}?from=board`}
       />
       <CommentThread post={post} me="caregiver" names={names} send={commentAsCaregiver} markRead={markReadAsCaregiver} />
     </Screen>

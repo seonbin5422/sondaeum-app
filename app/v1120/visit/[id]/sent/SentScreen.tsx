@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LinkButton, Screen } from "../../../_components/ui";
+import { Button, Icon, LinkButton, Screen } from "../../../_components/ui";
+import { buzz, Spinner } from "../../../_components/Pressable";
 import { preloadKakao, shareKakaoCard } from "../../../_components/kakaoShare";
 import { caregiverTitle, maskName } from "../../../_types";
 
@@ -34,6 +35,7 @@ export function SentScreen({
   const [sharedAt, setSharedAt] = useState<Date | null>(null);
   const [copied, setCopied] = useState(false);
   const [link, setLink] = useState("");
+  const [sharing, setSharing] = useState(false); // 공유 창이 열리는 동안 다시 못 누르게
   // shortcut: 보낸 시각을 이 기기(localStorage)에만 둔다, 다른 기기에서 보내면 모름. 대화방 저장(DIF-5) 때 DB로 옮긴다
   const key = `v1120:shared:${visitId}`;
 
@@ -60,6 +62,15 @@ export function SentScreen({
   }
 
   async function shareKakao() {
+    setSharing(true);
+    try {
+      await shareKakaoInner();
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function shareKakaoInner() {
     const text = `${clientName} 어르신 ${date} 방문 보고서예요.`;
     if (shareKakaoCard({ title: `${date} 방문 보고서`, description: `${maskName(clientName)} 어르신 · ${caregiverTitle(caregiverName)}가 보냈어요`, image: "report", url: link, button: "보고서 보기" })) {
       markShared(false);
@@ -86,65 +97,94 @@ export function SentScreen({
     } catch {}
   }
 
-  return (
-    <Screen bottom={<LinkButton href="/v1120" variant="secondary">홈으로</LinkButton>}>
-      <h1 className="text-xl font-bold">{noContact ? "기록 저장" : `${guardianTitle}님께 보내기`}</h1>
+  const kakaoButton = (label: string) => (
+    <button
+      type="button"
+      onPointerDown={buzz}
+      onClick={shareKakao}
+      disabled={sharing}
+      className="press flex h-14 w-full items-center justify-center gap-2 rounded-[15px] bg-[#fee500] text-lg font-bold text-black/85 active:bg-[#e6cf00] disabled:opacity-60"
+    >
+      {sharing ? <Spinner /> : <Icon name="chat_bubble" />}
+      {sharing ? "카카오톡을 여는 중이에요" : label}
+    </button>
+  );
 
-      <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">
-        <p className="flex items-center gap-2 text-lg font-bold text-(--text-success)">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--success) text-base text-white">1</span>
+  return (
+    <Screen
+      bottom={
+        // 홈으로: 보내기(카카오톡 또는 링크 복사) 전에는 비활성 + 이유, 보호자가 없으면 처음부터 켬
+        sharedAt || noContact ? (
+          <LinkButton href="/v1120">홈으로</LinkButton>
+        ) : (
+          <Button disabled disabledReason="카카오톡으로 보내거나 링크를 복사하면 켜져요.">
+            홈으로
+          </Button>
+        )
+      }
+    >
+      {/* 공통/상단 바에서 뒤로를 뺀 모양: 보낸 뒤에는 돌아가 고칠 수 없다 */}
+      <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
+        <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">
+          {noContact ? "기록 저장" : `${guardianTitle}에게 보내기`}
+        </h1>
+      </div>
+
+      <section className="enter flex flex-col gap-3 rounded-2xl bg-(--success-soft) p-5 leading-[1.4]">
+        <p className="flex items-center gap-3 text-xl font-bold">
+          <Icon name="check_circle" size={32} className="pop text-(--success)" />
           기록 저장 완료
         </p>
-        <p className="text-base">
-          {clientName} {date} 기록을 저장했어요.
+        <p className="text-lg text-muted">
+          {clientName} <span className="whitespace-nowrap">{date}</span> 기록을 저장했어요.
         </p>
       </section>
 
       {noContact ? (
-        <section className="flex flex-col gap-1 rounded-[15px] bg-(--neutral-soft) p-5">
-          <p className="text-lg font-bold">보호자가 없어요</p>
-          <p className="text-base">기록은 수급자의 방문 기록과 서류에 남아요. 보호자가 생기면 수급자 정보 수정에서 적어 주세요.</p>
+        <section className="enter flex flex-col gap-2 rounded-2xl bg-white p-5 leading-[1.4]" style={{ "--i": 1 } as React.CSSProperties}>
+          <p className="text-xl font-bold">보호자가 없어요</p>
+          <p className="text-lg text-muted">기록은 수급자의 방문 기록과 서류에 남아요. 보호자가 생기면 수급자 정보 수정에서 적어 주세요.</p>
         </section>
       ) : sharedAt ? (
-        <section className="flex flex-col gap-1 rounded-[15px] bg-(--success-soft) p-5">
-          <p className="flex items-center gap-2 text-lg font-bold text-(--text-success)">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-(--success) text-base text-white">2</span>
-            {guardianName} {guardianTitle}님께 {copied ? "보낼 링크를 복사했어요" : "보냈어요"}
+        // 보낸·복사한 순간 이 칸이 바뀌며 통 튄다 (done-pulse)
+        <section key={sharedAt.getTime()} className="done-pulse flex flex-col gap-3 rounded-2xl bg-white p-5 leading-[1.4]" aria-live="polite">
+          <p className="flex items-center gap-3 text-xl font-bold">
+            <Icon name="check_circle" size={32} className="text-(--success)" />
+            <span>
+              <span className="whitespace-nowrap">{guardianName} {guardianTitle}님께</span>{" "}
+              {copied ? "보낼 링크를 복사했어요" : "보냈어요"}
+            </span>
           </p>
-          <p className="text-base">{formatSent(sharedAt)}</p>
-          {copied && <p className="text-base text-muted">이 브라우저에서는 카카오톡을 바로 열 수 없어요. 카카오톡을 열어 {guardianTitle}님께 붙여 넣어 주세요.</p>}
-          <a href={`/v1120/g/${shareToken}`} className="mt-1 inline-flex min-h-12 w-fit items-center text-base font-bold underline underline-offset-4">
-            {guardianTitle}님이 보는 화면 열어 보기
-          </a>
-          <button
-            type="button"
-            onClick={shareKakao}
-            className="mt-2 flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold active:bg-accent-soft"
+          <p className="text-lg text-muted">{formatSent(sharedAt)}</p>
+          {copied && (
+            <p className="text-base text-muted">
+              이 브라우저에서는 카카오톡을 바로 열 수 없어요. 카카오톡을 열어 <span className="whitespace-nowrap">{guardianTitle}님께</span> 붙여 넣어 주세요.
+            </p>
+          )}
+          <a
+            href={`/v1120/g/${shareToken}`}
+            className="press inline-flex min-h-12 w-fit items-center gap-1 rounded-xl text-base font-bold text-(--text-brand) active:opacity-60"
           >
-            카카오톡으로 다시 보내기
-          </button>
+            {guardianTitle}님이 보는 화면 열어 보기 ›
+          </a>
+          {kakaoButton("카카오톡으로 다시 보내기")}
+          <Button variant="secondary" onClick={copy}>
+            링크 다시 복사하기
+          </Button>
         </section>
       ) : (
-        <section className="flex flex-col gap-3 rounded-[15px] p-5 ring-2 ring-accent">
-          <p className="flex items-center gap-2 text-lg font-bold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-base">2</span>
+        <section className="enter flex flex-col gap-3 rounded-2xl bg-white p-5 leading-[1.4]" style={{ "--i": 1 } as React.CSSProperties}>
+          <p className="flex items-center gap-3 text-xl font-bold">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-lg">2</span>
             {guardianTitle}님께 보내기
           </p>
-          <p className="text-base">아직 {guardianTitle}님께 가지 않았어요. 아래 버튼을 눌러 카카오톡으로 보내 주세요.</p>
-          <button
-            type="button"
-            onClick={shareKakao}
-            className="flex h-16 w-full items-center justify-center rounded-[15px] bg-accent text-lg font-bold text-accent-foreground active:bg-accent-dark"
-          >
-            카카오톡으로 보내기
-          </button>
-          <button
-            type="button"
-            onClick={copy}
-            className="flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold active:bg-accent-soft"
-          >
+          <p className="text-lg text-muted">
+            아직 <span className="whitespace-nowrap">{guardianTitle}님께</span> 가지 않았어요. 아래 버튼을 눌러 카카오톡으로 보내 주세요.
+          </p>
+          {kakaoButton("카카오톡으로 보내기")}
+          <Button variant="secondary" onClick={copy}>
             링크 복사하기
-          </button>
+          </Button>
         </section>
       )}
     </Screen>

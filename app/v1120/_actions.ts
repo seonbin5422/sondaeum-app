@@ -69,6 +69,7 @@ export async function saveClient(form: FormData) {
     allergies: text(form, "allergies"),
     medicalHistory: text(form, "medicalHistory"),
     medicationNotes: text(form, "medicationNotes"),
+    personalNotes: text(form, "personalNotes"),
     phone: sealPII(text(form, "phone")),
   };
 
@@ -210,6 +211,31 @@ export async function summarizeVisit(visitId: string) {
     await prisma.visit.update({ where: { id: visitId }, data: { status: "RECORDED" } });
     throw err;
   }
+}
+
+// C-13 실패 화면 "직접 채우기": AI 정리 없이 빈 기록지로 기록 확인(C-14)에 간다. 녹음 글은 그대로 두고, 이미 정리된 기록이 있으면 덮어쓰지 않는다
+const BLANK_RECORD: CareRecord = {
+  physical: { personalHygiene: null, bathing: null, mealAssist: null, repositioning: null, mobility: null, toileting: null, minutes: null },
+  physicalNote: null,
+  cognitive: { stimulation: null, dailyLiving: null, behaviorManagement: null, emotional: null },
+  household: { mealPrepCleaningLaundry: null, personalActivity: null, minutes: null },
+  change: { physical: null, meal: null, cognitive: null },
+  bowel: { stoolAccidents: null, urineAccidents: null, diaperChanges: null },
+  notes: null,
+};
+export async function fillManually(visitId: string) {
+  const v = await ownVisitOrThrow(visitId);
+  // 다른 탭에서 정리가 돌고 있으면 그 결과를 기다린다 (STB-2와 같은 이유)
+  if (v.status === "SUMMARIZING") throw new Error("아직 정리하고 있어요. 잠시 뒤 다시 눌러 주세요.");
+  if (!v.report?.careRecord) {
+    const fields = { careRecord: encryptText(JSON.stringify(BLANK_RECORD)), aiRawJson: encryptText(JSON.stringify({})) };
+    await prisma.report.upsert({
+      where: { visitId },
+      create: { visitId, meals: encryptText(""), medication: encryptText(""), notes: encryptText(""), ...fields },
+      update: fields,
+    });
+  }
+  await prisma.visit.update({ where: { id: visitId }, data: { status: "DRAFT_READY" } });
 }
 
 // C-14 특이사항 칸에서 빠진 도움·조치를 그 자리에서 말로 더한다: 지금 특이사항 + 새로 한 말을 AI가 다시 정리한다.

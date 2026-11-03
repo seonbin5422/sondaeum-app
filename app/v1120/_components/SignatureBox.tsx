@@ -25,26 +25,13 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
   };
 
   return (
-    <div className="flex flex-col gap-1 break-inside-avoid">
-      <div className="flex min-h-12 items-center justify-between">
-        <span className="text-base font-bold">{label}</span>
-        {strokes.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              setStrokes([]);
-              onChange([]);
-            }}
-            className="min-h-12 px-2 text-base text-muted underline print:hidden"
-          >
-            다시 쓰기
-          </button>
-        )}
-      </div>
-      <div className="relative h-28 rounded-xl border border-border bg-white">
+    <div className="flex min-w-0 flex-col gap-1 break-inside-avoid">
+      {/* 서명칸 (Figma 516:854): 연한 회색 면 r12, 140px, 이름은 칸 안 위쪽 */}
+      <div className="relative h-[140px] overflow-hidden rounded-xl bg-(--bg-secondary) print:bg-white">
+        <span className="pointer-events-none absolute inset-x-3 top-3 text-base font-medium leading-[1.4] text-muted">{label}</span>
         {strokes.length === 0 && (
-          <span aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-base text-muted print:hidden">
-            여기에 서명해 주세요
+          <span aria-hidden className="pointer-events-none absolute inset-x-3 bottom-3 text-center text-base font-bold text-(--text-brand) print:hidden">
+            눌러서 서명
           </span>
         )}
         <svg
@@ -67,8 +54,6 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
           onPointerUp={end}
           onPointerCancel={end}
         >
-          {/* 서명 기준선 */}
-          <line x1={16} x2={W - 16} y1={H - 24} y2={H - 24} stroke="var(--line)" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
           {strokes.map((s, i) =>
             s.length === 1 ? (
               <circle key={i} cx={s[0][0]} cy={s[0][1]} r={1.5} fill="#222222" />
@@ -87,6 +72,18 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
           )}
         </svg>
       </div>
+      {strokes.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            setStrokes([]);
+            onChange([]);
+          }}
+          className="press min-h-12 self-start rounded-xl px-2 text-base font-bold text-muted active:bg-(--bg-secondary) print:hidden"
+        >
+          다시 쓰기
+        </button>
+      )}
     </div>
   );
 }
@@ -95,18 +92,19 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
 export function SignatureSection({ visitId, initial, caregiverName }: { visitId?: string; initial?: Signatures; caregiverName: string }) {
   const [sig, setSig] = useState<Signatures>(initial ?? EMPTY_SIGNATURES);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
-  const first = useRef(true);
+  const last = useRef(JSON.stringify(initial ?? EMPTY_SIGNATURES)); // 마지막으로 저장한 값. 같으면 다시 저장하지 않는다 (처음 열 때 "저장했어요"가 뜨지 않게)
 
   useEffect(() => {
-    if (first.current || !visitId) {
-      first.current = false;
-      return;
-    }
+    const now = JSON.stringify(sig);
+    if (!visitId || now === last.current) return;
     // 사유는 글자마다 바뀌어서 잠깐 멈췄을 때 한 번만 저장한다
     setStatus("saving");
     const t = setTimeout(() => {
       saveSignatures(visitId, sig).then(
-        () => setStatus("saved"),
+        () => {
+          last.current = now;
+          setStatus("saved");
+        },
         () => setStatus("failed"),
       );
     }, 600);
@@ -115,22 +113,26 @@ export function SignatureSection({ visitId, initial, caregiverName }: { visitId?
 
   return (
     <>
-      <div className="grid gap-3 print:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         <SignatureBox label="수급자 또는 보호자" value={sig.recipient} onChange={(recipient) => setSig((s) => ({ ...s, recipient }))} />
         <SignatureBox label={`요양보호사 ${caregiverName}`} value={sig.caregiver} onChange={(caregiver) => setSig((s) => ({ ...s, caregiver }))} />
       </div>
-      <label className="flex flex-col gap-1 text-base font-bold">
+      <label className="flex flex-col gap-2 text-lg font-bold">
         서명 불가 사유
         <input
           value={sig.reason}
           maxLength={200}
           onChange={(e) => setSig((s) => ({ ...s, reason: e.target.value }))}
-          placeholder="서명할 수 없을 때만 적어 주세요"
-          className="h-12 rounded-xl border border-border px-3 font-normal placeholder:text-muted focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/50 print:placeholder:text-transparent"
+          placeholder="예: 수급자 손 떨림으로 서명 어려움"
+          className="h-14 rounded-[15px] bg-(--bg-secondary) px-4 text-lg font-normal transition-shadow placeholder:text-muted focus:bg-white focus:outline-none focus:ring-[3px] focus:ring-accent/50 print:bg-white print:px-0 print:placeholder:text-transparent"
         />
       </label>
       {visitId && (
-        <p role="status" className={`text-base print:hidden ${status === "failed" ? "text-(--danger)" : "text-muted"}`}>
+        <p
+          role="status"
+          key={status}
+          className={`min-h-6 text-base print:hidden ${status === "failed" ? "text-(--text-danger)" : status === "saved" ? "done-pulse font-bold text-(--text-success)" : "text-muted"}`}
+        >
           {status === "saving" ? "서명 저장 중…" : status === "saved" ? "서명을 저장했어요" : status === "failed" ? "서명을 저장하지 못했어요. 다시 써 주세요." : ""}
         </p>
       )}

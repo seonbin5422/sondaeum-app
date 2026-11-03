@@ -7,7 +7,9 @@ export default async function LoginPage() {
   // 카카오 버튼은 로그인 시작 경로로: 무작위 state를 만들고 로그인 뒤 1120 화면으로 (SEC-4)
   const authorizeUrl = "/api/auth/kakao/start?to=v1120";
 
+  // 1128 테마 바탕은 회색이지만 로그인 화면은 아직 옛 모양(흰 바탕) 그대로 둔다
   return (
+    <div className="flex flex-1 flex-col bg-white">
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6">
       <Image src="/brand/logo-full.svg" alt="손다음" width={110} height={36} priority />
       <div className="mt-16 flex flex-col gap-3">
@@ -41,5 +43,6 @@ export default async function LoginPage() {
         </a>
       </div>
     </main>
+    </div>
   );
 }

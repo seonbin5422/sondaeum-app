@@ -4,22 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { myUnreadTotal } from "../_actions";
+import { buzz } from "./Pressable";
 
-// 하단 메뉴바 (1120.ver 제안안, 와이어 없음). 아이콘만 두지 않고 항상 글자를 붙인다.
+// 공통/하단 메뉴 (Figma 508:245): 아이콘 36px, 선택=진한 아이콘+굵은 글자, 나머지=연한 아이콘. 아이콘만 두지 않고 항상 글자를 붙인다.
 const TABS = [
-  { href: "/v1120", label: "홈", icon: "⌂", match: (p: string) => p === "/v1120" },
-  { href: "/v1120/clients", label: "수급자", icon: "☺", match: (p: string) => p.startsWith("/v1120/client") },
-  { href: "/v1120/chats", label: "게시판", icon: "✉", match: (p: string) => p.startsWith("/v1120/chats") },
-  { href: "/v1120/me", label: "내 정보", icon: "☰", match: (p: string) => p.startsWith("/v1120/me") },
+  { href: "/v1120", label: "홈", icon: "home", match: (p: string) => p === "/v1120" },
+  { href: "/v1120/clients", label: "수급자", icon: "clients", match: (p: string) => p.startsWith("/v1120/client") },
+  { href: "/v1120/chats", label: "게시판", icon: "board", match: (p: string) => p.startsWith("/v1120/chats") },
+  { href: "/v1120/me", label: "내 정보", icon: "me", match: (p: string) => p.startsWith("/v1120/me") },
 ];
 
 // 보호자 메뉴바 (D-44). 보호자는 로그인 없이 수급자별 링크로 들어온다
 function guardianTabs(token: string) {
   const home = `/v1120/c/${token}`;
   return [
-    { href: home, label: "홈", icon: "⌂", match: (p: string) => p === home || p.startsWith(`${home}/documents`) || p.startsWith(`${home}/reports`) },
-    { href: `${home}/chat`, label: "게시판", icon: "✉", match: (p: string) => p.startsWith(`${home}/chat`) },
-    { href: `${home}/me`, label: "내 정보", icon: "☰", match: (p: string) => p.startsWith(`${home}/me`) },
+    { href: home, label: "홈", icon: "home", match: (p: string) => p === home || p.startsWith(`${home}/documents`) || p.startsWith(`${home}/reports`) },
+    { href: `${home}/chat`, label: "게시판", icon: "board", match: (p: string) => p.startsWith(`${home}/chat`) },
+    { href: `${home}/me`, label: "내 정보", icon: "me", match: (p: string) => p.startsWith(`${home}/me`) },
   ];
 }
 
@@ -33,8 +34,8 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
   }, [pathname, guardianToken]);
   const tabs = guardianToken ? guardianTabs(guardianToken) : TABS;
   return (
-    <nav aria-label="메뉴" className="border-t border-(--line) bg-white">
-      <ul className={`mx-auto grid max-w-md ${guardianToken ? "grid-cols-3" : "grid-cols-4"}`}>
+    <nav aria-label="메뉴" className="bg-white pb-[env(safe-area-inset-bottom)]">
+      <ul className={`mx-auto grid h-[76px] max-w-md py-1.5 ${guardianToken ? "grid-cols-3" : "grid-cols-4"}`}>
         {tabs.map((t) => {
           const active = t.match(pathname);
           return (
@@ -42,20 +43,21 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-16 flex-col items-center justify-center gap-0.5 text-base font-bold ${
-                  active ? "text-foreground" : "text-muted"
+                onPointerDown={buzz}
+                className={`press flex h-full flex-col items-center justify-center gap-0.5 rounded-xl text-base leading-[1.4] active:bg-(--bg-secondary) ${
+                  active ? "font-bold text-foreground" : "text-muted"
                 }`}
               >
-                {/* 선택된 메뉴는 아이콘 뒤를 브랜드색 알약으로 채운다 (막대만으로는 흰 바탕에서 잘 안 보임) */}
-                <span aria-hidden className={`rounded-full px-4 py-0.5 text-2xl leading-none ${active ? "bg-accent text-foreground" : ""}`}>
-                  {t.icon}
+                <span className="relative size-9">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/v1120/icons/tab-${t.icon}-${active ? "on" : "off"}.svg`} alt="" width={36} height={36} className="size-9" />
+                  {!guardianToken && t.label === "게시판" && unread > 0 && (
+                    <span className="pop absolute left-6 -top-1 flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-(--danger) px-1.5 text-[14px] font-bold leading-none text-white">
+                      {unread}
+                    </span>
+                  )}
                 </span>
                 {t.label}
-                {!guardianToken && t.label === "게시판" && unread > 0 && (
-                  <span className="absolute right-[22%] top-1.5 rounded-full bg-(--danger) px-1.5 text-base font-bold leading-6 text-white">
-                    {unread}
-                  </span>
-                )}
               </Link>
             </li>
           );

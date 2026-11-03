@@ -7,7 +7,7 @@ import { NO_CONTACT } from "../../../../_types";
 // C-20 서류 · 진료 참고용 요약
 export default async function Page({ params, searchParams }: PageProps<"/v1120/client/[id]/documents/summary">) {
   const { id } = await params;
-  const { from, to } = await searchParams;
+  const { from, to, board } = await searchParams;
   const c = await myClient(id);
   if (!c) notFound();
   const today = kstYmd();
@@ -21,7 +21,8 @@ export default async function Page({ params, searchParams }: PageProps<"/v1120/c
       today={today}
       from={period.from}
       to={period.to}
-      backHref={`/v1120/client/${id}/documents`}
+      // 게시판 글의 "요약 보기"로 열었으면 그 글로 돌아간다
+      backHref={typeof board === "string" ? `/v1120/chats/${id}/${encodeURIComponent(board)}` : `/v1120/client/${id}/documents`}
       role="caregiver"
       share={c.guardianRelation === NO_CONTACT ? undefined : shareSummary.bind(null, id, period.from, period.to)}
     />

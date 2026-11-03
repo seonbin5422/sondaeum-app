@@ -1,68 +1,125 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../../../_components/ui";
+import { Button, Card, Icon, Screen, TopBar } from "../../../_components/ui";
 import { deleteClient, permanentDeleteClient } from "../../../_actions";
 
-export function DeleteSteps({ id, name, permanent }: { id: string; name: string; permanent: boolean }) {
+const at = (i: number) => ({ "--i": i }) as CSSProperties;
+
+// C-10 삭제 확인 (Figma 515:640) · C-11 완전히 지우기 (Figma 515:671)
+export function DeleteSteps({ id, name, permanent, backHref }: { id: string; name: string; permanent: boolean; backHref: string }) {
   const router = useRouter();
   const [moved, setMoved] = useState(false);
   const [typed, setTyped] = useState("");
 
   if (!permanent) {
     return (
-      <div className="flex flex-col gap-5">
-        <h1 className="text-2xl font-bold">{name} 정보를 삭제할까요?</h1>
-        <ul className="flex flex-col gap-2 rounded-xl bg-(--neutral-soft) px-4 py-3 text-lg">
-          <li>· 목록과 홈에서 보이지 않아요.</li>
-          <li>· 14일 동안은 수급자 탭 아래 &quot;삭제한 수급자&quot;에서 되살릴 수 있어요.</li>
-          <li>· 보호자 게시판 링크는 바로 닫혀요.</li>
-        </ul>
-        <form action={deleteClient.bind(null, id)} className="flex">
-          <Button type="submit" variant="danger">
-            삭제하기
-          </Button>
-        </form>
-        <Button variant="secondary" onClick={() => router.back()}>
-          취소
-        </Button>
-      </div>
+      <Screen
+        bottom={
+          <>
+            <form action={deleteClient.bind(null, id)} className="flex">
+              <Button type="submit" variant="danger" pendingLabel="지우는 중이에요">
+                삭제하기
+              </Button>
+            </form>
+            <Button variant="secondary" onClick={() => router.back()}>
+              취소
+            </Button>
+          </>
+        }
+      >
+        <TopBar backHref={backHref} title="수급자 삭제" />
+        <div className="pt-5" style={at(0)}>
+          <Card className="p-6">
+            <span className="flex size-[72px] items-center justify-center rounded-full bg-(--danger-soft) text-(--danger)">
+              <Icon name="delete" size={36} />
+            </span>
+            <h1 className="text-2xl font-bold leading-[1.4]">
+              {name} <span className="whitespace-nowrap">정보를 삭제할까요?</span>
+            </h1>
+            <ul className="flex flex-col gap-4 text-lg">
+              {[
+                "목록과 홈에서 보이지 않아요.",
+                <>
+                  14일 동안은 수급자 탭 아래 <span className="whitespace-nowrap">&quot;삭제한 수급자&quot;에서</span> 되살릴 수 있어요.
+                </>,
+                "보호자 게시판 링크는 바로 닫혀요.",
+              ].map((t, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <Icon name="info" className="mt-0.5 text-muted" />
+                  <span className="flex-1">{t}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      </Screen>
     );
   }
 
   const ok = moved && typed.trim() === name;
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-bold">{name} 기록을 완전히 지울까요?</h1>
-      <p className="text-lg">방문 기록, 보고서, 댓글이 모두 지워지고 되살릴 수 없어요.</p>
-      <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
-        <p className="text-lg font-bold">먼저 확인해 주세요</p>
-        <p className="text-base">급여제공기록은 기관이 5년 동안 보관해야 해요. 필요한 기록을 기관 시스템에 옮겼는지 확인해 주세요.</p>
-        <label className="mt-1 flex min-h-12 items-center gap-3 text-lg font-bold">
-          <input type="checkbox" className="h-6 w-6 accent-[var(--accent)]" checked={moved} onChange={(e) => setMoved(e.target.checked)} />
-          기관 시스템에 옮겼어요
-        </label>
+    <Screen
+      bottom={
+        <form action={permanentDeleteClient.bind(null, id)} className="flex">
+          <Button
+            type="submit"
+            variant="danger"
+            pendingLabel="지우는 중이에요"
+            disabled={!ok}
+            disabledReason={!moved ? "기관 시스템에 옮겼는지 먼저 확인해 주세요" : "수급자 이름을 똑같이 적어 주세요"}
+          >
+            완전히 지우기
+          </Button>
+        </form>
+      }
+    >
+      <TopBar backHref={backHref} title="완전히 지우기" />
+      <div style={at(0)}>
+        <Card className="gap-2 p-6">
+          <h1 className="text-2xl font-bold leading-[1.4]">
+            {name} 수급자 기록을 <span className="whitespace-nowrap">완전히 지울까요?</span>
+          </h1>
+          <p className="text-lg text-muted">
+            방문 기록, 보고서, 게시판 글과 댓글이 모두 지워지고 <span className="whitespace-nowrap">되살릴 수 없어요.</span>
+          </p>
+        </Card>
       </div>
-      <label className="flex flex-col gap-2">
-        <span className="text-lg font-bold">확인을 위해 수급자 이름을 적어 주세요</span>
-        <input
-          className="h-14 rounded-[15px] border border-border px-4 text-lg"
-          value={typed}
-          placeholder={name}
-          onChange={(e) => setTyped(e.target.value)}
-        />
-      </label>
-      <form action={permanentDeleteClient.bind(null, id)} className="flex">
-        <Button
-          type="submit"
-          variant="danger"
-          disabled={!ok}
-          disabledReason={!moved ? "기관 시스템에 옮겼는지 먼저 확인해 주세요" : "수급자 이름을 똑같이 적어 주세요"}
-        >
-          완전히 지우기
-        </Button>
-      </form>
-    </div>
+      <section className="enter flex flex-col gap-2 rounded-2xl bg-(--danger-soft) p-5" style={at(1)}>
+        <p className="flex items-center gap-2 text-lg font-bold text-(--text-danger)">
+          <Icon name="error" className="text-(--danger)" />
+          먼저 확인해 주세요
+        </p>
+        <p className="text-lg">급여제공기록은 기관이 5년 동안 보관해야 해요. 필요한 기록을 기관 시스템에 옮겼는지 확인해 주세요.</p>
+      </section>
+      {/* 공통/동의 항목: 줄 전체가 누름 영역, 고르면 바로 아이콘이 바뀐다 */}
+      <div style={at(2)}>
+        <Card className="p-1">
+          <label className="press flex min-h-12 cursor-pointer items-center gap-3 rounded-xl p-4 text-lg font-bold active:bg-(--bg-secondary)">
+            <input type="checkbox" className="sr-only" checked={moved} onChange={(e) => setMoved(e.target.checked)} />
+            <Icon
+              name={moved ? "check_circle" : "radio_button_unchecked"}
+              size={32}
+              className={moved ? "pop text-(--brand-secondary)" : "text-(--line)"}
+            />
+            기관 시스템에 옮겼어요
+          </label>
+        </Card>
+      </div>
+      <div style={at(3)}>
+        <Card>
+          <label className="flex flex-col gap-2">
+            <span className="text-lg font-bold">확인을 위해 수급자 이름을 적어 주세요</span>
+            <input
+              className="h-14 rounded-[15px] bg-(--bg-secondary) px-4 text-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-[3px] focus:ring-accent/50"
+              value={typed}
+              placeholder={name}
+              onChange={(e) => setTyped(e.target.value)}
+            />
+          </label>
+        </Card>
+      </div>
+    </Screen>
   );
 }

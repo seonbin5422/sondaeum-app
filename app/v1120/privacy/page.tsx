@@ -50,7 +50,7 @@ const SECTIONS: [string, string[]][] = [
 
 export default function PrivacyPage() {
   return (
-    <Screen>
+    <Screen white>
       <TopBar backHref="/v1120/me" title="개인정보 처리방침" />
       <p className="text-lg">손다음은 「개인정보 보호법」에 따라 이용자의 개인정보를 지키고, 궁금한 점을 빠르게 해결하려고 이 처리방침을 만들었어요.</p>
       <p className="text-base text-muted">시행일: 2026년 11월 28일</p>

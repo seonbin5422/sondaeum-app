@@ -1,29 +1,35 @@
 import type { ReactNode } from "react";
 import type { CareRecord, Change } from "../_types";
+import { Icon } from "./Icon";
 
 // G-01 보호자 보고서 본문. C-15 "보낼 내용 보기"에서도 같은 것을 쓴다.
 // order="base"는 main 기준(급여제공기록지 순서), "improved"는 PR #9 개선안(특이사항·비교를 맨 위로, 머지 보류).
 
+// 1128 (Figma C-15 513:486): 글자색만으로 구분하고, 나빠졌을 때만 빨간 ▼로 눈에 띄게
 const changeText: Record<Change, { label: string; className: string }> = {
-  improved: { label: "좋아졌어요", className: "bg-(--success-soft) text-(--text-success)" },
-  same: { label: "비슷해요", className: "bg-(--neutral-soft) text-foreground" },
-  worse: { label: "나빠졌어요", className: "bg-(--danger-soft) text-(--text-danger)" },
+  improved: { label: "▲ 좋아졌어요", className: "text-(--text-success)" },
+  same: { label: "비슷해요", className: "text-foreground" },
+  worse: { label: "▼ 나빠졌어요", className: "text-(--text-danger)" },
 };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+// flat: 회색 바탕(C-15) 위에서는 그림자 없이 흰 면만. 흰 바탕인 보호자 화면은 지금처럼 그림자로 구분한다
+function Section({ title, aside, flat, children }: { title: string; aside?: string; flat: boolean; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-[15px] bg-white p-5 shadow-[var(--shadow-card)]">
-      <h2 className="text-lg font-bold">{title}</h2>
+    <section className={`flex flex-col gap-2.5 rounded-2xl bg-white p-5 leading-[1.4] ${flat ? "enter" : "shadow-[var(--shadow-card)]"}`}>
+      <div className="flex items-start justify-between gap-3 text-lg font-bold">
+        <h2>{title}</h2>
+        {aside && <span className="whitespace-nowrap text-(--text-brand)">{aside}</span>}
+      </div>
       {children}
     </section>
   );
 }
 
-function Row({ label, value, dim = false }: { label: string; value: string; dim?: boolean }) {
+function Row({ label, value, dim = false, valueClass = "" }: { label: string; value: string; dim?: boolean; valueClass?: string }) {
   return (
-    <div className={`flex items-center justify-between text-lg ${dim ? "text-muted" : ""}`}>
-      <span>{label}</span>
-      <span className="text-xl font-bold">{value}</span>
+    <div className={`-my-1 flex items-start justify-between gap-3 py-1.5 text-lg ${dim ? "opacity-60" : ""}`}>
+      <span className="text-muted">{label}</span>
+      <span className={`whitespace-nowrap font-bold ${valueClass}`}>{value}</span>
     </div>
   );
 }
@@ -32,8 +38,9 @@ function Done({ items }: { items: string[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {items.map((t) => (
-        <span key={t} className="rounded-full bg-(--success-soft) px-3 py-1 text-base font-bold text-(--text-success)">
-          ✓ {t}
+        <span key={t} className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-(--bg-secondary) px-3 py-0.5 text-base font-bold">
+          <Icon name="check" size={18} />
+          {t}
         </span>
       ))}
     </div>
@@ -42,7 +49,7 @@ function Done({ items }: { items: string[] }) {
 
 const count = (n: number | null) => (n === null ? null : n === 0 ? "없음" : `${n}번`);
 
-export function ReportSections({ record: r, order = "base" }: { record: CareRecord; order?: "base" | "improved" }) {
+export function ReportSections({ record: r, order = "base", flat = false }: { record: CareRecord; order?: "base" | "improved"; flat?: boolean }) {
   const physicalDone = (
     [
       ["개인위생", r.physical.personalHygiene],
@@ -72,14 +79,13 @@ export function ReportSections({ record: r, order = "base" }: { record: CareReco
   ).filter(([, v]) => v !== null) as [string, Change][];
 
   const physical = (
-    <Section key="physical" title="신체활동 도움">
+    <Section key="physical" title="신체활동 도움" aside={r.physical.minutes !== null ? `${r.physical.minutes}분` : undefined} flat={flat}>
       {physicalDone.length > 0 && <Done items={physicalDone} />}
-      {r.physical.minutes !== null && <Row label="제공시간" value={`${r.physical.minutes}분`} />}
-      {r.physicalNote && <p className="text-base text-muted">{r.physicalNote}</p>}
+      {r.physicalNote && <p className="text-lg">{r.physicalNote}</p>}
     </Section>
   );
   const cognitive = (
-    <Section key="cognitive" title="인지·정서 지원">
+    <Section key="cognitive" title="인지·정서 지원" flat={flat}>
       {(
         [
           ["인지자극활동", r.cognitive.stimulation],
@@ -95,34 +101,28 @@ export function ReportSections({ record: r, order = "base" }: { record: CareReco
     </Section>
   );
   const household = (
-    <Section key="household" title="가사·일상생활 지원">
+    <Section key="household" title="가사·일상생활 지원" aside={r.household.minutes !== null ? `${r.household.minutes}분` : undefined} flat={flat}>
       {householdDone.length > 0 && <Done items={householdDone} />}
-      {r.household.minutes !== null && <Row label="제공시간" value={`${r.household.minutes}분`} />}
     </Section>
   );
   const compare =
     changes.length > 0 ? (
-      <Section key="compare" title="지난 방문과 비교">
+      <Section key="compare" title="지난 방문과 비교" flat={flat}>
         {changes.map(([n, v]) => (
-          <div key={n} className="flex items-center justify-between text-lg">
-            <span>{n}</span>
-            <span className={`rounded-full px-3 py-0.5 text-base font-bold ${changeText[v].className}`}>
-              {changeText[v].label}
-            </span>
-          </div>
+          <Row key={n} label={n} value={changeText[v].label} valueClass={changeText[v].className} />
         ))}
       </Section>
     ) : null;
   const bowel = (
-    <Section key="bowel" title="배변 변화">
+    <Section key="bowel" title="배변 변화" flat={flat}>
       {count(r.bowel.stoolAccidents) && <Row label="대변 실수" value={count(r.bowel.stoolAccidents)!} />}
       {count(r.bowel.urineAccidents) && <Row label="소변 실수" value={count(r.bowel.urineAccidents)!} />}
       {count(r.bowel.diaperChanges) && <Row label="기저귀 교환" value={count(r.bowel.diaperChanges)!} />}
     </Section>
   );
   const notes = r.notes ? (
-    <Section key="notes" title="특이사항">
-      <p className="text-lg font-bold">{r.guardianNotes ?? r.notes}</p>
+    <Section key="notes" title="특이사항" flat={flat}>
+      <p className="text-lg">{r.guardianNotes ?? r.notes}</p>
     </Section>
   ) : null;
 

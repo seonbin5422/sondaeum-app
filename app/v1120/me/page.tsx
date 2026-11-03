@@ -1,46 +1,39 @@
-import Link from "next/link";
+import type { CSSProperties } from "react";
 import { requireCaregiver } from "../_data";
 import { logout } from "../_actions";
-import { Avatar, Screen } from "../_components/ui";
+import { Button, Icon, ListRow, Screen } from "../_components/ui";
+import { caregiverTitle } from "../_types";
 
-// 내 정보 탭 (C-06 요양보호사 프로필 + 설정)
+// 내 정보 탭 (C-06 요양보호사 프로필 + 설정, Figma wireframe-1128 517:829). 흰 상단 바 아래 회색 바탕에 흰 카드
 export default async function MePage() {
-  const { name: caregiverName, licenseNumber: caregiverLicense, isDemo } = await requireCaregiver();
-  const links: [string, string][] = [
-    ["내 정보 고치기", "/v1120/me/edit"],
-    ["동의한 내용 보기", "/v1120/me/consent"],
-    ["개인정보 처리방침", "/v1120/privacy"],
-  ];
+  const { name: caregiverName, licenseNumber: caregiverLicense } = await requireCaregiver();
   return (
     <Screen nav>
-      <h1 className="text-2xl font-bold">내 정보</h1>
-      <div className="flex items-center gap-4 rounded-[15px] bg-white p-5 shadow-[var(--shadow-card)]">
-        <Avatar name={caregiverName} />
-        <div>
-          <p className="text-xl font-bold">{caregiverName} 요양보호사</p>
-          <p className="text-base text-muted">자격번호 {caregiverLicense ?? "미입력"}</p>
-        </div>
+      <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
+        <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">내 정보</h1>
       </div>
-      <ul className="flex flex-col divide-y divide-(--line) rounded-[15px] border border-(--line)">
-        {links.map(([l, h]) => (
-          <li key={l}>
-            <Link href={h} className="flex min-h-16 items-center justify-between px-4 text-lg font-bold">
-              {l}
-              <span className="text-muted" aria-hidden>
-                ›
-              </span>
-            </Link>
-          </li>
-        ))}
-        <li>
-          <form action={logout}>
-            <button type="submit" className="flex min-h-16 w-full items-center justify-between px-4 text-lg font-bold">
-              로그아웃
-            </button>
-          </form>
-        </li>
-      </ul>
-      {isDemo && <p className="text-center text-base text-muted">손다음 1120.ver 미리보기</p>}
+      <section className="enter flex items-center gap-4 rounded-2xl bg-white p-5">
+        <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-(--bg-brand) text-[28px] font-bold">
+          {caregiverName.slice(0, 1)}
+        </span>
+        <span className="flex min-w-0 flex-col gap-0.5 leading-[1.4]">
+          <span className="text-[22px] font-bold">{caregiverTitle(caregiverName)}</span>
+          <span className="text-base text-muted">
+            자격번호 <span className="whitespace-nowrap">{caregiverLicense ?? "미입력"}</span>
+          </span>
+        </span>
+      </section>
+      <nav aria-label="내 정보 메뉴" className="enter flex flex-col overflow-hidden rounded-2xl bg-white p-1" style={{ "--i": 1 } as CSSProperties}>
+        <ListRow href="/v1120/me/edit" icon={<Icon name="edit" />} title="내 정보 고치기" />
+        <ListRow href="/v1120/me/consent" icon={<Icon name="check_circle" />} title="동의한 내용 보기" />
+        <ListRow href="/v1120/privacy" icon={<Icon name="shield" />} title="개인정보 처리방침" />
+      </nav>
+      <form action={logout} className="enter" style={{ "--i": 2 } as CSSProperties}>
+        <Button type="submit" variant="danger" pendingLabel="로그아웃 중이에요">
+          <Icon name="logout" />
+          로그아웃
+        </Button>
+      </form>
     </Screen>
   );
 }

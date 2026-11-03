@@ -70,7 +70,7 @@ const RE = {
   outing: /외출|병원\s?동행|장보|같이 나가/,
   better: /좋아졌|나아졌|호전|더 잘/,
   worse: /나빠졌|안 좋아|줄었|악화|못 드셨|힘들어하/,
-  same: /비슷|똑같|그대로|그대롭|변화 없|변함없/,
+  same: /비슷|똑같|그대로|그대롭|변화\s?(가\s?)?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/,
   stool: /대변|대소변|변을/,
   urine: /소변|오줌/,
   diaper: /기저귀/,
@@ -107,9 +107,11 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const anyHh = hhSentences.length > 0 || outing.length > 0;
 
   // 변화상태: 영역 + 좋아짐/나빠짐/비슷 낱말이 같은 문장에 있을 때만
+  const AREAS = [/걸으|걸어|걷|다리|무릎|움직|기운|몸/, /식사|밥|드시|식사량|입맛/, /기억|정신|헷갈|알아보/];
   const changeOf = (area: RegExp): Change | null => {
     const s = ss.find((x) => area.test(x) && (RE.better.test(x) || RE.worse.test(x) || RE.same.test(x)));
-    const general = ss.find((x) => /상태|컨디션|전반|전부|모두/.test(x) && isChange(x));
+    // 영역 없이 "지난번이랑 달라진 게 없어요"처럼 전체를 말한 문장은 세 칸 모두
+    const general = ss.find((x) => (/상태|컨디션|전반|전부|모두/.test(x) && isChange(x)) || (/변화\s?(가\s?)?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/.test(x) && !AREAS.some((a) => a.test(x))));
     const pickS = s ?? general;
     if (!pickS) return null;
     return RE.worse.test(pickS) ? "worse" : RE.better.test(pickS) ? "improved" : "same";
@@ -145,9 +147,9 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
       minutes: minutesSum([...new Set([...hhSentences, ...outing])]),
     },
     change: {
-      physical: changeOf(/걸으|걸어|걷|다리|무릎|움직|기운|몸/),
-      meal: changeOf(/식사|밥|드시|식사량|입맛/),
-      cognitive: changeOf(/기억|정신|헷갈|알아보/),
+      physical: changeOf(AREAS[0]),
+      meal: changeOf(AREAS[1]),
+      cognitive: changeOf(AREAS[2]),
     },
     bowel: {
       stoolAccidents: countFor(RE.stool),

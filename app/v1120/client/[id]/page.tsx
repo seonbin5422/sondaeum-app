@@ -1,15 +1,17 @@
-import Link from "next/link";
+import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
-import { myClient, myHistory } from "../../_data";
-import { Avatar, Chip, LinkButton, Screen, TopBar } from "../../_components/ui";
+import { myClient, myHistory, myUnreadByClient } from "../../_data";
+import { Card, Chip, Icon, LinkButton, ListRow, Screen, TopBar } from "../../_components/ui";
 import { contactTitle, NO_CONTACT } from "../../_types";
 
-// C-05 수급자 정보 (기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면)
+// C-05 수급자 정보 (Figma 514:520). 기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면
 export default async function ClientPage({ params }: PageProps<"/v1120/client/[id]">) {
   const { id } = await params;
   const c = await myClient(id);
   if (!c) notFound();
-  const last = (await myHistory(id)).find((v) => v.status === "SENT");
+  const [history, unread] = await Promise.all([myHistory(id), myUnreadByClient()]);
+  const last = history.find((v) => v.status === "SENT");
+  const n = unread.get(c.id) ?? 0;
   const noContact = c.guardianRelation === NO_CONTACT;
   const title = contactTitle(c.guardianRelation);
 
@@ -17,75 +19,110 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
     ["알레르기", c.allergies],
     ["병력", c.medicalHistory],
     ["복용 중인 약", c.medicationNotes],
+    ...(noContact
+      ? []
+      : ([[title, [`${c.guardianName} (${c.guardianRelation})`, c.guardianPhone].filter(Boolean).join(" · ")]] as [string, string][])),
     ["장기요양인정번호", c.careRegistrationNumber],
-    ["수급자 전화번호", c.phone],
-    ["보호자", noContact ? null : `${c.guardianName} (${c.guardianRelation})`],
-    ...(noContact ? [] : ([["보호자 전화번호", c.guardianPhone]] as [string, string | null][])),
+    ["연락처", c.phone],
   ];
+  const at = (i: number) => ({ "--i": i }) as CSSProperties;
 
   return (
-    <Screen nav>
-      <TopBar backHref="/v1120/clients" />
-      <header className="flex items-center gap-4">
-        <Avatar name={c.name} />
-        <div className="flex flex-col items-start gap-1">
-          <h1 className="text-2xl font-bold">{c.name}</h1>
+    <Screen nav white>
+      <TopBar backHref="/v1120/clients" title="수급자 정보" />
+
+      <div style={at(0)}>
+        <Card className="items-center gap-3 p-6 text-center">
+          <span className="flex size-[72px] items-center justify-center rounded-full bg-(--bg-secondary) text-[28px] font-bold text-muted">
+            {c.name.slice(0, 1)}
+          </span>
+          <h1 className="text-2xl font-bold">{c.name} 수급자</h1>
           <p className="text-lg text-muted">
-            {[c.age && `${c.age}세`, c.gender].filter(Boolean).join(" · ")}{(c.age || c.gender) && " · "}<span className="font-bold text-foreground">장기요양 {c.careGrade ?? "등급 미입력"}</span>
+            {[c.age && `${c.age}세`, c.gender, <span key="g" className="whitespace-nowrap">장기요양 {c.careGrade ?? "등급 미입력"}</span>]
+              .filter(Boolean)
+              .flatMap((x, i) => (i ? [" · ", x] : [x]))}
           </p>
           <Chip>{c.scheduleLabel}</Chip>
-        </div>
-      </header>
-
-      {c.personalNotes && (
-        <div className="flex flex-col gap-1 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
-          <p className="text-base font-bold">꼭 기억할 것</p>
-          <p className="text-lg">{c.personalNotes}</p>
-        </div>
-      )}
-
-      {!c.guardianJoined && !noContact && (
-        <div className="flex flex-col gap-2 rounded-xl bg-accent-soft px-4 py-3 text-accent-soft-foreground">
-          <p className="text-lg font-bold">{c.guardianName} {title}님이 아직 게시판에 들어오지 않았어요</p>
-          <LinkButton href={`/v1120/client/${c.id}/invite`} className="!h-14">
-            {title}님 게시판에 초대하기
-          </LinkButton>
-        </div>
-      )}
-
-      <dl className="flex flex-col divide-y divide-(--line) rounded-[15px] border border-(--line) px-4">
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-4 py-3 text-lg">
-            <dt className="shrink-0 text-muted">{k}</dt>
-            <dd className={`text-right font-bold ${v ? "" : "font-normal text-muted"}`}>{v ?? "없음"}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="flex flex-col gap-3">
-        <LinkButton href={`/v1120/client/${c.id}/history`}>
-          방문 기록 보기{last ? ` (최근 ${Number(last.date.slice(5, 7))}월 ${Number(last.date.slice(8))}일)` : ""}
-        </LinkButton>
-        <div className="grid grid-cols-2 gap-2">
-          <LinkButton href={`/v1120/client/${c.id}/documents`} variant="secondary">
-            서류 만들기
-          </LinkButton>
-          {!noContact && (
-            <LinkButton href={`/v1120/chats/${c.id}`} variant="secondary">
-              게시판
-            </LinkButton>
-          )}
-        </div>
+        </Card>
       </div>
 
-      <div className="flex justify-between border-t border-(--line) pt-4">
-        <Link href={`/v1120/client/${c.id}/edit`} className="flex min-h-12 items-center text-lg font-bold underline underline-offset-4">
+      {c.personalNotes && (
+        <div style={at(1)}>
+          <section className="enter flex flex-col gap-1 rounded-2xl bg-(--memo) p-5">
+            <p className="text-base font-bold">꼭 기억할 것</p>
+            <p className="text-lg font-medium">{c.personalNotes}</p>
+          </section>
+        </div>
+      )}
+
+      <div style={at(2)}>
+        <Card>
+          <dl className="flex flex-col gap-4 leading-[1.4]">
+            {rows.map(([k, v]) => (
+              <div key={k} className="flex flex-col gap-0.5">
+                <dt className="text-base text-muted">{k}</dt>
+                <dd className={`text-lg font-medium ${v ? "" : "text-muted"}`}>{v || "없음"}</dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+      </div>
+
+      <div style={at(3)}>
+        <Card className="-mx-5 gap-0 rounded-none p-1">
+          <ListRow
+            href={`/v1120/client/${c.id}/history`}
+            icon={<Icon name="history" />}
+            title="방문 기록 보기"
+            desc={last ? `최근 ${Number(last.date.slice(5, 7))}월 ${Number(last.date.slice(8))}일` : "아직 보낸 기록이 없어요"}
+          />
+          <ListRow
+            href={`/v1120/client/${c.id}/documents`}
+            icon={<MaskIcon src="/v1120/client-doc.svg" />}
+            title="서류 만들기"
+            desc="진료 참고용 요약 · 급여제공기록지"
+          />
+          {!noContact && (
+            <>
+              <ListRow
+                href={`/v1120/chats/${c.id}`}
+                icon={<MaskIcon src="/v1120/client-board.svg" />}
+                title={`${title} 게시판`}
+                desc={n > 0 ? <span className="font-bold text-(--text-brand)">새 댓글 {n}개</span> : "새 댓글이 없어요"}
+              />
+              <ListRow
+                href={`/v1120/client/${c.id}/invite`}
+                icon={<Icon name="person_add" />}
+                title={`${title} 게시판 초대`}
+                desc={
+                  c.guardianJoined ? (
+                    "카카오톡·문자로 링크 보내기"
+                  ) : (
+                    <span className="font-bold text-(--text-brand)">
+                      {c.guardianName} {title}님이 <span className="whitespace-nowrap">아직 안 들어왔어요</span>
+                    </span>
+                  )
+                }
+              />
+            </>
+          )}
+        </Card>
+      </div>
+
+      <div className="enter flex gap-2" style={at(4)}>
+        <LinkButton href={`/v1120/client/${c.id}/edit`} variant="secondary" className="flex-1">
           정보 수정
-        </Link>
-        <Link href={`/v1120/client/${c.id}/delete`} className="flex min-h-12 items-center text-lg font-bold text-(--danger)">
+        </LinkButton>
+        <LinkButton href={`/v1120/client/${c.id}/delete`} variant="danger" className="flex-1">
           수급자 삭제
-        </Link>
+        </LinkButton>
       </div>
     </Screen>
   );
+}
+
+// Figma 서류·게시판 아이콘은 공통 아이콘 세트에 없어 public/v1120에 받아 둔 것을 글자색으로 칠한다
+function MaskIcon({ src }: { src: string }) {
+  const url = `url(${src})`;
+  return <span aria-hidden className="inline-block size-6 shrink-0 bg-current" style={{ maskImage: url, WebkitMaskImage: url, maskSize: "100% 100%", WebkitMaskSize: "100% 100%" }} />;
 }

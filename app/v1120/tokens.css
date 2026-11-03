@@ -18,3 +18,89 @@
   font-size: 18px;
   line-height: 1.6;
 }
+
+/* 1128 테마: 회색 바탕(background/secondary) 위 흰 카드, 테두리 없음 */
+.v1120 {
+  --bg-secondary: #f4f4f4;
+  --bg-brand: #fff4e3;
+  --text-brand: #8a5c12;
+  --brand-secondary: #e69a1f;
+  --schedule: #9cdbd1;
+
+  /* 줄바꿈: 낱말 중간에서 끊지 않고(keep-all), 줄 길이를 고르게 해서 뜻 덩어리가 한 줄에 남게 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+.v1120 :is(h1, h2, h3, button, a) {
+  text-wrap: balance;
+}
+
+/* 마이크로 인터랙션: 누르는 순간 반응이 보이게 (고령 사용자가 "눌렸나?" 다시 누르지 않게) */
+.v1120 .press {
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), background-color 120ms, opacity 120ms;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.v1120 .press:active {
+  transform: scale(0.96);
+}
+.v1120 .spin {
+  animation: v1120-spin 0.8s linear infinite;
+}
+@keyframes v1120-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 끝난 뒤 transform을 남기지 않도록 backwards: 남으면 안쪽 fixed 시트가 화면이 아니라 그 카드 기준으로 붙는다 */
+/* 화면 들어올 때: 위에서부터 차례로 떠오름 (Figma C-03 모션: 위로 32px, 0.05초 간격) */
+.v1120 .enter {
+  animation: v1120-enter 400ms cubic-bezier(0.05, 0.7, 0.1, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+.v1120 .enter-down {
+  animation: v1120-enter-down 400ms cubic-bezier(0.05, 0.7, 0.1, 1) backwards;
+}
+.v1120 .pop {
+  animation: v1120-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 450ms backwards;
+}
+@keyframes v1120-enter {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+@keyframes v1120-enter-down {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes v1120-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+/* 저장·완료처럼 결과를 알릴 때 잠깐 커졌다 돌아옴 */
+.v1120 .done-pulse {
+  animation: v1120-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v1120 .enter,
+  .v1120 .enter-down,
+  .v1120 .pop,
+  .v1120 .done-pulse {
+    animation: none;
+  }
+  .v1120 .press:active {
+    transform: none;
+  }
+}
+
+/* 상단 바를 하단 메뉴처럼 화면 가로 끝까지 깐다 (내용 칸 max-w-md 밖으로). 가로 스크롤은 Screen의 overflow-x-clip이 막는다 */
+.v1120 .full-bleed {
+  margin-inline: calc(50% - 50vw);
+}

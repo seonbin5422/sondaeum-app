@@ -13,5 +13,5 @@ export default async function ConfirmPage({ params, searchParams }: PageProps<"/
   // 다시 들어온 기록(resume=1)이면 기록 확인으로 돌아갈 때도 그 표시를 지킨다
   const reviewHref = `/v1120/visit/${id}/review${(await searchParams).resume === "1" ? "?resume=1" : ""}`;
   const recipient = v.client.guardianRelation === NO_CONTACT ? null : `${contactTitle(v.client.guardianRelation)}님`;
-  return <ConfirmScreen id={id} record={v.record} reviewHref={reviewHref} recipient={recipient} />;
+  return <ConfirmScreen id={id} record={v.record} reviewHref={reviewHref} recipient={recipient} date={v.time.date} clientName={v.client.name} caregiverName={v.caregiverName} />;
 }

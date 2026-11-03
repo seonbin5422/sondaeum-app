@@ -1,32 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { Button, Icon } from "./ui";
+import { Spinner } from "./Pressable";
 
-// 서류 화면 아래 버튼. "PDF로 저장"과 "인쇄하기"는 브라우저 인쇄 창을 연다 (PDF는 인쇄 창에서 "PDF로 저장").
-// share가 있으면 "게시판에 올리기": 그 수급자 게시판에 글로 올린다 (같은 기간은 한 번만)
+// 서류 화면 아래 버튼 (Figma 516:765). "PDF로 저장"과 "인쇄하기"는 브라우저 인쇄 창을 연다 (PDF는 인쇄 창에서 "PDF로 저장").
+// share가 있으면 "보호자 게시판에 올리기": 그 수급자 게시판에 글로 올린다 (같은 기간은 한 번만)
 export function PrintActions({ share }: { share?: () => Promise<void> }) {
   const [shared, setShared] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return (
-    <div className="flex flex-col gap-3 print:hidden">
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="flex h-16 w-full items-center justify-center rounded-[15px] bg-accent text-lg font-bold text-accent-foreground active:bg-accent-dark"
-      >
+    <div className="flex flex-col gap-2 pt-2 print:hidden">
+      <Button onClick={() => window.print()}>
+        <Icon name="picture_as_pdf" />
         PDF로 저장
-      </button>
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold"
-      >
+      </Button>
+      <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={() => window.print()}>
+        <Icon name="print" />
         인쇄하기
-      </button>
+      </Button>
       {share && (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={async () => {
             setBusy(true);
             setError(null);
@@ -40,12 +36,26 @@ export function PrintActions({ share }: { share?: () => Promise<void> }) {
             }
           }}
           disabled={shared || busy}
-          className="flex h-14 w-full items-center justify-center rounded-[15px] border border-border bg-white text-lg font-bold disabled:border-transparent disabled:bg-(--success-soft) disabled:text-(--text-success)"
+          aria-busy={busy || undefined}
+          // 회색 바탕 위라 보조 버튼은 흰 면. 처리 중·올린 뒤에는 흐리게 하지 않고 상태를 보여 준다
+          className={shared ? "done-pulse bg-(--success-soft)! text-(--text-success)! disabled:opacity-100!" : busy ? "bg-white! disabled:opacity-100!" : "bg-white! active:bg-(--line)!"}
         >
-          {shared ? "✓ 게시판에 올렸어요" : busy ? "올리는 중…" : "게시판에 올리기"}
-        </button>
+          {shared ? (
+            <>
+              <Icon name="check_circle" />
+              게시판에 올렸어요
+            </>
+          ) : busy ? (
+            <>
+              <Spinner />
+              올리는 중이에요
+            </>
+          ) : (
+            "보호자 게시판에 올리기"
+          )}
+        </Button>
       )}
-      {error && <p className="text-base text-(--danger)">{error}</p>}
+      {error && <p role="alert" className="text-base text-(--text-danger)">{error}</p>}
     </div>
   );
 }

@@ -50,9 +50,17 @@ export default async function HomePage() {
         </div>
         {left.length > 0 && (
           <div className="enter relative flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
-            <p className="min-w-0 flex-1 text-lg font-bold leading-[1.4] text-muted">
-              마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
-            </p>
+            {/* "이어서 하기"는 가장 최근 기록으로 가니 그 기록이 누구의 언제 것인지 함께 보여 준다 */}
+            <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
+              <span className="text-lg font-bold text-muted">
+                마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
+              </span>
+              <span className="text-base font-bold">
+                <span className="whitespace-nowrap">{left[0].clientName} 수급자</span> ·{" "}
+                <span className="whitespace-nowrap">{serviceTimeOf(null, left[0].day).date}</span>
+                {left.length > 1 && <span className="whitespace-nowrap"> 외 {left.length - 1}건</span>}
+              </span>
+            </span>
             <PressLink href={visitHref(left[0].visitId, left[0].status)} className={`${pillBase} ${pillTones.soft}`}>
               이어서 하기
             </PressLink>

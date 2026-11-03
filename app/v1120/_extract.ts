@@ -77,6 +77,13 @@ const RE = {
   notes: /혈압|약|아프|통증|넘어|열이|기침|병원|어지러/,
 };
 
+// "지난번과 비슷"은 비교할 지난 기록(보낸 방문)이 있을 때만 체크한다. 첫 기록이면 비운다 (사용자 결정 11/3 (가))
+export function dropSameWithoutPrevious(r: CareRecord, hasPrevious: boolean): CareRecord {
+  if (hasPrevious) return r;
+  const keep = (c: CareRecord["change"][keyof CareRecord["change"]]) => (c === "same" ? null : c);
+  return { ...r, change: { physical: keep(r.change.physical), meal: keep(r.change.meal), cognitive: keep(r.change.cognitive) } };
+}
+
 export function extractRecord(transcript: string): { record: CareRecord; quotes: SaidQuotes } {
   const ss = sentences(transcript);
 

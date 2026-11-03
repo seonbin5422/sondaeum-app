@@ -448,7 +448,7 @@ export function ReviewScreen({
       }
     >
       {/* 방금 녹음하고 왔으면 뒤로가 곧 "더 말하기"라 버튼을 따로 두지 않는다 */}
-      <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title="기록 확인" />
+      <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title={`${clientName} 기록 확인`} />
       {saveError && <p className="text-base font-bold text-(--text-danger)" role="alert">{saveError}</p>}
 
       <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-white p-1">

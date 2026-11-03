@@ -7,7 +7,7 @@ import { buzz, Spinner } from "../../../_components/Pressable";
 import { useSpeech } from "../../../_components/useSpeech";
 import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
-import { changedFields, extractRecord, overlayFields } from "../../../_extract";
+import { changedFields, dropSameWithoutPrevious, extractRecord, overlayFields } from "../../../_extract";
 import type { CareRecord, Change } from "../../../_types";
 import { AUDIO_TOO_LARGE_MESSAGE, MAX_AUDIO_UPLOAD_BYTES } from "@/lib/audioUpload";
 
@@ -84,12 +84,14 @@ function formatTime(sec: number) {
 export function RecordScreen({
   visitId,
   clientName,
+  hasPrevious,
   initialTranscript,
   saved,
   showSample,
 }: {
   visitId: string;
   clientName: string;
+  hasPrevious: boolean; // 보낸 지난 기록이 있어야 "지난번과 비슷"을 체크한다
   initialTranscript: string;
   saved: CareRecord | null; // "더 말하기"로 돌아왔을 때 이미 정리·확인한 기록
   showSample: boolean; // 체험 계정만 "예시 내용 넣기"를 보여 준다
@@ -154,10 +156,10 @@ export function RecordScreen({
   const shown = (transcript + " " + speech.interim).trim();
   // 인식 중인 글자까지 넣으면 칸이 흔들려서, 인식이 끝난 문장으로만 채운다
   // 더 말하기로 돌아왔으면 기록 확인에서 고친 값도 보여 준다. 다시 정리할 때(summarizeVisit)와 같은 규칙으로 합친다
-  const live = extractRecord(transcript).record;
+  const live = dropSameWithoutPrevious(extractRecord(transcript).record, hasPrevious);
   // 돌아와서 고쳐 말한 칸(처음 녹음 글과 낱말 찾기 값이 달라진 칸)은 지금 말한 값으로, 나머지는 기록 확인 값으로 (D-42 261101.ver)
   // shortcut: 기준은 이 화면에 들어올 때의 녹음 글이라, 고치다 나갔다 다시 들어오면 그때 글이 기준이 된다
-  const [base] = useState(() => extractRecord(initialTranscript).record);
+  const [base] = useState(() => dropSameWithoutPrevious(extractRecord(initialTranscript).record, hasPrevious));
   const changed = saved ? changedFields(base, live) : [];
   const sections = guide(saved ? overlayFields(saved, live, changed) : live);
   const resumed = transcript.length > 0 && !speech.recording;

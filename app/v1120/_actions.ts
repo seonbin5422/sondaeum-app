@@ -6,7 +6,7 @@ import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText, openPII, sealPII } from "@/lib/crypto";
 import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
-import { clearFields, dropSameWithoutPrevious, extractRecord, keepFilled } from "./_extract";
+import { dropSameWithoutPrevious, extractRecord, isField, keepFilled, keptFields, overlayFields } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
@@ -148,10 +148,13 @@ export async function saveTranscript(visitId: string, transcript: string) {
 export async function finishRecording(visitId: string, transcript: string, changed: string[] = []) {
   const v = await ownVisitOrThrow(visitId);
   if (!transcript.trim()) throw new Error("녹음 내용이 없어요.");
-  // 기록 확인에서 돌아와 고쳐 말한 칸은 비워 둔다 → 다시 정리할 때 그 칸만 새로 말한 값으로 채워진다 (D-42 261101.ver)
-  if (v.report?.careRecord && changed.length) {
-    const cleared = clearFields(JSON.parse(decryptText(v.report.careRecord)) as CareRecord, changed.slice(0, 50).map(String));
-    await prisma.report.update({ where: { visitId }, data: { careRecord: encryptText(JSON.stringify(cleared)) } });
+  // 다시 정리할 때는 녹음 글 기준. 기록 확인에서 직접 고친 칸 중 다시 말하지 않은 칸만 남기고 비운다 (D-42 261101.ver).
+  // 그래서 글에서 지운 내용은 기록에서도 빠진다
+  if (v.report?.careRecord) {
+    const saved = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
+    const keep = keptFields(saved, changed.slice(0, 50).map(String));
+    const kept = { ...overlayFields(BLANK_RECORD, saved, keep), handEdited: keep };
+    await prisma.report.update({ where: { visitId }, data: { careRecord: encryptText(JSON.stringify(kept)) } });
   }
   await prisma.visit.update({
     where: { id: visitId },
@@ -271,9 +274,12 @@ export async function addToNotes(visitId: string, spoken: string): Promise<CareR
 export async function saveRecord(visitId: string, record: CareRecord) {
   const v = await ownVisitOrThrow(visitId);
   if (!v.report) throw new Error("정리된 기록이 없어요.");
+  // 클라이언트에서 온 칸 이름은 진짜 칸만 받는다
+  const handEdited = Array.isArray(record.handEdited) ? record.handEdited.filter((f) => typeof f === "string" && isField(record, f)).slice(0, 50) : [];
+  const clean = { ...record, handEdited };
   await prisma.report.update({
     where: { visitId },
-    data: { careRecord: encryptText(JSON.stringify(record)), notes: encryptText(record.notes ?? ""), wasEdited: true },
+    data: { careRecord: encryptText(JSON.stringify(clean)), notes: encryptText(clean.notes ?? ""), wasEdited: true },
   });
 }
 

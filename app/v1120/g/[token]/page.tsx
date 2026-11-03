@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { decryptText, openPII } from "@/lib/crypto";
 import { serviceTimeOf } from "../../_data";
+import { fixRecordText } from "../../_ai";
 import { contactTitle, type CareRecord, type GuardianReportProps } from "../../_types";
 import { GuardianReport } from "./GuardianReport";
 
@@ -21,7 +22,7 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
     caregiverName: visit.caregiver.name,
     startedAt: time.startedAt,
     endedAt: time.endedAt,
-    record: JSON.parse(decryptText(r.careRecord)) as CareRecord,
+    record: fixRecordText(JSON.parse(decryptText(r.careRecord)) as CareRecord),
   };
 }
 

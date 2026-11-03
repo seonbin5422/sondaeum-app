@@ -7,7 +7,7 @@ import { buzz, Spinner } from "../../../_components/Pressable";
 import { useSpeech } from "../../../_components/useSpeech";
 import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
-import { changedFields, dropSameWithoutPrevious, extractRecord, overlayFields } from "../../../_extract";
+import { changedFields, dropSameWithoutPrevious, extractRecord, keptFields, overlayFields } from "../../../_extract";
 import type { CareRecord, Change } from "../../../_types";
 import { AUDIO_TOO_LARGE_MESSAGE, MAX_AUDIO_UPLOAD_BYTES } from "@/lib/audioUpload";
 
@@ -161,7 +161,8 @@ export function RecordScreen({
   // shortcut: 기준은 이 화면에 들어올 때의 녹음 글이라, 고치다 나갔다 다시 들어오면 그때 글이 기준이 된다
   const [base] = useState(() => dropSameWithoutPrevious(extractRecord(initialTranscript).record, hasPrevious));
   const changed = saved ? changedFields(base, live) : [];
-  const sections = guide(saved ? overlayFields(saved, live, changed) : live);
+  // 녹음 글 기준, 기록 확인에서 직접 고친 칸만 그 값으로
+  const sections = guide(saved ? overlayFields(live, saved, keptFields(saved, changed)) : live);
   const resumed = transcript.length > 0 && !speech.recording;
   // D-51 "다 말했어요" 뒤 빠진 칸을 하나씩 소리로 묻는다. 답은 녹음 내용 끝에 붙어 AI 정리에 그대로 들어간다
   // shortcut: 빠진 칸은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다, 질문이 헛돌면 AI 정리 뒤에 묻도록 옮긴다

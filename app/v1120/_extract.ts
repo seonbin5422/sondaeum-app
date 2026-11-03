@@ -182,6 +182,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
 // shortcut: 직접 고친 뒤 더 말하면 새 특이사항은 자동으로 붙지 않고 "내가 한 말"로만 보인다, 고친 칸을 칸마다 기록하게 되면 그 칸만 지킨다
 export function keepFilled(old: CareRecord, next: CareRecord, edited: boolean): CareRecord {
   const merged = structuredClone(next);
+  if (old.handEdited?.length) merged.handEdited = old.handEdited;
   for (const g of ["physical", "cognitive", "household", "change", "bowel"] as const) {
     const o = old[g] as Record<string, unknown>;
     const m = merged[g] as Record<string, unknown>;
@@ -229,6 +230,12 @@ function setField(r: CareRecord, f: string, from: CareRecord | null) {
   const [g, k] = f.split(".") as [Group, string];
   (r[g] as Record<string, unknown>)[k] = from ? (from[g] as Record<string, unknown>)[k] : null;
   if (g === "physical") r.physicalNote = from ? from.physicalNote : null;
+}
+
+// 녹음으로 돌아왔을 때 저장된 기록에서 지킬 칸: 기록 확인에서 직접 고쳤고, 지금 다시 말하지 않은 칸만.
+// 나머지는 녹음 글 기준이라 글을 지우면 체크도 풀린다
+export function keptFields(saved: CareRecord, changed: string[]) {
+  return (saved.handEdited ?? []).filter((f) => isField(saved, f) && !changed.includes(f));
 }
 
 // 녹음 화면 체크 목록: 고쳐 말한 칸은 지금 녹음 글의 값으로

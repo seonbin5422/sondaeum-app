@@ -81,15 +81,15 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
       personalHygiene: bool(p.personalHygiene), bathing: bool(p.bathing), mealAssist: bool(p.mealAssist),
       repositioning: bool(p.repositioning), mobility: bool(p.mobility), toileting: bool(p.toileting), minutes: int(p.minutes, 600),
     },
-    physicalNote: str(r.physicalNote),
+    physicalNote: fixEumForm(str(r.physicalNote)),
     cognitive: { stimulation: int(c.stimulation, 600), dailyLiving: int(c.dailyLiving, 600), behaviorManagement: int(c.behaviorManagement, 600), emotional: int(c.emotional, 600) },
     household: { mealPrepCleaningLaundry: bool(h.mealPrepCleaningLaundry), personalActivity: bool(h.personalActivity), minutes: int(h.minutes, 600) },
     change: { physical: change(cg.physical), meal: change(cg.meal), cognitive: change(cg.cognitive) },
     bowel: { stoolAccidents: int(bw.stoolAccidents, 50), urineAccidents: int(bw.urineAccidents, 50), diaperChanges: int(bw.diaperChanges, 50) },
     notes: fixEumForm(str(r.notes)),
-    guardianNotes: str(r.guardianNotes),
+    guardianNotes: fixEumForm(str(r.guardianNotes)),
     notesNoAction: r.notesNoAction === true,
-    notesAsk: r.notesNoAction === true ? str(r.notesAsk) : null,
+    notesAsk: r.notesNoAction === true ? fixEumForm(str(r.notesAsk)) : null,
   };
   for (const group of [record.physical, record.household] as Record<string, boolean | number | null>[]) {
     const checks = Object.keys(group).filter((k) => k !== "minutes");
@@ -150,6 +150,10 @@ const EUM_FIX: [RegExp, string][] = [
 ];
 export function fixEumForm(t: string | null) {
   return t && EUM_FIX.reduce((acc, [re, to]) => acc.replace(re, to), t);
+}
+// 저장된 기록을 읽을 때도 글 칸을 고친다 (11/1 전에 저장된 기록·다른 칸에 남은 '그대롭음')
+export function fixRecordText(r: CareRecord): CareRecord {
+  return { ...r, physicalNote: fixEumForm(r.physicalNote), notes: fixEumForm(r.notes), guardianNotes: fixEumForm(r.guardianNotes ?? null) };
 }
 
 export async function fillRecord(redacted: string) {

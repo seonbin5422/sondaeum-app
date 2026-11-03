@@ -6,7 +6,7 @@ import { Button, Icon, LinkButton, Screen, TopBar, selectChipClass } from "../..
 import { Spinner } from "../../../_components/Pressable";
 import { addToNotes, saveRecord } from "../../../_actions";
 import { useSpeech } from "../../../_components/useSpeech";
-import type { SaidQuotes } from "../../../_extract";
+import { changedFields, type SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
 import type { CareRecord, Change } from "../../../_types";
 
@@ -210,7 +210,9 @@ export function ReviewScreen({
   // LAW-7: 학대가 의심되는 말은 보고서에 자동으로 싣지 않고 요양보호사에게 신고 안내
   const flagged = /때리|때렸|맞았|멍이|욕을|가두|굶겨/.test(transcript);
 
-  function update(next: CareRecord) {
+  function update(edit: CareRecord) {
+    // 직접 고친 칸을 적어 둔다: 녹음으로 돌아가 다시 정리해도 이 칸은 지킨다
+    const next = { ...edit, handEdited: [...new Set([...(r.handEdited ?? []), ...changedFields(r, edit)])] };
     setR(next);
     // 고칠 때마다 잠깐 기다렸다 DB에 저장
     clearTimeout(saveTimer.current);

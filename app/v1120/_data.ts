@@ -7,6 +7,7 @@ import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, openPII, safeDecryptText } from "@/lib/crypto";
+import { fixRecordText } from "./_ai";
 import type { BoardComment, BoardPost, CareGrade, CareRecord, ClientProfile, HistoryVisit, Signatures } from "./_types";
 import { cleanSignatures } from "./_signatures";
 import type { SaidQuotes } from "./_extract";
@@ -133,7 +134,7 @@ function toPosts(visits: PostRow[]): BoardPost[] {
       const [, m, d] = kstYmd(v.startedAt ?? v.createdAt).split("-");
       let record: CareRecord | null = null;
       try {
-        record = v.report.careRecord ? (JSON.parse(decryptText(v.report.careRecord)) as CareRecord) : null;
+        record = v.report.careRecord ? fixRecordText(JSON.parse(decryptText(v.report.careRecord)) as CareRecord) : null;
       } catch {}
       return [
         {
@@ -310,7 +311,7 @@ export async function myVisit(visitId: string) {
     caregiverName: caregiver.name,
     client: toProfile(v.client),
     transcript: v.transcript ? safeDecryptText(v.transcript, "") : "",
-    record: json<CareRecord>(v.report?.careRecord),
+    record: ((r) => r && fixRecordText(r))(json<CareRecord>(v.report?.careRecord)),
     quotes: json<SaidQuotes>(v.report?.aiRawJson),
     edited: v.report?.wasEdited ?? false,
     shareToken: v.report?.shareToken ?? null,
@@ -356,7 +357,7 @@ function toHistoryVisit(v: HistoryRow): HistoryVisit {
   const time = serviceTimeOf(v.client.scheduleLabel, day);
   let record = EMPTY_RECORD;
   try {
-    if (v.report?.careRecord) record = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
+    if (v.report?.careRecord) record = fixRecordText(JSON.parse(decryptText(v.report.careRecord)) as CareRecord);
   } catch {}
   return {
     visitId: v.id,

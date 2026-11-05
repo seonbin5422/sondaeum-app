@@ -40,7 +40,7 @@ export function Screen({
   const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
   return (
     <div className="flex flex-1 flex-col overflow-x-clip" style={{ background: bg, "--screen-bg": bg } as CSSProperties}>
-    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-5 ${pad}`}>
+    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-5 ${pad} ${nav ? "still" : ""}`}>
       {children}
       {(bottom || nav) && (
         <div className="fixed inset-x-0 bottom-0 z-10">

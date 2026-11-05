@@ -88,6 +88,12 @@
 .v1120 .done-pulse {
   animation: v1120-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
+/* 하단 메뉴로 오가는 화면은 바로 보이게 (팀 피드백 11/6: 등장 모션 때문에 메뉴 전환이 느려 보임) */
+.v1120 .still .enter,
+.v1120 .still .enter-down,
+.v1120 .still .pop {
+  animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .v1120 .enter,
   .v1120 .enter-down,

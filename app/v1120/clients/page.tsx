@@ -42,8 +42,9 @@ export default async function ClientsPage() {
                   <PressLink href={`/v1120/client/${c.id}/history`} className={shortcut}>
                     방문 기록
                   </PressLink>
+                  {/* 세 버튼이 한 줄이라 "서류 만들기"는 좁은 폰에서 두 줄이 된다. 글자를 줄이지 않고 낱말을 줄인다 (들어가면 제목은 "서류 만들기") */}
                   <PressLink href={`/v1120/client/${c.id}/documents`} className={shortcut}>
-                    서류 만들기
+                    서류
                   </PressLink>
                   <PressLink href={`/v1120/chats/${c.id}`} className={`${shortcut} ${n > 0 ? "text-(--text-brand)" : ""}`}>
                     <ChatLabel n={n} />

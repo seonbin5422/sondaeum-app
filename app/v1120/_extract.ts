@@ -60,19 +60,19 @@ const RE = {
   bathing: /목욕|샤워|몸\s?씻/,
   meal: /식사|밥|드셨|죽|점심|아침 식|저녁 식|반찬/,
   reposition: /체위|돌려\s?눕|자세/,
-  mobility: /이동|산책|걸으|걸어|걷|부축|휠체어/,
+  mobility: /이동|걸으|걸어|걷|부축|휠체어/, // 산책 동행은 서식상 외출 동행(outing)
   toilet: /화장실/,
-  stimulation: /사진|퍼즐|인지|노래|그림|색칠|회상/,
+  stimulation: /인지\s?(활동|프로그램|훈련)|퍼즐|색칠|계산/, // D-52: 인지 훈련 활동을 분명히 말했을 때만
   dailyLiving: /함께\s?(요리|정리|빨래)|같이\s?(요리|정리|빨래)/,
   behavior: /배회|불안해|화를|공격|소리를 지르/,
-  emotional: /말벗|이야기|대화|격려|말동무/,
+  emotional: /말벗|이야기|얘기|대화|격려|말동무|말 나|사진|노래|회상/,
   household: /청소|빨래|세탁|설거지|식사\s?준비|정리/,
-  outing: /외출|병원\s?동행|장보|같이 나가/,
+  outing: /외출|산책|병원\s?동행|장보|은행|같이 나가/,
   better: /좋아졌|나아졌|호전|더 잘/,
   worse: /나빠졌|안 좋아|줄었|악화|못 드셨|힘들어하/,
   same: /비슷|똑같|그대로|그대롭|변화\s?(가\s?)?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/,
-  stool: /대변|대소변|변을/,
-  urine: /소변|오줌/,
+  stool: /대변|대소변|변을|똥|응가/,
+  urine: /소변|오줌|오짐|쉬야/,
   diaper: /기저귀/,
   notes: /혈압|약|아프|통증|넘어|열이|기침|병원|어지러/,
 };
@@ -129,7 +129,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const countFor = (re: RegExp) => {
     const s = ss.find((x) => re.test(x) && /실수|지렸|못 가리/.test(x)) ?? ss.find((x) => re.test(x) && /없었/.test(x));
     if (!s) return null;
-    if (/대소변/.test(s)) return countIn(s); // "대소변 실수 없어요"는 둘 다
+    if (/대소변|똥\s*오줌|오줌\s*똥/.test(s)) return countIn(s); // "대소변 실수 없어요"·"똥 오줌 실수 없어요"는 둘 다
     // "소변 실수 한 번, 대변 실수는 없었어요"처럼 한 문장에 둘이 있으면 그 낱말 뒤만 본다
     const part = s.slice(s.search(re));
     const cut = part.search(re === RE.stool ? RE.urine : RE.stool);

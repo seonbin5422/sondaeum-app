@@ -33,15 +33,18 @@ export default async function ChatsPage() {
                       {c.name.slice(0, 1)}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-[1.4]">
-                      <span className="text-xl font-bold">{c.name} 수급자</span>
+                      <span className="whitespace-nowrap text-xl font-bold">{c.name} 수급자</span>
                       <span className="text-base text-muted">
-                        {c.guardianName}{" "}
+                        <span className="whitespace-nowrap">{c.guardianName}</span>{" "}
                         <span className="whitespace-nowrap">
                           {contactTitle(c.guardianRelation) === "보호자" ? `보호자(${c.guardianRelation})` : c.guardianRelation}
                         </span>
                       </span>
+                      {/* 이름 옆에 두면 좁은 폰에서 이름이 네 줄로 쪼개져서 아래 줄로 (11/6) */}
+                      <span className="mt-1 flex empty:hidden">
+                        <UnreadBadge n={unread.get(c.id) ?? 0} />
+                      </span>
                     </span>
-                    <UnreadBadge n={unread.get(c.id) ?? 0} />
                     <Icon name="chevron_right" size={28} className="text-muted" />
                   </span>
                   <span className={`rounded-xl bg-(--bg-secondary) px-4 py-2.5 text-base font-medium leading-[1.4] ${post ? "" : "text-muted"}`}>

@@ -1,7 +1,7 @@
 // 실행: npx tsx app/v1120/_redact.check.ts (AI 호출 없이 개인정보 지우기와 AI 결과 거르기만 확인)
 import assert from "node:assert/strict";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
-import { checkAiRecord, fillGaps, notesLost } from "./_ai";
+import { checkAiRecord, fillGaps, fixEumForm, notesLost } from "./_ai";
 import { extractRecord } from "./_extract";
 
 const people = { client: "홍길순", guardian: "김영희", caregiver: "이순자", phones: ["010-9876-5432"] };
@@ -86,6 +86,21 @@ assert.equal(checkAiRecord({ ...twoNotes, notesAsk: "기침에 어떻게 도와�
 
 // 녹음 중 미리 보기: "~습니다"로 이어 말해도 활동마다 자기 시간을 잡는다
 const sung = extractRecord("세수했고요 세수 5분 모아 드렸습니다 함께 노래 부르는 시간을 10분 가졌습니다").record;
-assert.equal(sung.cognitive.stimulation, 10);
+// D-52·서식: 노래는 인지자극활동(인지활동형 프로그램)이 아니라 말벗
+assert.equal(sung.cognitive.emotional, 10);
+assert.equal(sung.cognitive.stimulation, null);
 assert.equal(sung.physical.minutes, 5);
-assert.equal(extractRecord("세수 5분 하고 노래 10분 불렀어요").record.cognitive.stimulation, 10);
+assert.equal(extractRecord("세수 5분 하고 노래 10분 불렀어요").record.cognitive.emotional, 10);
+assert.equal(extractRecord("인지 활동으로 퍼즐 20분 했어요").record.cognitive.stimulation, 20);
+// 서식 뒤쪽: 산책 동행은 외출 동행(개인활동지원)
+assert.equal(extractRecord("공원 산책 30분 다녀왔어요").record.household.personalActivity, true);
+
+// 아기말·속된 말은 기록지 말로 (fixEumForm, 11/6)
+{
+  assert.equal(fixEumForm("똥 오줌 실수 없음."), "대소변 실수 없음.");
+  assert.equal(fixEumForm("오줌이랑 똥 실수는 없으셨어요"), "대소변 실수는 없으셨어요");
+  assert.equal(fixEumForm("똥을 못 보셨다고 하심. 밤에 오줌 3회."), "대변을 못 보셨다고 하심. 밤에 소변 3회.");
+  assert.equal(fixEumForm("쉬시게 해 드림."), "쉬시게 해 드림.");
+  assert.deepEqual(extractRecord("똥 오줌 실수 없었어요.").record.bowel, { stoolAccidents: 0, urineAccidents: 0, diaperChanges: null });
+  console.log("care words ok");
+}

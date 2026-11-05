@@ -50,20 +50,21 @@ export default async function HomePage() {
           </h1>
         </div>
         {left.length > 0 && (
-          <div className="enter relative flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
-            {/* 가장 최근 기록이 누구의 언제 것인지 보여 준다. 2건 이상이면 "이어서 하기"가 시트를 열어 고르게 한다 */}
-            <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
+          <div className="enter relative flex flex-col gap-3 rounded-2xl bg-white px-4 py-4" style={order(1)}>
+            {/* 가장 최근 기록이 누구의 언제 것인지 보여 준다. 2건 이상이면 "이어서 하기"가 시트를 열어 고르게 한다.
+                글과 버튼을 옆으로 두면 좁은 폰에서 글이 여러 줄로 눌려서 위아래로 쌓는다 (11/6 팀 피드백) */}
+            <span className="flex flex-col gap-0.5 leading-[1.4]">
               <span className="text-lg font-bold text-muted">
                 마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
               </span>
-              <span className="text-base font-bold">
+              <span className="text-lg font-bold">
                 <span className="whitespace-nowrap">{left[0].clientName} 수급자</span> ·{" "}
                 <span className="whitespace-nowrap">{serviceTimeOf(null, left[0].day).date}</span>
                 {left.length > 1 && <span className="whitespace-nowrap"> 외 {left.length - 1}건</span>}
               </span>
             </span>
             <ResumeSheet
-              className={`${pillBase} ${pillTones.soft}`}
+              className={`${pillBase} ${pillTones.soft} w-full text-lg`}
               items={left.map((v) => ({
                 href: visitHref(v.visitId, v.status),
                 name: v.clientName,

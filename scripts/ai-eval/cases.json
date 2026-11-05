@@ -837,5 +837,147 @@
       "지침",
       "고뿔"
     ]
+  },
+  {
+    "id": "47-crude-words",
+    "about": "아기말·속된 말은 기록지 말로 ('똥 오줌 실수 없음' → '대소변 실수 없음')",
+    "input": "오늘 똥 오줌 실수는 없었어요. 점심 드시고 한 번 게우셔서 입 닦아 드렸어요.",
+    "expect": {
+      "bowel.stoolAccidents": 0,
+      "bowel.urineAccidents": 0
+    },
+    "notesMust": [
+      [
+        "구토",
+        "토하"
+      ],
+      "입"
+    ],
+    "notesMustNot": [
+      "똥",
+      "오줌",
+      "게우"
+    ],
+    "guardianMust": [],
+    "example": "대소변 실수 없음. 점심 식사 후 1회 구토하여 입 주변 닦아 드림."
+  },
+  {
+    "id": "48-form-meal",
+    "about": "서식: 밥 차리기·떠먹이기는 식사 도움, 조리는 식사준비",
+    "input": "점심 밥 차려 드리고 옆에서 떠먹여 드렸어요.",
+    "expect": {
+      "physical.mealAssist": true,
+      "household.mealPrepCleaningLaundry": [
+        null,
+        false
+      ]
+    },
+    "example": null
+  },
+  {
+    "id": "49-form-cook",
+    "about": "서식: 수급자를 위한 조리는 식사준비",
+    "input": "저녁 반찬 두 가지 만들어 드리고 설거지했어요.",
+    "expect": {
+      "household.mealPrepCleaningLaundry": true,
+      "physical.mealAssist": [
+        null,
+        false
+      ]
+    },
+    "example": null
+  },
+  {
+    "id": "50-form-walk",
+    "about": "서식: 산책 동행은 부축해도 외출 동행(개인활동지원)",
+    "input": "공원 산책 30분 같이 다녀왔어요. 걸으실 때 부축해 드렸어요.",
+    "expect": {
+      "household.personalActivity": true,
+      "household.minutes": 30
+    },
+    "example": null
+  },
+  {
+    "id": "51-form-function",
+    "about": "서식: 신체기능 유지·증진(관절운동·복약 도움)은 체크 칸 없이 시간과 특이사항",
+    "input": "아침 약 챙겨 드리고 무릎 굽혔다 폈다 운동 10분 같이 했어요.",
+    "expect": {
+      "physical.minutes": 10
+    },
+    "notesMust": [
+      [
+        "복약",
+        "약"
+      ]
+    ],
+    "example": "아침 약 복약 도움함. 무릎 관절운동 10분 도움."
+  },
+  {
+    "id": "52-honor-meal-sleep",
+    "about": "높임말: 진지 잡수시다·주무시다",
+    "input": "진지는 반 공기 잡수시고 점심 드시고 한 시간 주무셨어요.",
+    "notesMust": [
+      [
+        "1/2",
+        "반"
+      ],
+      [
+        "수면",
+        "주무",
+        "낮잠",
+        "잠"
+      ]
+    ],
+    "notesMustNot": [
+      "진지",
+      "잡수"
+    ],
+    "example": null
+  },
+  {
+    "id": "53-honor-yakju",
+    "about": "높임말: 약주는 음주(약 아님)",
+    "input": "어제 저녁에 약주 한잔 하셨다고 하시네요.",
+    "notesMust": [
+      [
+        "음주",
+        "술"
+      ]
+    ],
+    "notesMustNot": [
+      "복약",
+      "약 복용"
+    ],
+    "example": null
+  },
+  {
+    "id": "54-honor-went-home",
+    "about": "'돌아가셨다'가 귀가일 때 사망으로 쓰지 않음",
+    "input": "따님이 오셨다가 저녁 드시고 댁으로 돌아가셨어요.",
+    "notesMust": [
+      "따님"
+    ],
+    "notesMustNot": [
+      "사망",
+      "별세"
+    ],
+    "example": null
+  },
+  {
+    "id": "55-honor-bland",
+    "about": "'심심하다'가 음식이면 싱겁다",
+    "input": "국이 심심하다고 하셔서 간장 조금 넣어 드렸어요.",
+    "notesMust": [
+      [
+        "싱겁",
+        "싱거"
+      ],
+      "간장"
+    ],
+    "notesMustNot": [
+      "지루",
+      "심심"
+    ],
+    "example": null
   }
 ]

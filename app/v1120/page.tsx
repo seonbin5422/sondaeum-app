@@ -4,6 +4,7 @@ import { requireCaregiver, serviceTimeOf } from "./_data";
 import { caregiverTitle } from "./_types";
 import { startVisit } from "./_actions";
 import { ScheduleSheet } from "./_components/ScheduleSheet";
+import { ResumeSheet } from "./_components/ResumeSheet";
 import { PressLink } from "./_components/Pressable";
 import { Button, Card, Chip, LinkButton, Screen } from "./_components/ui";
 import { kstNowHm, notifications, todayVisitList, visitHref, type HomeVisit } from "./notifications/_today";
@@ -49,24 +50,27 @@ export default async function HomePage() {
           </h1>
         </div>
         {left.length > 0 && (
-          <div className="enter relative flex flex-col gap-1 rounded-2xl bg-white px-4 py-3" style={order(1)}>
-            <p className="text-lg font-bold leading-[1.4] text-muted">
-              마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
-            </p>
-            {/* 기록마다 누구의 언제 것인지와 버튼을 따로 둔다 (2건 이상일 때 "이어서 하기"가 누구 기록인지 몰랐음, 팀 피드백 11/6) */}
-            <ul className="flex flex-col gap-1">
-              {left.map((v) => (
-                <li key={v.visitId} className="flex items-center gap-3">
-                  <span className="min-w-0 flex-1 text-base font-bold leading-[1.4]">
-                    <span className="whitespace-nowrap">{v.clientName} 수급자</span> ·{" "}
-                    <span className="whitespace-nowrap">{serviceTimeOf(null, v.day).date}</span>
-                  </span>
-                  <PressLink href={visitHref(v.visitId, v.status)} className={`${pillBase} ${pillTones.soft}`}>
-                    이어서 하기<span className="sr-only">: {v.clientName} 수급자 {serviceTimeOf(null, v.day).date}</span>
-                  </PressLink>
-                </li>
-              ))}
-            </ul>
+          <div className="enter relative flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
+            {/* 가장 최근 기록이 누구의 언제 것인지 보여 준다. 2건 이상이면 "이어서 하기"가 시트를 열어 고르게 한다 */}
+            <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
+              <span className="text-lg font-bold text-muted">
+                마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
+              </span>
+              <span className="text-base font-bold">
+                <span className="whitespace-nowrap">{left[0].clientName} 수급자</span> ·{" "}
+                <span className="whitespace-nowrap">{serviceTimeOf(null, left[0].day).date}</span>
+                {left.length > 1 && <span className="whitespace-nowrap"> 외 {left.length - 1}건</span>}
+              </span>
+            </span>
+            <ResumeSheet
+              className={`${pillBase} ${pillTones.soft}`}
+              items={left.map((v) => ({
+                href: visitHref(v.visitId, v.status),
+                name: v.clientName,
+                date: serviceTimeOf(null, v.day).date,
+                step: v.status === "RECORDING" ? "녹음하다 멈춤" : v.status === "DRAFT_READY" ? "확인하고 보내기 전" : "기록 정리 중",
+              }))}
+            />
           </div>
         )}
       </header>

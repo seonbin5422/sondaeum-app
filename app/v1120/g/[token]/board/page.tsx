@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { guardianBoard } from "../../../_data";
-import { LiveRefresh, PostCard } from "../../../_components/Board";
+import { BoardExpired, LiveRefresh, PostCard } from "../../../_components/Board";
 import { BackButton } from "../../../_components/BackButton";
 import { caregiverTitle, contactTitle } from "../../../_types";
 
@@ -8,6 +8,7 @@ import { caregiverTitle, contactTitle } from "../../../_types";
 export default async function GuardianBoardPage({ params }: PageProps<"/v1120/g/[token]/board">) {
   const { token } = await params;
   const b = await guardianBoard(token);
+  if (b === "expired") return <BoardExpired />;
   if (!b) notFound();
   const title = contactTitle(b.guardianRelation);
   const names = { caregiver: b.caregiverName, guardian: `${b.guardianName} ${title}` };

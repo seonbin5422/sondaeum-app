@@ -4,7 +4,6 @@ import { HomeSchedule } from "@/app/components/HomeSchedule";
 import { CaregiverGreeting } from "@/app/components/CaregiverGreeting";
 import { Logo } from "@/app/components/ui/Logo";
 import { buildCaregiverFeedback } from "@/lib/caregiverFeedback";
-import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { verifySession } from "@/lib/dal";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +16,6 @@ export default async function HomePage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
-  await purgeExpiredClients();
   const { caregiverId } = await verifySession();
   const caregiver = await prisma.caregiver.findUnique({ where: { id: caregiverId } });
   const clients = await prisma.client.findMany({

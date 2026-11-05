@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { safeDecryptText } from "@/lib/crypto";
@@ -18,7 +19,9 @@ export default async function GuardianPage({ params }: PageProps<"/g/[token]">) 
 
   const isFirstView = !report.viewedAt;
 
-  await prisma.report.update({
+  // STB-5: 카카오톡·메신저가 링크 미리보기를 만들려고 여는 요청은 보호자가 읽은 것으로 세지 않는다
+  const ua = (await headers()).get("user-agent") ?? "";
+  if (!/kakaotalk-scrap|facebookexternalhit|slackbot|twitterbot|telegrambot|discordbot|bot\b|crawler|spider|preview/i.test(ua)) await prisma.report.update({
     where: { id: report.id },
     data: {
       viewCount: { increment: 1 },

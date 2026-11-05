@@ -281,7 +281,7 @@ type BoardPost = { shareToken: string; title: string; at: string; notes: string 
 
 ### 남은 것
 
-- 보호자 확인: 링크만 있으면 누구나 보호자로 보고 쓴다. 보호자 로그인(D-44)이나 링크 만료(STB-5)로 막는다.
+- 보호자 확인: 링크만 있으면 누구나 보호자로 보고 쓴다. 보호자 로그인(D-44)으로 막는다. 링크 기한(STB-5)은 11/6 반영: 보낸 날부터 90일(D-53).
 
 ## 방문 상태 전이
 
@@ -310,7 +310,7 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
 | DIF-5 | `Guardian`·`ChatRoom`·`Message`. 위 "대화방" 절 (D-45 초안) |
 | DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29) |
-| STB-5 | `Report.shareExpiresAt` |
+| STB-5 | `Client.boardExpiresAt` (11/6 반영, D-53: 링크를 보낸 날부터 90일. 보고서별 기한이 아니라 수급자 게시판 단위) |
 | LAW-3 | 동의 기록: `Caregiver.consentedAt`·`consentItems`로 넣음 (10/13, D-40) |
 
 ## 개인정보 암호화 (SEC-5, 11/2)

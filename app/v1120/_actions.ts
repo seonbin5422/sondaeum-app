@@ -10,7 +10,7 @@ import { dropSameWithoutPrevious, extractRecord, isField, keepFilled, keptFields
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
-import { kstTodayRange, requireCaregiver } from "./_data";
+import { boardOpenUntil, kstTodayRange, requireCaregiver } from "./_data";
 import { cleanSignatures, isEmptySignatures } from "./_signatures";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
@@ -300,6 +300,7 @@ export async function sendReport(visitId: string) {
   if (!v.report) throw new Error("정리된 기록이 없어요.");
   await prisma.report.update({ where: { visitId }, data: { sentAt: new Date() } });
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
+  await prisma.client.update({ where: { id: v.clientId }, data: { boardExpiresAt: boardOpenUntil() } }); // 보고서 링크를 보냈으니 게시판을 다시 90일 연다 (STB-5)
   redirect(`/v1120/visit/${visitId}/sent`);
 }
 
@@ -314,7 +315,8 @@ function commentBody(text: string) {
 
 // 댓글을 달 글: 보낸 보고서 또는 게시판에 올린 서류 (같은 shareToken 자리를 쓴다)
 async function postTarget(shareToken: string, caregiverId?: string) {
-  const own = caregiverId ? { caregiverId } : { isActive: true };
+  // 보호자는 게시판 기한(STB-5) 안에만 댓글을 단다
+  const own = caregiverId ? { caregiverId } : { isActive: true, OR: [{ boardExpiresAt: null }, { boardExpiresAt: { gt: new Date() } }] };
   const [r, d] = await Promise.all([
     prisma.report.findFirst({
       where: { shareToken, sentAt: { not: null }, visit: { ...(caregiverId ? { caregiverId } : {}), client: { ...own, purgeAt: null } } },
@@ -365,6 +367,7 @@ export async function shareSummary(clientId: string, from: string, to: string) {
   if (c.guardianRelation === NO_CONTACT) throw new Error("보호자가 없어 게시판이 없어요.");
   const exists = await prisma.sharedDocument.findFirst({ where: { clientId, kind: "summary", from, to } });
   if (!exists) await prisma.sharedDocument.create({ data: { clientId, caregiverId: c.caregiverId!, kind: "summary", from, to } });
+  await prisma.client.update({ where: { id: clientId }, data: { boardExpiresAt: boardOpenUntil() } }); // 게시판에 올렸으니 다시 90일 (STB-5)
 }
 
 // C-06 내 정보 고치기

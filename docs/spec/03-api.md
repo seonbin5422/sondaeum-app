@@ -36,7 +36,7 @@ API는 모두 `app/api/` 아래 Route Handler다. **지금은 요양보호사 AP
 | 메서드 | 경로 | 하는 일 | 세션 |
 | --- | --- | --- | --- |
 | POST | `/api/visits` | 방문 생성 (`RECORDING`). 요양보호사는 DB의 첫 번째로 저장 | ❌ |
-| POST | `/api/visits/[id]/stop` | 기록 저장: 개인정보 필터 → 암호화 → `RECORDED` | ❌ |
+| POST | `/api/visits/[id]/stop` | 기록 저장: 번호 마스킹(앱 안, `lib/pii.ts` → `_redact.ts`, LAW-6) → 암호화 → `RECORDED` | ❌ |
 | POST | `/api/visits/[id]/transcribe` | 음성 파일(≤4MB) 전사, 파일은 저장 안 함 | ❌ (Groq 비용) |
 | POST | `/api/visits/[id]/classify-preview` | 저장 없이 AI 분류 미리보기 | ❌ (Groq 비용) |
 | POST | `/api/visits/[id]/summarize` | AI 요약 → 보고서 생성 (`DRAFT_READY`) | ❌ (Groq 비용) |
@@ -45,14 +45,20 @@ API는 모두 `app/api/` 아래 Route Handler다. **지금은 요양보호사 AP
 
 | 메서드 | 경로 | 하는 일 | 세션 |
 | --- | --- | --- | --- |
-| PATCH | `/api/reports/[id]` | 보고서 수정 | ❌, 전송 후에도 수정됨 (STB-1) |
+| PATCH | `/api/reports/[id]` | 보고서 수정 (번호 마스킹은 앱 안에서, LAW-6) | ❌, 전송 후에도 수정됨 (STB-1) |
 | POST | `/api/reports/[id]/send` | 전송 처리 (`SENT`) | ❌, 중복 전송됨 (STB-1) |
+
+## 예약 작업 (Cron)
+
+| 메서드 | 경로 | 하는 일 | 세션 |
+| --- | --- | --- | --- |
+| GET | `/api/cron/purge-clients` | 삭제 예약 14일이 지난 수급자와 그 방문·보고서·댓글·서류를 지움. `vercel.json` crons로 매일 03:00 KST. 화면이 부를 때마다 지우던 것을 옮김 (STB-6) | `Authorization: Bearer CRON_SECRET`만 (Vercel Cron이 붙여 보냄). 환경변수가 없으면 500 |
 
 ## 공개 페이지 (API 아님)
 
 | 경로 | 하는 일 |
 | --- | --- |
-| `/g/[token]` | 보호자 보고서. 열 때마다 `viewCount` 증가, 첫 열람 시 `viewedAt` 기록. 미리보기 봇도 열람으로 셈 (STB-5) |
+| `/g/[token]` | 보호자 보고서. 열 때마다 `viewCount` 증가, 첫 열람 시 `viewedAt` 기록. 카카오톡 등 미리보기 봇(User-Agent)은 열람으로 세지 않음 (STB-5) |
 
 ## SEC-1 이후 규칙
 

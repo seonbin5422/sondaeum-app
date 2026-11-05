@@ -1,8 +1,9 @@
 // 로컬 HTTPS 개발용 자체 서명 인증서 생성 스크립트.
-// LAN IP가 바뀌면 아래 altNames의 IP를 바꾸고 다시 실행하세요: node scripts/gen-cert.js
-const selfsigned = require("selfsigned");
-const fs = require("fs");
-const path = require("path");
+// LAN IP가 바뀌면 아래 altNames의 IP를 바꾸고 다시 실행하세요: node scripts/gen-cert.mjs
+import selfsigned from "selfsigned";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 async function main() {
   const attrs = [{ name: "commonName", value: "localhost" }];
@@ -21,7 +22,7 @@ async function main() {
     ],
   });
 
-  const dir = path.join(__dirname, "..", "certificates");
+  const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "certificates");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "localhost.pem"), pems.cert);
   fs.writeFileSync(path.join(dir, "localhost-key.pem"), pems.private);

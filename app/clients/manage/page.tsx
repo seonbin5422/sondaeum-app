@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/app/components/ui/PageHeader";
 import { ClientManageRow } from "@/app/components/ClientManageRow";
-import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 
 export const dynamic = "force-dynamic";
 
 export default async function ManageClientsPage() {
-  await purgeExpiredClients();
   const clients = await prisma.client.findMany({
     where: { purgeAt: null },
     orderBy: [{ isActive: "desc" }, { name: "asc" }],

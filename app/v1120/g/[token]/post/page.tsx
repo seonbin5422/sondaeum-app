@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { guardianBoard } from "../../../_data";
 import { commentAsGuardian, markReadAsGuardian } from "../../../_actions";
-import { CommentThread, PostSummary } from "../../../_components/Board";
+import { BoardExpired, CommentThread, PostSummary } from "../../../_components/Board";
 import { BackButton } from "../../../_components/BackButton";
 import { contactTitle } from "../../../_types";
 
@@ -9,6 +9,7 @@ import { contactTitle } from "../../../_types";
 export default async function GuardianPostPage({ params }: PageProps<"/v1120/g/[token]/post">) {
   const { token } = await params;
   const b = await guardianBoard(token);
+  if (b === "expired") return <BoardExpired />;
   const post = b?.posts.find((p) => p.shareToken === token);
   if (!b || !post) notFound();
   const names = { caregiver: b.caregiverName, guardian: `${b.guardianName} ${contactTitle(b.guardianRelation)}` };

@@ -291,3 +291,15 @@ export function CommentThread({
     </section>
   );
 }
+
+// STB-5 (가): 보호자 링크 기한(90일)이 지났을 때 게시판·글·서류 자리에 보여 준다
+export function BoardExpired() {
+  return (
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 p-6 text-center leading-[1.4]">
+      <h1 className="text-2xl font-bold">링크 기간이 지났어요</h1>
+      <p className="text-lg text-muted">
+        어르신 기록을 지키려고 링크는 받은 날부터 <span className="whitespace-nowrap">90일 동안만</span> 열려요. 요양보호사에게 새 링크를 받아 주세요.
+      </p>
+    </main>
+  );
+}

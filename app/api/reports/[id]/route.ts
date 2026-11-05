@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { encryptText } from "@/lib/crypto";
 import { redactPii } from "@/lib/pii";
 import { apiCaregiverId, notFound, ownsReport, unauthorized } from "@/lib/apiAuth";
-import { AI_LIMIT_MESSAGE, takeAiCall } from "@/lib/aiLimit";
 
 export async function PATCH(
   req: NextRequest,
@@ -13,7 +12,6 @@ export async function PATCH(
   const me = await apiCaregiverId();
   if (!me) return unauthorized();
   if (!(await ownsReport(id, me))) return notFound();
-  if (!(await takeAiCall(me, "redact"))) return NextResponse.json({ error: AI_LIMIT_MESSAGE }, { status: 429 });
   const body = await req.json();
 
   try {

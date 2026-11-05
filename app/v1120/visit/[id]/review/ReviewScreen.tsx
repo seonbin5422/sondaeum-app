@@ -115,6 +115,28 @@ function NumberRow({ label, unit, value, onChange }: { label: string; unit: stri
   );
 }
 
+// D-54: AI가 정리한 칸보다 내가 한 말(녹음 글)을 먼저 보여 줘서, 말한 그대로 옮겼는지 대조하며 확인하게 한다
+function SaidCard({ text }: { text: string }) {
+  const [all, setAll] = useState(false);
+  const long = text.length > 120;
+  return (
+    <section className="enter flex flex-col gap-2 rounded-2xl bg-white p-5 leading-[1.4]">
+      <h2 className="text-lg font-bold">내가 한 말</h2>
+      <p className={`whitespace-pre-wrap text-lg ${all || !long ? "" : "line-clamp-4"}`}>{text}</p>
+      {long && (
+        <button
+          type="button"
+          aria-expanded={all}
+          onClick={() => setAll(!all)}
+          className="press -my-2 min-h-12 self-start text-base font-bold text-(--text-brand) active:opacity-60"
+        >
+          {all ? "접기" : "모두 보기"}
+        </button>
+      )}
+    </section>
+  );
+}
+
 // 특이사항 끝에 터치로 붙이는 전달 문장 [버튼, 기록지 문장, 보호자용 문장]
 const REPORTS = [
   ["보호자에게 전달함", "보호자에게 전달함.", "보호자님께 알려 드렸어요."],
@@ -494,6 +516,7 @@ export function ReviewScreen({
         </>
       ) : (
       <>
+      {transcript.trim() && <SaidCard text={transcript} />}
       <div className="enter flex flex-col gap-1 rounded-2xl bg-white p-5 leading-[1.4]">
         <p className="text-lg font-bold">AI가 급여제공기록지에 맞춰 적었어요</p>
         <p className="text-base">

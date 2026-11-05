@@ -124,7 +124,7 @@ export async function classifyCareNote(transcript: string): Promise<CareNoteDraf
           "복약은 아침/점심/저녁/취침전 중 실제로 복용했다고 언급된 시간대만 true로 표시하고, " +
           "복용하지 않았거나 복약 언급 자체가 없으면 medicationNone을 true로 표시하세요.",
       },
-      { role: "user", content: transcript },
+      { role: "user", content: redactPii(transcript) }, // 해외 API로 보내기 전에 번호를 지운다 (LAW-6)
     ],
     response_format: {
       type: "json_schema",
@@ -142,11 +142,7 @@ export async function classifyCareNote(transcript: string): Promise<CareNoteDraf
   }
   const rawDraft = JSON.parse(text) as CareNoteDraft;
 
-  const [meals, medication, notes] = await Promise.all([
-    redactPii(rawDraft.meals),
-    redactPii(rawDraft.medication),
-    redactPii(rawDraft.notes),
-  ]);
+  const [meals, medication, notes] = [redactPii(rawDraft.meals), redactPii(rawDraft.medication), redactPii(rawDraft.notes)];
 
   return {
     ...rawDraft,

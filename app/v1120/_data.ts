@@ -3,7 +3,6 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionCaregiverId } from "@/lib/session";
-import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 import { WEEKDAY_LABELS, getScheduleTimeRange, parseScheduleDays } from "@/lib/schedule";
 import type { Client } from "@/app/generated/prisma/client";
 import { decryptText, openPII, safeDecryptText } from "@/lib/crypto";
@@ -52,7 +51,6 @@ export function toProfile(c: Client): ClientProfile {
 // 내 수급자 전부 (삭제한 것 포함, 완전히 지우기 예약된 것 제외)
 export async function myClients() {
   const caregiver = await requireCaregiver();
-  await purgeExpiredClients();
   const rows = await prisma.client.findMany({
     where: { caregiverId: caregiver.id, purgeAt: null },
     orderBy: { name: "asc" },
@@ -237,9 +235,9 @@ export async function myBoardSummary(): Promise<Map<string, { title: string; com
 }
 
 // 보호자 게시판 (G-02): 보고서·서류 링크나 게시판 초대 링크 하나를 가진 보호자가 그 수급자의 게시판을 모두 본다. 로그인 없음
-// shortcut: 링크만 있으면 누구나 그 수급자 게시판을 본다, 보호자 로그인(D-44)·링크 만료(STB-5)가 생기면 그걸로 막는다
+// shortcut: 기한(90일) 안에는 링크만 있으면 누구나 그 수급자 게시판을 본다, 보호자 로그인(D-44)이 생기면 그걸로 막는다. 기한이 지나면 "expired"
 export async function guardianBoard(shareToken: string) {
-  const clientSelect = { id: true, name: true, guardianName: true, guardianRelation: true, isActive: true, purgeAt: true, scheduleLabel: true };
+  const clientSelect = { id: true, name: true, guardianName: true, guardianRelation: true, isActive: true, purgeAt: true, scheduleLabel: true, boardExpiresAt: true };
   const [r, doc, invited] = await Promise.all([
     prisma.report.findUnique({ where: { shareToken }, select: { sentAt: true, visit: { select: { caregiver: { select: { name: true } }, client: { select: clientSelect } } } } }),
     prisma.sharedDocument.findUnique({ where: { shareToken }, select: { caregiverId: true, client: { select: clientSelect } } }),
@@ -247,6 +245,7 @@ export async function guardianBoard(shareToken: string) {
   ]);
   const c = r?.sentAt ? r.visit.client : (doc?.client ?? invited);
   if (!c?.isActive || c.purgeAt) return null;
+  if (!boardOpen(c)) return "expired" as const;
   const caregiverId = doc?.caregiverId;
   const caregiverName = r?.sentAt
     ? r.visit.caregiver.name
@@ -268,14 +267,20 @@ export async function guardianBoard(shareToken: string) {
   };
 }
 
-// 게시판 초대 링크 토큰. 처음 부를 때 만든다 (내 수급자만)
+// STB-5 (가), D-53: 보호자 링크(게시판 초대·보고서·서류)를 보낸 날부터 90일 동안 게시판이 열린다. 새로 보내면 다시 90일
+export const BOARD_OPEN_DAYS = 90;
+export const boardOpenUntil = () => new Date(Date.now() + BOARD_OPEN_DAYS * 86_400_000);
+// 비어 있으면(11/6 전에 만든 수급자) 아직 기한이 없어 열어 둔다
+export const boardOpen = (c: { boardExpiresAt: Date | null }) => !c.boardExpiresAt || c.boardExpiresAt > new Date();
+
+// 게시판 초대 링크 토큰. 처음 부를 때 만들고, 기한이 지났으면 새 링크로 바꾼다(옛 초대 링크는 닫힘) (내 수급자만)
 export async function myBoardToken(clientId: string): Promise<string | null> {
   const caregiver = await requireCaregiver();
-  const c = await prisma.client.findFirst({ where: { id: clientId, caregiverId: caregiver.id }, select: { boardToken: true } });
+  const c = await prisma.client.findFirst({ where: { id: clientId, caregiverId: caregiver.id }, select: { boardToken: true, boardExpiresAt: true } });
   if (!c) return null;
-  if (c.boardToken) return c.boardToken;
-  const boardToken = crypto.randomUUID().replaceAll("-", "");
-  await prisma.client.update({ where: { id: clientId }, data: { boardToken } });
+  if (c.boardToken && c.boardExpiresAt && boardOpen(c)) return c.boardToken;
+  const boardToken = c.boardToken && boardOpen(c) ? c.boardToken : crypto.randomUUID().replaceAll("-", "");
+  await prisma.client.update({ where: { id: clientId }, data: { boardToken, boardExpiresAt: boardOpenUntil() } });
   return boardToken;
 }
 

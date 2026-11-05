@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
+// 지운 수급자 수를 돌려준다 (Cron 기록용)
 export async function purgeExpiredClients() {
   const expired = await prisma.client.findMany({
     where: { purgeAt: { lte: new Date() } },
@@ -14,4 +15,5 @@ export async function purgeExpiredClients() {
     await prisma.sharedDocument.deleteMany({ where: { clientId: id } });
     await prisma.client.delete({ where: { id } });
   }
+  return expired.length;
 }

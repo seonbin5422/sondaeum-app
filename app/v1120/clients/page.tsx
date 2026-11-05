@@ -13,7 +13,7 @@ export default async function ClientsPage() {
   const removed = clients.filter((c) => !c.isActive);
   const shortcut = "flex h-12 flex-1 items-center justify-center gap-1 rounded-xl bg-(--bg-secondary) px-3 text-base font-bold whitespace-nowrap active:bg-(--line)";
   return (
-    <Screen nav>
+    <Screen nav tab>
       <TitleBar title="수급자" />
       <p className="text-lg text-muted">담당 수급자 {active.length}명</p>
 

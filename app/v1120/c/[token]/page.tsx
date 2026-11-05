@@ -16,7 +16,7 @@ export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[
   ];
 
   return (
-    <Screen nav guardianToken={token}>
+    <Screen nav tab guardianToken={token}>
       <p className="text-lg text-muted">안녕하세요, {c.guardianName} 보호자님</p>
       <header className="flex items-center gap-4">
         <Avatar name={c.name} />

@@ -10,7 +10,7 @@ export default async function GuardianBoardDemoPage({ params }: PageProps<"/v112
   if (!c) notFound();
   const names = { caregiver: caregiverName, guardian: `${c.guardianName} 보호자` };
   return (
-    <Screen nav guardianToken={token}>
+    <Screen nav tab guardianToken={token}>
       <header>
         <h1 className="text-2xl font-bold">{c.name} 어르신 게시판</h1>
         <p className="text-base text-muted">{caregiverName} 요양보호사가 보낸 보고서에 댓글로 이야기해요</p>

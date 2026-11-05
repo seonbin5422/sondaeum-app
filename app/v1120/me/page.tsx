@@ -8,7 +8,7 @@ import { caregiverTitle } from "../_types";
 export default async function MePage() {
   const { name: caregiverName, licenseNumber: caregiverLicense } = await requireCaregiver();
   return (
-    <Screen nav>
+    <Screen nav tab>
       <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
         <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">내 정보</h1>
       </div>

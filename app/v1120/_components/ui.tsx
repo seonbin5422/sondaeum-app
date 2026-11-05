@@ -27,12 +27,14 @@ export function Screen({
   children,
   bottom,
   nav = false,
+  tab = false,
   guardianToken,
   white = false,
 }: {
   children: ReactNode;
   bottom?: ReactNode;
   nav?: boolean;
+  tab?: boolean; // 하단 메뉴 탭 화면(홈·수급자·게시판·내 정보): 메뉴를 오갈 때 바로 보이게 등장 모션을 끈다. 세부 화면은 모션 유지
   guardianToken?: string;
   white?: boolean; // Figma에서 바탕이 흰 화면(예: C-13 기록 정리)
 }) {
@@ -40,7 +42,7 @@ export function Screen({
   const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
   return (
     <div className="flex flex-1 flex-col overflow-x-clip" style={{ background: bg, "--screen-bg": bg } as CSSProperties}>
-    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-5 ${pad} ${nav ? "still" : ""}`}>
+    <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-5 ${pad} ${tab ? "still" : ""}`}>
       {children}
       {(bottom || nav) && (
         <div className="fixed inset-x-0 bottom-0 z-10">

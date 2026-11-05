@@ -25,7 +25,7 @@ export default async function HomePage() {
   const today = serviceTimeOf(null, new Date()).date;
 
   return (
-    <Screen nav>
+    <Screen nav tab>
       <header className="enter-down relative -mx-5 -mt-5 flex flex-col gap-4 overflow-hidden rounded-b-3xl bg-accent px-6 pb-7 pt-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/v1120/home/home-deco.svg" alt="" aria-hidden width={267} height={297} className="pointer-events-none absolute -top-2 left-1/2 mix-blend-soft-light" />
@@ -49,21 +49,24 @@ export default async function HomePage() {
           </h1>
         </div>
         {left.length > 0 && (
-          <div className="enter relative flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
-            {/* "이어서 하기"는 가장 최근 기록으로 가니 그 기록이 누구의 언제 것인지 함께 보여 준다 */}
-            <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
-              <span className="text-lg font-bold text-muted">
-                마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
-              </span>
-              <span className="text-base font-bold">
-                <span className="whitespace-nowrap">{left[0].clientName} 수급자</span> ·{" "}
-                <span className="whitespace-nowrap">{serviceTimeOf(null, left[0].day).date}</span>
-                {left.length > 1 && <span className="whitespace-nowrap"> 외 {left.length - 1}건</span>}
-              </span>
-            </span>
-            <PressLink href={visitHref(left[0].visitId, left[0].status)} className={`${pillBase} ${pillTones.soft}`}>
-              이어서 하기
-            </PressLink>
+          <div className="enter relative flex flex-col gap-1 rounded-2xl bg-white px-4 py-3" style={order(1)}>
+            <p className="text-lg font-bold leading-[1.4] text-muted">
+              마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
+            </p>
+            {/* 기록마다 누구의 언제 것인지와 버튼을 따로 둔다 (2건 이상일 때 "이어서 하기"가 누구 기록인지 몰랐음, 팀 피드백 11/6) */}
+            <ul className="flex flex-col gap-1">
+              {left.map((v) => (
+                <li key={v.visitId} className="flex items-center gap-3">
+                  <span className="min-w-0 flex-1 text-base font-bold leading-[1.4]">
+                    <span className="whitespace-nowrap">{v.clientName} 수급자</span> ·{" "}
+                    <span className="whitespace-nowrap">{serviceTimeOf(null, v.day).date}</span>
+                  </span>
+                  <PressLink href={visitHref(v.visitId, v.status)} className={`${pillBase} ${pillTones.soft}`}>
+                    이어서 하기<span className="sr-only">: {v.clientName} 수급자 {serviceTimeOf(null, v.day).date}</span>
+                  </PressLink>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </header>
@@ -80,8 +83,8 @@ export default async function HomePage() {
       <div className="enter grid grid-cols-2 gap-3" style={order(3)}>
         <ScheduleSheet clients={clients} />
         <PressLink
-          // 서류는 수급자마다 만든다: 한 명이면 바로 그 수급자 서류로, 여럿이면 수급자 목록에서 고른다
-          href={active.length === 1 ? `/v1120/client/${active[0].id}/documents` : "/v1120/clients"}
+          // 서류는 수급자마다 만든다: 한 명이면 바로 그 수급자 서류로, 여럿이면 서류 만들기 안에서 고른다
+          href={active.length === 1 ? `/v1120/client/${active[0].id}/documents` : "/v1120/documents"}
           pendingText={false}
           className="flex h-[150px] flex-col items-start gap-2 rounded-2xl bg-white p-4 text-left active:bg-(--line)"
         >

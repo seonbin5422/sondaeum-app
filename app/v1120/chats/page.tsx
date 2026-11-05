@@ -11,7 +11,7 @@ export default async function ChatsPage() {
   // 보호자가 없는 수급자는 게시판이 없다 (D-49)
   const rooms = all.filter((c) => c.isActive && c.guardianRelation !== NO_CONTACT);
   return (
-    <Screen nav>
+    <Screen nav tab>
       <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
         <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">게시판</h1>
       </div>

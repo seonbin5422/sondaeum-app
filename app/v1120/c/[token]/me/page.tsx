@@ -9,7 +9,7 @@ export default async function GuardianMePage({ params }: PageProps<"/v1120/c/[to
   const c = findClient(chatTokenToClient[token] ?? "");
   if (!c) notFound();
   return (
-    <Screen nav guardianToken={token}>
+    <Screen nav tab guardianToken={token}>
       <h1 className="text-2xl font-bold">내 정보</h1>
       <div className="flex items-center gap-4 rounded-[15px] bg-white p-5 shadow-[var(--shadow-card)]">
         <Avatar name={c.guardianName} />

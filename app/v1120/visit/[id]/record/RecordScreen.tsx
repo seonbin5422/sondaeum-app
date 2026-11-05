@@ -110,6 +110,18 @@ export function RecordScreen({
     );
   }
   const [typing, setTyping] = useState(false);
+  const textBox = useRef<HTMLTextAreaElement>(null);
+  // "글로 쓰기"를 누르면 위쪽 글 칸으로 내려가 커서를 끝에 둔다 (키보드는 autoFocus가 누른 순간에 띄움)
+  const openTyping = () => {
+    setTyping(true);
+    requestAnimationFrame(() => {
+      const el = textBox.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
   const [seconds, setSeconds] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -319,6 +331,8 @@ export function RecordScreen({
         <p className="text-lg font-bold">녹음 내용</p>
         {typing ? (
           <textarea
+            ref={textBox}
+            autoFocus
             className="min-h-32 w-full resize-y rounded-xl bg-(--bg-secondary) p-3 text-lg outline-none focus:ring-[3px] focus:ring-accent/50"
             value={transcript}
             placeholder="오늘 한 일을 적어 주세요."
@@ -390,7 +404,7 @@ export function RecordScreen({
 
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording} onClick={() => setTyping(true)}>
+          <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording} onClick={openTyping}>
             글로 쓰기
           </Button>
           <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording || uploading} onClick={() => fileInput.current?.click()}>

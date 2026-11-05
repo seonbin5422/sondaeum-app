@@ -13,6 +13,15 @@ const toPath = (s: Stroke) => s.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(
 function SignatureBox({ label, value, onChange }: { label: string; value: Stroke[]; onChange: (v: Stroke[]) => void }) {
   const [strokes, setStrokes] = useState(value);
   const [drawing, setDrawing] = useState(false);
+  const svg = useRef<SVGSVGElement>(null);
+
+  // iOS Safari는 svg의 touch-action:none을 무시하고 화면을 같이 끌어서, 서명칸 안에서는 터치 스크롤을 직접 막는다 (React onTouchMove는 passive라 못 막음)
+  useEffect(() => {
+    const el = svg.current;
+    const stop = (e: TouchEvent) => e.preventDefault();
+    el?.addEventListener("touchmove", stop, { passive: false });
+    return () => el?.removeEventListener("touchmove", stop);
+  }, []);
 
   const at = (e: React.PointerEvent<SVGSVGElement>): [number, number] => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -27,7 +36,7 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
   return (
     <div className="flex min-w-0 flex-col gap-1 break-inside-avoid">
       {/* 서명칸 (Figma 516:854): 연한 회색 면 r12, 140px, 이름은 칸 안 위쪽 */}
-      <div className="relative h-[140px] overflow-hidden rounded-xl bg-(--bg-secondary) print:bg-white">
+      <div className="relative h-[140px] touch-none overflow-hidden rounded-xl bg-(--bg-secondary) print:bg-white">
         <span className="pointer-events-none absolute inset-x-3 top-3 text-base font-medium leading-[1.4] text-muted">{label}</span>
         {strokes.length === 0 && (
           <span aria-hidden className="pointer-events-none absolute inset-x-3 bottom-3 text-center text-base font-bold text-(--text-brand) print:hidden">
@@ -35,6 +44,7 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
           </span>
         )}
         <svg
+          ref={svg}
           role="img"
           aria-label={`${label} 서명칸${strokes.length ? " (서명함)" : ""}`}
           viewBox={`0 0 ${W} ${H}`}

@@ -88,8 +88,9 @@ export default function ProcessingPage() {
       }
     >
       {/* 공통/상단 바에서 뒤로를 뺀 모양: 정리 중에는 돌아갈 곳이 없어 제목을 왼쪽에 둔다 (Figma 558:1409) */}
-      <div className="full-bleed -mt-5 flex h-16 items-center bg-(--screen-bg) pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
-        <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">기록 정리</h1>
+      <div className="full-bleed -mt-5 flex h-16 items-center bg-(--screen-bg)">
+        {/* 제목은 게시판·내 정보 탭처럼 가운데 내용 칸 왼쪽 20에 (padding %는 바깥 칸 기준이라 PC에서 어긋났음) */}
+        <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">기록 정리</h1>
       </div>
 
       <section

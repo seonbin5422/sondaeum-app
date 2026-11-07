@@ -125,8 +125,9 @@ export function SentScreen({
       }
     >
       {/* 공통/상단 바에서 뒤로를 뺀 모양: 보낸 뒤에는 돌아가 고칠 수 없어 제목을 왼쪽에 둔다 (Figma 558:2413) */}
-      <div className="full-bleed -mt-5 flex h-16 items-center bg-(--screen-bg) pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
-        <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">
+      <div className="full-bleed -mt-5 flex h-16 items-center bg-(--screen-bg)">
+        {/* 제목은 게시판·내 정보 탭처럼 가운데 내용 칸 왼쪽 20에 (padding %는 바깥 칸 기준이라 PC에서 어긋났음) */}
+        <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">
           {noContact ? "기록 저장" : `${guardianTitle}에게 보내기`}
         </h1>
       </div>

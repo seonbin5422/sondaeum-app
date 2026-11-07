@@ -16,7 +16,7 @@ export default async function NotificationsPage() {
     <Screen>
       {/* 머리 (Figma 558:1216): 뒤로 · 왼쪽 제목 24 · 오른쪽 "모두 읽음", 바탕은 화면과 같은 회색 */}
       <div className="sticky top-0 z-10 full-bleed -mt-5 bg-(--screen-bg)">
-        <div className="mx-auto flex max-w-md items-center gap-2 py-4 pl-3 pr-5">
+        <div className="mx-auto flex max-w-md items-center gap-2 py-4 pl-2 pr-5">
           <PressLink href="/v1120" pendingText={false} className="flex size-12 shrink-0 items-center justify-center rounded-full active:bg-(--line)">
             <Icon name="arrow_back" size={28} />
             <span className="sr-only">뒤로</span>

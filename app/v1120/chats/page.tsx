@@ -13,7 +13,7 @@ export default async function ChatsPage() {
   return (
     <Screen nav tab>
       {/* 탭 화면 제목은 왼쪽 (수정본). 본문은 상단 바에서 20px 아래 */}
-      <div className="full-bleed -mt-5 mb-1 flex h-16 items-center bg-(--screen-bg)">
+      <div className="sticky top-0 z-10 full-bleed -mt-5 mb-1 flex h-16 items-center bg-(--screen-bg)">
         <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">게시판</h1>
       </div>
       {rooms.length === 0 ? (

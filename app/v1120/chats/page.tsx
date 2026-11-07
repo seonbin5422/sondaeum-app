@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { myBoardSummary, myClients, myUnreadByClient } from "../_data";
-import { UnreadBadge } from "../_components/Unread";
+import { CountBadge } from "../_components/Unread";
 import { PressLink } from "../_components/Pressable";
 import { EmptyState, Icon, Screen } from "../_components/ui";
 import { contactTitle, NO_CONTACT } from "../_types";
@@ -13,7 +13,7 @@ export default async function ChatsPage() {
   return (
     <Screen nav tab>
       {/* 탭 화면 제목은 왼쪽 (수정본). 본문은 상단 바에서 20px 아래 */}
-      <div className="full-bleed -mt-5 mb-1 flex h-16 items-center bg-white">
+      <div className="full-bleed -mt-5 mb-1 flex h-16 items-center bg-(--screen-bg)">
         <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">게시판</h1>
       </div>
       {rooms.length === 0 ? (
@@ -30,8 +30,10 @@ export default async function ChatsPage() {
                   className="flex flex-col gap-3 rounded-2xl bg-white p-5 active:bg-(--bg-brand)"
                 >
                   <span className="flex items-center gap-3">
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary) text-xl font-bold">
+                    {/* 새 댓글 수는 아바타 오른쪽 위에 하단 메뉴 아이콘처럼 붙인다 */}
+                    <span className="relative flex size-12 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary) text-xl font-bold">
                       {c.name.slice(0, 1)}
+                      <CountBadge n={unread.get(c.id) ?? 0} className="absolute -right-1.5 -top-1.5" />
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-[1.4]">
                       <span className="whitespace-nowrap text-xl font-bold">{c.name} 수급자</span>
@@ -40,10 +42,6 @@ export default async function ChatsPage() {
                         <span className="whitespace-nowrap">
                           {contactTitle(c.guardianRelation) === "보호자" ? `보호자(${c.guardianRelation})` : c.guardianRelation}
                         </span>
-                      </span>
-                      {/* 이름 옆에 두면 좁은 폰에서 이름이 네 줄로 쪼개져서 아래 줄로 (11/6) */}
-                      <span className="mt-1 flex empty:hidden">
-                        <UnreadBadge n={unread.get(c.id) ?? 0} />
                       </span>
                     </span>
                     <Icon name="chevron_right" size={28} className="text-muted" />

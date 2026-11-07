@@ -9,7 +9,7 @@ export default async function MePage() {
   const { name: caregiverName, licenseNumber: caregiverLicense } = await requireCaregiver();
   return (
     <Screen nav tab white>
-      <div className="full-bleed -mt-5 mb-1 flex h-16 items-center bg-white">
+      <div className="full-bleed -mt-5 mb-1 flex h-16 items-center bg-(--screen-bg)">
         <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">내 정보</h1>
       </div>
       {/* 바탕이 흰색이라 상자는 안 보이고 글자만 20px 들어간다 → 바깥 여백(20px)에 맞춰 안쪽 여백은 위아래만 */}

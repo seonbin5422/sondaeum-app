@@ -110,3 +110,8 @@
 .v1120 .full-bleed {
   margin-inline: calc(50% - 50vw);
 }
+
+/* 홈: 맨 위로 당겨도(바운스)·iOS 26 Safari 상단 줄에도 귤색이 보이게, 아래쪽은 회색 */
+html:has(.v1120-home-top) {
+  background: linear-gradient(#ffb133 50%, #f4f4f4 50%);
+}

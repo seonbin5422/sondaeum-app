@@ -240,6 +240,7 @@ export function RecordScreen({
 
   return (
     <Screen
+      floating={!showActions} // 녹음 버튼만 있을 땐 흰 칸 없이 떠 있게 (사용자 11/7)
       bottom={
         <>
           {/* Figma 580:2283: 녹음 버튼은 화면 아래 가운데 112px 원. 녹음 중에는 빨간 원 + 정지 */}
@@ -248,7 +249,7 @@ export function RecordScreen({
             onPointerDown={buzz}
             onClick={speech.recording ? speech.stop : () => (hush(), speech.start())}
             disabled={speech.supported === false}
-            className={`press relative mx-auto flex size-28 shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40 ${
+            className={`press relative mx-auto flex size-28 shrink-0 items-center justify-center rounded-full text-white shadow-[0_6px_20px_rgba(0,0,0,0.18)] disabled:opacity-40 ${
               speech.recording ? "bg-record active:bg-[#e04424]" : "bg-(--muted) active:bg-foreground"
             }`}
           >

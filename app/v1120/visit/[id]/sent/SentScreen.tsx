@@ -125,7 +125,7 @@ export function SentScreen({
       }
     >
       {/* 공통/상단 바에서 뒤로를 뺀 모양: 보낸 뒤에는 돌아가 고칠 수 없어 제목을 왼쪽에 둔다 (Figma 558:2413) */}
-      <div className="full-bleed -mt-5 flex h-16 items-center bg-white pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
+      <div className="full-bleed -mt-5 flex h-16 items-center bg-(--screen-bg) pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
         <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">
           {noContact ? "기록 저장" : `${guardianTitle}에게 보내기`}
         </h1>

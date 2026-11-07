@@ -14,11 +14,10 @@ export default async function NotificationsPage() {
   const unread = items.filter((n) => n.unread).length;
   return (
     <Screen>
-      {/* 머리 (Figma 558:1216): 뒤로 · 왼쪽 제목 24 · 오른쪽 "모두 읽음". 공용 TopBar는 가운데 제목뿐이라 여기서 그린다.
-          바탕은 Figma의 회색 대신 확정 규칙(상단 바는 항상 흰색)을 따른다 */}
-      <div className="sticky top-0 z-10 full-bleed -mt-5 bg-white">
+      {/* 머리 (Figma 558:1216): 뒤로 · 왼쪽 제목 24 · 오른쪽 "모두 읽음", 바탕은 화면과 같은 회색 */}
+      <div className="sticky top-0 z-10 full-bleed -mt-5 bg-(--screen-bg)">
         <div className="mx-auto flex max-w-md items-center gap-2 py-4 pl-3 pr-5">
-          <PressLink href="/v1120" pendingText={false} className="flex size-12 shrink-0 items-center justify-center rounded-full active:bg-(--bg-secondary)">
+          <PressLink href="/v1120" pendingText={false} className="flex size-12 shrink-0 items-center justify-center rounded-full active:bg-(--line)">
             <Icon name="arrow_back" size={28} />
             <span className="sr-only">뒤로</span>
           </PressLink>
@@ -27,26 +26,27 @@ export default async function NotificationsPage() {
         </div>
       </div>
       {items.length === 0 && <EmptyState>새 알림이 없어요.</EmptyState>}
-      <Section title="오늘" items={today} i={1} />
-      <Section title="지난 7일" items={past} i={2} />
+      {/* 본문 (Figma 558:1221): 머리 아래 20, 구역 제목과 흰 카드 사이 12 */}
+      <div className="mt-1 flex flex-col gap-3 pb-3">
+        <Section title="오늘" items={today} i={1} />
+        <Section title="지난 7일" items={past} i={2} />
+      </div>
     </Screen>
   );
 }
 
-// 구역 하나 = 화면 폭 흰 칸 (토스식). 칸 사이는 Screen 회색 바탕이 띠로 보인다
+// 구역 하나 = 제목 18 + 둥근 흰 카드(16), 항목 사이 1px 선 (Figma 558:1223)
 function Section({ title, items, i }: { title: string; items: Noti[]; i: number }) {
   if (items.length === 0) return null;
   return (
-    <section className="enter full-bleed bg-white" style={{ "--i": i } as CSSProperties}>
-      <div className="mx-auto max-w-md">
-        <h2 className="px-5 pb-1 pt-5 text-lg font-bold leading-[1.4]">{title}</h2>
-        <ul className="flex flex-col gap-px bg-(--line)">
-          {items.map((n) => (
-            <Item key={n.key} n={n} />
-          ))}
-        </ul>
-      </div>
-    </section>
+    <>
+      <h2 className="enter text-lg font-bold leading-[1.4]" style={{ "--i": i } as CSSProperties}>{title}</h2>
+      <ul className="enter flex flex-col gap-px overflow-hidden rounded-2xl bg-(--line)" style={{ "--i": i } as CSSProperties}>
+        {items.map((n) => (
+          <Item key={n.key} n={n} />
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -63,7 +63,7 @@ function Item({ n }: { n: Noti }) {
   const who = n.kind === "comment" ? `${n.name} 보호자님이` : n.name ? `${n.name} 수급자` : "";
   return (
     <li className="bg-white">
-      <PressLink href={n.href} pendingText={false} className="flex items-start gap-3 px-5 py-4 active:bg-(--bg-secondary)">
+      <PressLink href={n.href} pendingText={false} className="flex items-start gap-3 p-4 active:bg-(--bg-secondary)">
         <span className={`flex size-11 shrink-0 items-center justify-center rounded-full ${look[n.kind].tone}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`/v1120/home/${look[n.kind].icon}.svg`} alt="" width={24} height={24} className="size-6" />

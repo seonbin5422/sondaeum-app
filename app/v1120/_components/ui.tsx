@@ -30,6 +30,7 @@ export function Screen({
   tab = false,
   guardianToken,
   white = false,
+  floating = false,
 }: {
   children: ReactNode;
   bottom?: ReactNode;
@@ -37,6 +38,7 @@ export function Screen({
   tab?: boolean; // 하단 메뉴 탭 화면(홈·수급자·게시판·내 정보): 메뉴를 오갈 때 바로 보이게 등장 모션을 끈다. 세부 화면은 모션 유지
   guardianToken?: string;
   white?: boolean; // Figma에서 바탕이 흰 화면(예: C-13 기록 정리)
+  floating?: boolean; // 아래 칸에 바탕 없이 버튼만 띄운다(녹음 버튼). 버튼 밖을 누르면 뒤 내용이 눌린다
 }) {
   const bg = white ? "white" : "var(--bg-secondary)";
   const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
@@ -48,8 +50,8 @@ export function Screen({
         <div className="fixed inset-x-0 bottom-0 z-10">
           {bottom && (
             // 1128 수정안 (11/7): 아래 버튼 칸은 흰 면, 위 16 · 옆 20 · 아래 24, 버튼 사이 8
-            <div className="bg-white">
-              <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-6 pt-4">{bottom}</div>
+            <div className={floating ? "pointer-events-none" : "bg-white"}>
+              <div className={`mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-6 pt-4 ${floating ? "*:pointer-events-auto" : ""}`}>{bottom}</div>
             </div>
           )}
           {nav && <BottomNav guardianToken={guardianToken} />}
@@ -60,15 +62,17 @@ export function Screen({
   );
 }
 
-// 공통/상단 바 (Figma 508:100): 흰 64px, 뒤로 48px 왼쪽 고정, 제목 22px은 1128 수정안(11/7)대로 뒤로 바로 옆 왼쪽 정렬, 본문까지 20. 화면 맨 위에 붙도록 Screen 여백을 되돌린다
-// 상단 바 뒤로 버튼 자리 (내용 칸 왼쪽). BackButton icon도 같은 자리를 쓴다
+// 공통/상단 바 (Figma 508:100): 64px, 바탕은 화면 바탕색과 같게(사용자 11/7), 뒤로 48px 왼쪽 8, 제목 22px은 뒤로 바로 옆(64) 왼쪽 정렬, 본문까지 20.
+// 뒤로·제목을 같은 max-w-md 칸 안에 둬서 넓은 화면에서도 둘이 어긋나지 않게 한다. 화면 맨 위에 붙도록 Screen 여백을 되돌린다
+// 상단 바 뒤로 버튼 자리. BackButton icon도 같은 자리를 쓴다
 export const TOP_BACK =
-  "absolute left-[max(0.5rem,calc(50%-13.5rem))] top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full active:bg-(--bg-secondary)";
+  "absolute left-2 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full active:bg-(--line)";
 
 // back: 링크 대신 다른 뒤로 버튼(예: 들어온 화면으로 돌아가는 BackButton)을 넣을 때
 export function TopBar({ backHref, title, back }: { backHref?: string; title?: string; back?: ReactNode }) {
   return (
-    <div className="sticky top-0 z-10 full-bleed -mt-5 mb-1 flex h-16 items-center bg-white px-16 print:hidden">
+    <div className="sticky top-0 z-10 full-bleed -mt-5 mb-1 bg-(--screen-bg) print:hidden">
+      <div className="relative mx-auto flex h-16 max-w-md items-center pl-16 pr-5">
       {back ?? (
         <PressLink href={backHref ?? "/v1120"} pendingText={false} className={TOP_BACK}>
           <Icon name="arrow_back" size={28} />
@@ -76,6 +80,7 @@ export function TopBar({ backHref, title, back }: { backHref?: string; title?: s
         </PressLink>
       )}
       {title && <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">{title}</h1>}
+      </div>
     </div>
   );
 }

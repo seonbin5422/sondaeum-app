@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { buzz, LinkButton, PressLink, Spinner } from "./Pressable";
 import { Icon } from "./Icon";
+import { CountBadge } from "./Unread";
 import { caregiverTitle, type BoardComment, type BoardPost } from "../_types";
 
 // C-18 수급자 게시판 · G-02 보호자 게시판 (DIF-5, D-15 261101.ver, Figma 1120 수정본 558:2165·558:2220).
@@ -116,7 +117,7 @@ export function PostCard({ post, names, href, me }: { post: BoardPost; names: Na
       )}
       <div className="flex items-center gap-2 text-base leading-[1.4]">
         <span className="whitespace-nowrap font-medium text-muted">댓글 {post.comments.length}</span>
-        {unread > 0 && <span className="whitespace-nowrap rounded-full bg-(--danger-soft) px-3 py-0.5 font-bold text-(--text-danger)">새 댓글 {unread}</span>}
+        <CountBadge n={unread} />
         <span className="ml-auto whitespace-nowrap font-bold text-(--text-brand)">{post.kind === "summary" ? "요약 보기 ›" : "보고서 보기 ›"}</span>
       </div>
     </PressLink>

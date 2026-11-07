@@ -59,7 +59,7 @@ export function DocumentPicker({ basePath, sentDates, today: TODAY }: { basePath
 
   // 크기·배치는 배포된 1120 버전 그대로(선택지 버튼과 같은 폭, 버튼과 12px 간격), 모양만 1128(회색 면·테두리 없음)
   const dateInput = (value: string, onChange: (v: string) => void, prefix: string) => (
-    <label className="flex h-14 flex-1 items-center gap-2 rounded-[15px] bg-(--bg-secondary) px-3 text-base focus-within:ring-[3px] focus-within:ring-accent/50">
+    <label className="flex h-14 flex-1 items-center gap-2 rounded-[15px] bg-white px-3 text-base focus-within:ring-[3px] focus-within:ring-accent/50">
       <span className="text-muted">{prefix}</span>
       <input type="date" className="w-full bg-transparent text-lg focus:outline-none" value={value} max={TODAY} onChange={(e) => onChange(e.target.value)} />
     </label>

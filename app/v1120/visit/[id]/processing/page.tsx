@@ -88,7 +88,7 @@ export default function ProcessingPage() {
       }
     >
       {/* 공통/상단 바에서 뒤로를 뺀 모양: 정리 중에는 돌아갈 곳이 없어 제목을 왼쪽에 둔다 (Figma 558:1409) */}
-      <div className="full-bleed -mt-5 flex h-16 items-center bg-white pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
+      <div className="full-bleed -mt-5 flex h-16 items-center bg-(--screen-bg) pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
         <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">기록 정리</h1>
       </div>
 

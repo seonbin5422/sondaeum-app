@@ -21,23 +21,23 @@ export function UnreadMessageLink({ clientId, n }: { clientId: string; n: number
   );
 }
 
-// 수급자 탭 버튼 글자: "게시판" 옆에 하단 메뉴와 같은 빨간 숫자 뱃지 (11/7)
-export function ChatLabel({ n }: { n: number }) {
+// 하단 메뉴 "게시판" 아이콘과 같은 빨간 숫자 뱃지 (사용자 11/7: 알약 말고 아이콘에 붙는 뱃지)
+export function CountBadge({ n, className = "" }: { n: number; className?: string }) {
+  if (n === 0) return null;
   return (
-    <span className="flex items-center gap-1.5">
-      게시판
-      {n > 0 && (
-        <span className="pop flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-(--danger) px-1.5 text-[14px] font-bold leading-none text-white">
-          {n}
-          <span className="sr-only">개 새 댓글</span>
-        </span>
-      )}
+    <span className={`pop flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-(--danger) px-1.5 text-[14px] font-bold leading-none text-white ${className}`}>
+      {n}
+      <span className="sr-only">개 새 댓글</span>
     </span>
   );
 }
 
-// 게시판 탭 목록의 "새 댓글" 알약 (Figma 517:649 연한 빨강)
-export function UnreadBadge({ n }: { n: number }) {
-  if (n === 0) return null;
-  return <span className="pop shrink-0 whitespace-nowrap rounded-full bg-(--danger-soft) px-3 py-0.5 text-base font-bold text-(--text-danger)">새 댓글 {n}</span>;
+// 수급자 탭 버튼 글자: "게시판" 옆에 빨간 숫자 뱃지
+export function ChatLabel({ n }: { n: number }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      게시판
+      <CountBadge n={n} />
+    </span>
+  );
 }

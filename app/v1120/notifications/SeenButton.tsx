@@ -11,7 +11,7 @@ function Inner() {
       type="submit"
       disabled={pending}
       onPointerDown={buzz}
-      className="press -mr-2 inline-flex min-h-12 items-center gap-2 whitespace-nowrap rounded-xl px-3 text-base font-medium text-muted active:bg-(--bg-secondary)"
+      className="press -mr-2 inline-flex min-h-12 items-center gap-2 whitespace-nowrap rounded-xl px-3 text-base font-medium text-muted active:bg-(--line)"
     >
       {pending && <Spinner />}
       {pending ? "읽는 중" : "모두 읽음"}

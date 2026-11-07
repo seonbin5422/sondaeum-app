@@ -30,7 +30,7 @@ export function Screen({
   tab = false,
   guardianToken,
   white = false,
-  floating = false,
+  plainBottom = false,
 }: {
   children: ReactNode;
   bottom?: ReactNode;
@@ -38,7 +38,7 @@ export function Screen({
   tab?: boolean; // 하단 메뉴 탭 화면(홈·수급자·게시판·내 정보): 메뉴를 오갈 때 바로 보이게 등장 모션을 끈다. 세부 화면은 모션 유지
   guardianToken?: string;
   white?: boolean; // Figma에서 바탕이 흰 화면(예: C-13 기록 정리)
-  floating?: boolean; // 아래 칸에 바탕 없이 버튼만 띄운다(녹음 버튼). 버튼 밖을 누르면 뒤 내용이 눌린다
+  plainBottom?: boolean; // 아래 칸을 흰 면 대신 화면 바탕색으로 (녹음 화면, 사용자 11/7)
 }) {
   const bg = white ? "white" : "var(--bg-secondary)";
   const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
@@ -50,8 +50,8 @@ export function Screen({
         <div className="fixed inset-x-0 bottom-0 z-10">
           {bottom && (
             // 1128 수정안 (11/7): 아래 버튼 칸은 흰 면, 위 16 · 옆 20 · 아래 24, 버튼 사이 8
-            <div className={floating ? "pointer-events-none" : "bg-white"}>
-              <div className={`mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-6 pt-4 ${floating ? "*:pointer-events-auto" : ""}`}>{bottom}</div>
+            <div className={plainBottom ? "bg-(--screen-bg)" : "bg-white"}>
+              <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-6 pt-4">{bottom}</div>
             </div>
           )}
           {nav && <BottomNav guardianToken={guardianToken} />}

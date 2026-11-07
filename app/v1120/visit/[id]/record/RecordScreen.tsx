@@ -240,26 +240,26 @@ export function RecordScreen({
 
   return (
     <Screen
-      floating={!showActions} // 녹음 버튼만 있을 땐 흰 칸 없이 떠 있게 (사용자 11/7)
+      plainBottom // 아래 칸은 흰 면 대신 화면 바탕색, 그림자 없이 (사용자 11/7)
       bottom={
         <>
-          {/* Figma 580:2283: 녹음 버튼은 화면 아래 가운데 112px 원. 녹음 중에는 빨간 원 + 정지 */}
+          {/* Figma 580:2283: 녹음 버튼은 화면 아래 가운데 원(Figma 112px, 사용자 11/7 요청으로 88px). 녹음 중에는 빨간 원 + 정지 */}
           <button
             type="button"
             onPointerDown={buzz}
             onClick={speech.recording ? speech.stop : () => (hush(), speech.start())}
             disabled={speech.supported === false}
-            className={`press relative mx-auto flex size-28 shrink-0 items-center justify-center rounded-full text-white shadow-[0_6px_20px_rgba(0,0,0,0.18)] disabled:opacity-40 ${
+            className={`press relative mx-auto flex size-22 shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40 ${
               speech.recording ? "bg-record active:bg-[#e04424]" : "bg-(--muted) active:bg-foreground"
             }`}
           >
             {/* 녹음 중: 버튼 둘레가 퍼져 나가며 듣고 있다는 걸 보여 준다 */}
             {speech.recording && <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-record/40 motion-reduce:hidden" />}
             {speech.recording ? (
-              <Icon name="stop" size={72} className="relative" />
+              <Icon name="stop" size={56} className="relative" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element -- Figma 녹음 아이콘(흰색 고정 SVG)
-              <img src="/v1120/mic.svg" alt="" width={62} height={62} />
+              <img src="/v1120/mic.svg" alt="" width={48} height={48} />
             )}
             <span className="sr-only">{recordButtonLabel}</span>
           </button>

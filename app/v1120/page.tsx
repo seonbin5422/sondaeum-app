@@ -32,8 +32,9 @@ export default async function HomePage() {
   return (
     <Screen nav tab>
       <header className="v1120-home-top enter-down relative -mx-5 -mt-5 flex flex-col gap-4 overflow-hidden rounded-b-3xl bg-accent px-6 pb-7 pt-6">
+        {/* 배경 그림은 머리 위 끝에서 잘리지 않게 12px 내려 둔다 (사용자 11/7: 시간 줄까지 귤색이라 잘린 동그라미가 보임) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/v1120/home/home-deco.svg" alt="" aria-hidden width={267} height={297} className="pointer-events-none absolute -top-2 left-1/2 mix-blend-soft-light" />
+        <img src="/v1120/home/home-deco.svg" alt="" aria-hidden width={267} height={297} className="pointer-events-none absolute top-3 left-1/2 mix-blend-soft-light" />
         <div className="relative flex h-12 items-center justify-between">
           <Image src="/brand/logo-full.svg" alt="손다음" width={118} height={42} priority className="brightness-0 invert" />
           <PressLink href="/v1120/notifications" pendingText={false} className="relative flex size-12 items-center justify-center rounded-full active:bg-white/30">

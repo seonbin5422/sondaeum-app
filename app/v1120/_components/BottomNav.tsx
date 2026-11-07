@@ -27,10 +27,13 @@ function guardianTabs(token: string) {
 export function BottomNav({ guardianToken }: { guardianToken?: string }) {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
-  // 요양보호사 메뉴만: 화면이 바뀔 때마다 서버에 안 읽은 보호자 댓글 수를 묻는다
+  // 요양보호사 메뉴만: 화면이 바뀔 때와 15초마다(같은 화면에서 새 댓글이 달려도 뱃지가 뜨게) 안 읽은 보호자 댓글 수를 묻는다
   useEffect(() => {
     if (guardianToken) return;
-    myUnreadTotal().then(setUnread, () => {});
+    const ask = () => document.visibilityState === "visible" && myUnreadTotal().then(setUnread, () => {});
+    ask();
+    const t = setInterval(ask, 15_000);
+    return () => clearInterval(t);
   }, [pathname, guardianToken]);
   const tabs = guardianToken ? guardianTabs(guardianToken) : TABS;
   return (

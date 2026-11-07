@@ -7,6 +7,32 @@ import { Spinner } from "../../../_components/Pressable";
 import { fillManually, summarizeVisit } from "../../../_actions";
 
 // C-13 AI 처리중 (Figma 512:511, 실패 512:528). 서버(summarizeVisit)가 녹음 내용을 급여제공기록지 모양으로 정리해 저장하면 C-14로 넘어간다.
+// 뱅글뱅글 도는 원 + 가운데 % (11/7). 실제 진행률을 몰라 시간에 따라 차오르다 95%에서 기다린다
+// shortcut: 가짜 진행률, 서버가 단계(받아쓰기·정리)를 알려 주게 되면 그 값으로 바꾼다
+function Ring() {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const t = setInterval(() => setPct(Math.round(95 * (1 - Math.exp(-(Date.now() - start) / 4000)))), 200);
+    return () => clearInterval(t);
+  }, []);
+  const r = 52;
+  const c = 2 * Math.PI * r;
+  return (
+    <span className="relative flex size-[120px] items-center justify-center" role="progressbar" aria-label="정리 중" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <svg viewBox="0 0 120 120" className="absolute inset-0 size-full -rotate-90">
+        <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" className="stroke-(--bg-brand)" />
+        <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" strokeLinecap="round" className="stroke-(--brand-secondary) transition-[stroke-dashoffset] duration-200" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} />
+      </svg>
+      {/* 차오르는 원 위로 짧은 호가 계속 돈다: 숫자가 95%에서 멈춰도 일하는 중임을 보여 준다 */}
+      <svg viewBox="0 0 120 120" className="spin absolute inset-0 size-full motion-reduce:hidden">
+        <circle cx="60" cy="60" r={r} fill="none" strokeWidth="10" strokeLinecap="round" className="stroke-white/70" strokeDasharray={`${c * 0.08} ${c}`} />
+      </svg>
+      <span className="text-[28px] font-bold tabular-nums tracking-[-0.02em]">{pct}%</span>
+    </span>
+  );
+}
+
 export default function ProcessingPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -83,20 +109,13 @@ export default function ProcessingPage() {
           </>
         ) : (
           <>
-            <span className="flex size-[120px] items-center justify-center rounded-full bg-(--bg-brand) text-(--brand-secondary)">
-              <Icon name="auto_awesome" size={56} className="animate-pulse" />
-            </span>
+            <Ring />
             <p className="text-[22px] font-bold tracking-[-0.02em]">
               AI가 기록지에 맞춰 <span className="whitespace-nowrap">정리하고 있어요</span>
             </p>
             <p className="text-lg text-muted">
               10초 정도 걸려요. 화면을 닫아도 녹음 내용은 저장돼 있어요.
             </p>
-            {/* 진행 막대: 실제 진행률을 몰라 10초 동안 90%까지 차오르게만 한다 */}
-            <div className="h-3 w-full overflow-hidden rounded-full" role="progressbar" aria-label="정리 중">
-              <div className="h-full rounded-full bg-accent [animation:v1120-fill_10s_cubic-bezier(0.2,0,0,1)_forwards] motion-reduce:w-1/2 motion-reduce:[animation:none]" />
-            </div>
-            <style>{`@keyframes v1120-fill { from { width: 8%; } to { width: 90%; } }`}</style>
           </>
         )}
       </section>

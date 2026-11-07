@@ -371,20 +371,21 @@ export function RecordScreen({
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">급여제공기록지 순서</h2>
-        <ol className="flex flex-col gap-2">
+        {/* 기록 확인(C-14) 칸처럼 칸·체크·글 사이를 띄운다 (11/7) */}
+        <ol className="flex flex-col gap-3">
           {sections.map((sec, i) => {
             const done = sec.found.length > 0;
             return (
               <li
                 key={sec.title}
-                className={`flex items-start gap-3 rounded-xl px-5 py-3 transition-colors ${done ? "bg-(--bg-brand)" : "bg-white"}`}
+                className={`flex items-center gap-4 rounded-2xl px-5 py-4 transition-colors ${done ? "bg-(--bg-brand)" : "bg-white"}`}
               >
                 {done ? (
                   <Icon name="check_circle" size={28} className="pop text-(--brand-secondary)" />
                 ) : (
                   <Icon name="radio_button_unchecked" size={28} className="text-(--line)" />
                 )}
-                <span className="flex min-w-0 flex-1 flex-col leading-[1.4]">
+                <span className="flex min-w-0 flex-1 flex-col gap-1 leading-[1.4]">
                   <span className="text-lg font-bold">
                     {i + 1}. {sec.title}
                     {done && <span className="sr-only"> (채워짐)</span>}

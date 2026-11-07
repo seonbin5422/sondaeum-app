@@ -46,7 +46,7 @@ export default async function ClientsPage() {
                   <PressLink href={`/v1120/client/${c.id}/documents`} className={shortcut}>
                     서류
                   </PressLink>
-                  <PressLink href={`/v1120/chats/${c.id}`} className={`${shortcut} ${n > 0 ? "text-(--text-brand)" : ""}`}>
+                  <PressLink href={`/v1120/chats/${c.id}`} className={shortcut}>
                     <ChatLabel n={n} />
                   </PressLink>
                 </div>

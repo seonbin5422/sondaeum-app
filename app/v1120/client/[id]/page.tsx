@@ -71,8 +71,9 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
         </section>
       </div>
 
+      {/* 목록 행의 아이콘·화살표를 위 블록 너비(본문 좌우 20)에 맞춘다: 행 안쪽 여백(16)만큼 바깥으로 빼서 누름 면은 넓게 (사용자 11/7) */}
       <div style={at(3)}>
-        <Card className="gap-0 p-1">
+        <Card className="-mx-4 gap-0 p-0!">
           <ListRow
             href={`/v1120/client/${c.id}/history`}
             icon={<Icon name="history" />}

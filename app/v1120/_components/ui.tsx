@@ -43,7 +43,7 @@ export function Screen({
   const bg = white ? "white" : "var(--bg-secondary)";
   const pad = bottom && nav ? "pb-56" : bottom ? "pb-40" : nav ? "pb-28" : "";
   return (
-    <div className="flex flex-1 flex-col overflow-x-clip" style={{ background: bg, "--screen-bg": bg } as CSSProperties}>
+    <div className={`flex flex-1 flex-col overflow-x-clip ${white ? "v1120-white" : ""}`} style={{ background: bg, "--screen-bg": bg } as CSSProperties}>
     <main className={`mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-5 ${pad} ${tab ? "still" : ""}`}>
       {children}
       {(bottom || nav) && (

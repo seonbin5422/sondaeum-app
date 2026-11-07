@@ -201,7 +201,7 @@ export function ReviewScreen({
   const [saveError, setSaveError] = useState("");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // 특이사항 칸에서 바로 말로 더하기: 다 말하면 AI가 특이사항을 다시 정리해 그 자리에서 바뀐다
+  // 특이사항 칸에서 바로 "기록 추가하기"(말로 더함): 다 말하면 AI가 특이사항을 다시 정리해 그 자리에서 바뀐다
   const heard = useRef("");
   const [heardText, setHeardText] = useState("");
   const [adding, setAdding] = useState(false);
@@ -419,7 +419,7 @@ export function ReviewScreen({
               특이사항 없음
             </Button>
           )}
-          {/* 말로 더하기는 조치가 빠졌을 때만. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
+          {/* "기록 추가하기"는 조치가 빠졌을 때만. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
           {(r.notesNoAction || speech.recording || adding || heardText) && (
           <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction ? "bg-(--bg-brand) text-(--text-brand)" : "bg-(--bg-secondary)"}`}>
             {r.notesNoAction && (
@@ -446,7 +446,7 @@ export function ReviewScreen({
                 onClick={speech.recording ? finishTalk : speech.start}
                 disabled={speech.supported === false}
               >
-                {speech.recording ? "● 다 말했어요" : "🎤 말로 더하기"}
+                {speech.recording ? "● 다 말했어요" : "🎤 기록 추가하기"}
               </Button>
             )}
             {speech.error && <p className="text-base font-bold text-(--text-danger)">{speech.error}</p>}

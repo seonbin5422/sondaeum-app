@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
-import { Card, Icon, LinkButton, Screen, TopBar } from "../../../_components/ui";
+import { Icon, LinkButton, Screen, TopBar } from "../../../_components/ui";
 import { buttonBase, buzz, Spinner, variantClasses } from "../../../_components/Pressable";
 import { preloadKakao, shareKakaoCard } from "../../../_components/kakaoShare";
 import { maskName } from "../../../_types";
@@ -36,7 +36,7 @@ export function InviteScreen({
   }, [chatPath]);
 
   // 보호자가 읽는 글이라 "어르신"을 쓴다 (D-31)
-  const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서는 이 게시판에 올라오고 댓글로 이야기할 수 있어요. 따로 가입하지 않아도 돼요.`;
+  const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서는 이 게시판에서 보실 수 있어요. 따로 가입하지 않아도 돼요.`;
 
   const [busy, setBusy] = useState(false);
   // 같은 결과를 다시 눌러도 확인 표시가 다시 튀도록 누를 때마다 바꾼다
@@ -81,7 +81,8 @@ export function InviteScreen({
 
   return (
     <Screen white bottom={<LinkButton href={doneHref} variant="secondary">{sent ? "다 됐어요" : "나중에 하기"}</LinkButton>}>
-      <TopBar backHref={doneHref} title={`${guardianTitle} 초대`} />
+      {/* Figma C-23 상단 바는 뒤로만 있고 제목은 본문 첫 줄 */}
+      <TopBar backHref={doneHref} />
       {justRegistered && (
         <p className="enter-down flex items-center gap-2 rounded-2xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--text-success)">
           <Icon name="check_circle" />
@@ -89,33 +90,32 @@ export function InviteScreen({
         </p>
       )}
 
+      {/* Figma 본문: 상자 없이 흰 바탕에 바로, 블록 사이 12px */}
+      <div className="flex flex-col gap-3 pt-1">
       <div style={at(0)}>
-        <Card className="gap-3 px-5 py-6">
+        <section className="enter flex flex-col gap-3 py-2">
           <h1 className="text-[22px] font-bold leading-[1.4]">
             {guardianTitle}님을 <span className="whitespace-nowrap">게시판에 초대할까요?</span>
           </h1>
           <p className="text-lg font-medium text-muted">
             {guardianName} {guardianTitle}님{guardianPhone && <span className="whitespace-nowrap"> · {guardianPhone}</span>}
           </p>
-          <ul className="flex flex-col gap-3">
-            {["방문 보고서가 게시판에 자동으로 올라가요", `${guardianTitle}님이 궁금한 점을 댓글로 물어볼 수 있어요`, "따로 가입하지 않아도 돼요"].map((t) => (
-              <li key={t} className="flex items-center gap-3 text-lg">
-                <Icon name="check_circle" className="text-(--brand-secondary)" />
-                <span className="flex-1">{t}</span>
-              </li>
+          <ul className="text-lg leading-[1.4]">
+            {["방문 보고서가 게시판에 자동으로 올라가요.", `${guardianTitle}님이 궁금한 점을 댓글로 물어볼 수 있어요.`, "따로 가입하지 않아도 돼요."].map((t) => (
+              <li key={t}>{t}</li>
             ))}
           </ul>
-        </Card>
+        </section>
       </div>
 
       <div style={at(1)}>
-        <Card className="gap-2">
+        <section className="enter flex flex-col gap-2 py-5">
           <h2 className="text-base font-bold text-muted">{guardianTitle}님께 가는 글</h2>
           <div className="flex flex-col gap-2 rounded-2xl bg-(--bg-brand) p-4">
             <p className="text-lg">{message}</p>
             <p className="text-base font-medium text-(--text-brand)">＋ 게시판 링크</p>
           </div>
-        </Card>
+        </section>
       </div>
 
       {sent && (
@@ -173,12 +173,10 @@ export function InviteScreen({
               복사했어요
             </span>
           ) : (
-            <>
-              <Icon name="content_copy" />
-              링크 복사하기
-            </>
+            "링크 복사하기"
           )}
         </button>
+      </div>
       </div>
     </Screen>
   );

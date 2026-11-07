@@ -49,7 +49,7 @@ function Section({
 }) {
   const sub = time ?? summary;
   return (
-    <section id={id} className={`enter flex scroll-mt-4 flex-col rounded-2xl bg-white ${open ? "gap-4 p-5" : "px-5 py-4"}`}>
+    <section id={id} className={`enter flex scroll-mt-4 flex-col rounded-2xl bg-white ${open ? "gap-4 p-5 ring-2 ring-inset ring-accent" : "px-5 py-4"}`}>
       <button
         type="button"
         aria-expanded={open}
@@ -270,6 +270,19 @@ export function ReviewScreen({
   const cogValues = Object.values(r.cognitive).filter((v): v is number => v !== null);
   const cogMinutes = cogValues.length ? cogValues.reduce((a, b) => a + b, 0) : null;
   const min = (v: number | null) => (v === null ? undefined : `${v}분`);
+  // 접힌 신체활동지원 줄: 한 것들 · 시간 (Figma 558:2454)
+  const physSummary =
+    [
+      ...([
+        ["personalHygiene", "개인위생"],
+        ["bathing", "몸씻기"],
+        ["mealAssist", "식사도움"],
+        ["repositioning", "체위변경"],
+        ["mobility", "이동도움"],
+        ["toileting", "화장실 이용"],
+      ] as const).filter(([k]) => r.physical[k]).map(([, l]) => l),
+      min(r.physical.minutes),
+    ].filter(Boolean).join(" · ") || undefined;
 
   // 하나씩 확인: confirmed = 확인을 누른 섹션 수, 그다음 섹션까지만 보인다
   const [confirmed, setConfirmed] = useState(0);
@@ -298,7 +311,7 @@ export function ReviewScreen({
 
   const steps: { title: string; time?: string; summary?: string; hint?: string; missing?: boolean; said?: string; body: ReactNode }[] = [
     {
-      title: "서비스 시간", time: `${visitTime.start}~${visitTime.end}`,
+      title: "서비스 시간", time: `${visitTime.start}–${visitTime.end}`,
       body: (
         <>
           <p className="text-xl font-bold">
@@ -309,7 +322,7 @@ export function ReviewScreen({
       ),
     },
     {
-      title: "신체활동지원", hint: "한 것을 눌러 주세요.", said: said?.physical ?? undefined, missing: r.physical.minutes === null, time: min(r.physical.minutes),
+      title: "신체활동지원", hint: "한 것을 눌러 주세요.", said: said?.physical ?? undefined, missing: r.physical.minutes === null, time: physSummary,
       body: (
         <>
           <div className="grid grid-cols-3 gap-2">
@@ -467,12 +480,12 @@ export function ReviewScreen({
           disabled={confirmed < steps.length}
           disabledReason={`항목을 하나씩 확인해 주세요 (${confirmed}/${steps.length})`}
         >
-          다음으로
+          다음
         </Button>
       }
     >
       {/* 방금 녹음하고 왔으면 뒤로가 곧 "더 말하기"라 버튼을 따로 두지 않는다 */}
-      <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title={`${clientName} 기록 확인`} />
+      <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title="기록 확인" />
       {saveError && <p className="text-base font-bold text-(--text-danger)" role="alert">{saveError}</p>}
 
       <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-white p-1">
@@ -515,12 +528,15 @@ export function ReviewScreen({
               />
         </>
       ) : (
-      <>
+      // Figma 558:2436: 기록 확인 칸 사이는 12px
+      <div className="flex flex-col gap-3">
       {transcript.trim() && <SaidCard text={transcript} />}
-      <div className="enter flex flex-col gap-1 rounded-2xl bg-white p-5 leading-[1.4]">
+      <div className="enter flex flex-col gap-1 rounded-2xl bg-(--bg-brand) p-5 leading-[1.4]">
         <p className="text-lg font-bold">AI가 급여제공기록지에 맞춰 적었어요</p>
         <p className="text-base">
-          &quot;확인 필요&quot;는 직접 말하지 않은 항목이에요. <span className="whitespace-nowrap">비워 두었으니</span> 채워 주세요.
+          &quot;확인 필요&quot;는 직접 말하지 않은 항목이에요.
+          <br />
+          비워 두었으니 채워 주세요.
         </p>
       </div>
       {resumed && (
@@ -538,15 +554,24 @@ export function ReviewScreen({
         </div>
       </div>
 
-      {steps.slice(0, confirmed + 1).map((st, i) => (
-        <Section key={st.title} id={`step-${i}`} {...st} done={i < confirmed} open={open.has(i)} onToggle={() => toggle(i)}>
+      {/* Figma 558:2432: 차례가 안 온 항목도 접힌 채 보여 앞으로 남은 것을 알 수 있게 한다 */}
+      {steps.map((st, i) => (
+        <Section
+          key={st.title}
+          id={`step-${i}`}
+          {...st}
+          summary={st.summary ?? (i > confirmed ? "아직 확인 전" : undefined)}
+          done={i < confirmed}
+          open={open.has(i)}
+          onToggle={() => toggle(i)}
+        >
           {st.body}
           {i === confirmed && (
             <Button onClick={() => next(i)}>{i === steps.length - 1 ? "다 확인했어요" : "확인했어요, 다음"}</Button>
           )}
         </Section>
       ))}
-      </>
+      </div>
       )}
 
       <LinkButton href="/v1120" variant="secondary" className="bg-white! active:bg-(--line)!">

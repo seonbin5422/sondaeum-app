@@ -11,7 +11,7 @@ import { kstNowHm, notifications, todayVisitList, visitHref, type HomeVisit } fr
 
 const order = (i: number) => ({ "--i": i }) as CSSProperties;
 
-// C-03 홈 (Figma 511:696): 귤색 머리(로고·알림·인사·마무리 못 한 기록) · 다음 방문 · 바로가기 · 오늘 방문
+// C-03 홈 (Figma 558:930): 귤색 머리(로고·알림·인사·마무리 못 한 기록) · 이번 방문 · 바로가기 · 오늘 방문
 export default async function HomePage() {
   const caregiver = await requireCaregiver();
   const { clients, list } = await todayVisitList();
@@ -50,21 +50,13 @@ export default async function HomePage() {
           </h1>
         </div>
         {left.length > 0 && (
-          <div className="enter relative flex flex-col gap-3 rounded-2xl bg-white px-4 py-4" style={order(1)}>
-            {/* 가장 최근 기록이 누구의 언제 것인지 보여 준다. 2건 이상이면 "이어서 하기"가 시트를 열어 고르게 한다.
-                글과 버튼을 옆으로 두면 좁은 폰에서 글이 여러 줄로 눌려서 위아래로 쌓는다 (11/6 팀 피드백) */}
-            <span className="flex flex-col gap-0.5 leading-[1.4]">
-              <span className="text-lg font-bold text-muted">
-                마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
-              </span>
-              <span className="text-lg font-bold">
-                <span className="whitespace-nowrap">{left[0].clientName} 수급자</span> ·{" "}
-                <span className="whitespace-nowrap">{serviceTimeOf(null, left[0].day).date}</span>
-                {left.length > 1 && <span className="whitespace-nowrap"> 외 {left.length - 1}건</span>}
-              </span>
-            </span>
+          <div className="enter relative mt-1 flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
+            {/* Figma 558:936: 한 줄에 문구 + "이어서 하기". 2건 이상이면 "이어서 하기"가 시트를 열어 고르게 한다 */}
+            <p className="min-w-0 flex-1 text-lg font-bold leading-[1.4] text-muted">
+              마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
+            </p>
             <ResumeSheet
-              className={`${pillBase} ${pillTones.soft} w-full text-lg`}
+              className={`${pillBase} ${pillTones.soft}`}
               items={left.map((v) => ({
                 href: visitHref(v.visitId, v.status),
                 name: v.clientName,
@@ -76,58 +68,60 @@ export default async function HomePage() {
         )}
       </header>
 
-      {next && <NextVisit visit={next} />}
+      {/* 본문: 머리 아래 20 · 칸 사이 12 (Figma 558:958) */}
+      <div className="flex flex-col gap-3 pt-1">
+        {next && <NextVisit visit={next} />}
 
-      {list.length === 0 && (
-        <Card className="items-start">
-          <p className="text-lg font-bold">오늘은 예정된 방문이 없어요.</p>
-          {active.length === 0 && <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}
-        </Card>
-      )}
+        {list.length === 0 && (
+          <Card className="items-start">
+            <p className="text-lg font-bold">오늘은 예정된 방문이 없어요.</p>
+            {active.length === 0 && <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}
+          </Card>
+        )}
 
-      <div className="enter grid grid-cols-2 gap-3" style={order(3)}>
-        <ScheduleSheet clients={clients} />
-        <PressLink
-          // 서류는 수급자마다 만든다: 한 명이면 바로 그 수급자 서류로, 여럿이면 서류 만들기 안에서 고른다
-          href={active.length === 1 ? `/v1120/client/${active[0].id}/documents` : "/v1120/documents"}
-          pendingText={false}
-          className="flex h-[150px] flex-col items-start gap-2 rounded-2xl bg-white p-4 text-left active:bg-(--line)"
-        >
-          <span className="flex size-12 items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/v1120/home/home-doc.svg" alt="" width={28} height={28} />
-          </span>
-          <span className="flex-1" />
-          <span className="text-lg font-bold leading-[1.4]">서류 만들기</span>
-          <span className="text-base leading-[1.4] text-muted">기간 골라 PDF</span>
-        </PressLink>
+        <div className="enter grid grid-cols-2 gap-3" style={order(3)}>
+          <ScheduleSheet clients={clients} />
+          <PressLink
+            // 서류는 수급자마다 만든다: 한 명이면 바로 그 수급자 서류로, 여럿이면 서류 만들기 안에서 고른다
+            href={active.length === 1 ? `/v1120/client/${active[0].id}/documents` : "/v1120/documents"}
+            pendingText={false}
+            className="flex h-[150px] flex-col items-start gap-2 rounded-2xl bg-white p-4 text-left active:bg-(--line)"
+          >
+            <span className="flex size-12 items-center justify-center rounded-full bg-(--bg-brand)">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/v1120/home/home-doc.svg" alt="" width={28} height={28} />
+            </span>
+            <span className="flex-1" />
+            <span className="text-lg font-bold leading-[1.4]">서류 만들기</span>
+            <span className="text-base leading-[1.4] text-muted">기간 골라 PDF</span>
+          </PressLink>
+        </div>
+
+        {list.length > 0 && (
+          <>
+            <div className="enter flex items-start justify-between pt-2 leading-[1.4]" style={order(4)}>
+              <h2 className="text-xl font-bold">오늘 방문</h2>
+              <p className="text-lg font-medium text-muted">{list.length}건</p>
+            </div>
+            <ul className="enter flex flex-col gap-px overflow-hidden rounded-2xl bg-(--bg-secondary)" style={order(5)}>
+              {list.map((v) => (
+                <li key={v.clientId} className="bg-white">
+                  <VisitRow visit={v} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
-
-      {list.length > 0 && (
-        <>
-          <div className="enter flex items-start justify-between pt-2 leading-[1.4]" style={order(4)}>
-            <h2 className="text-xl font-bold">오늘 방문</h2>
-            <p className="text-lg font-medium text-muted">{list.length}건</p>
-          </div>
-          <ul className="enter flex flex-col gap-px overflow-hidden rounded-2xl bg-(--bg-secondary)" style={order(5)}>
-            {list.map((v) => (
-              <li key={v.clientId} className="bg-white">
-                <VisitRow visit={v} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
     </Screen>
   );
 }
 
 function NextVisit({ visit }: { visit: HomeVisit }) {
   return (
-    <section className="enter flex flex-col items-start gap-4 rounded-2xl bg-white p-5" style={order(2)}>
-      <span className="rounded-full bg-accent px-3 py-1 text-base font-bold leading-[1.4]">
-        다음 방문{visit.time ? ` · ${visit.start}` : ""}
-      </span>
+    <section className="enter flex flex-col items-start gap-4 rounded-2xl bg-white p-5 ring-2 ring-inset ring-accent" style={order(2)}>
+      {/* 귤색 링: 지금 할 방문을 다른 칸과 구분 (Figma 558:959) */}
+      <span className="rounded-full bg-accent px-3 py-1 text-base font-bold leading-[1.4]">이번 방문</span>
       <div className="flex items-center gap-3">
         <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary) text-2xl font-bold text-muted">
           {visit.clientName.slice(0, 1)}
@@ -151,18 +145,17 @@ function NextVisit({ visit }: { visit: HomeVisit }) {
   );
 }
 
-// 홈/할 일 버튼: 방문 상태를 버튼 하나로 (기록 전=귤색, 기록 중=연한 귤색, 확인 필요=파랑, 보냄=연한 파랑)
+// 홈/할 일 버튼 (Figma 485:381): 방문 상태를 버튼 하나로 (기록 전=귤색, 기록 중·확인 필요=연한 귤색, 보냄=연한 파랑)
 function actionOf(v: HomeVisit) {
   if (v.status === "NOT_STARTED") return { label: "기록하기", tone: "accent" as const };
   if (v.status === "RECORDING") return { label: "이어서 기록하기", tone: "soft" as const };
   if (v.status === "SENT") return { label: "보냄 완료", tone: "sent" as const };
-  return { label: "확인하고 보내기", tone: "check" as const };
+  return { label: "확인하고 보내기", tone: "soft" as const };
 }
 
 const pillTones = {
   accent: "bg-accent text-foreground active:bg-accent-dark",
   soft: "bg-(--bg-brand) text-(--text-brand) active:bg-accent/40",
-  check: "bg-(--success) text-white active:bg-(--text-success)",
   sent: "bg-(--success-soft) text-(--text-success) active:bg-(--line)",
 };
 const pillBase = "press inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 text-base font-bold";

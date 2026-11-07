@@ -112,6 +112,7 @@ export function SentScreen({
 
   return (
     <Screen
+      white
       bottom={
         // 홈으로: 보내기(카카오톡 또는 링크 복사) 전에는 비활성 + 이유, 보호자가 없으면 처음부터 켬
         sharedAt || noContact ? (
@@ -123,13 +124,15 @@ export function SentScreen({
         )
       }
     >
-      {/* 공통/상단 바에서 뒤로를 뺀 모양: 보낸 뒤에는 돌아가 고칠 수 없다 */}
-      <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
-        <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">
+      {/* 공통/상단 바에서 뒤로를 뺀 모양: 보낸 뒤에는 돌아가 고칠 수 없어 제목을 왼쪽에 둔다 (Figma 558:2413) */}
+      <div className="full-bleed -mt-5 flex h-16 items-center bg-white pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
+        <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">
           {noContact ? "기록 저장" : `${guardianTitle}에게 보내기`}
         </h1>
       </div>
 
+      {/* Figma 558:2414: 저장 완료 칸과 보내기 칸 사이 4px */}
+      <div className="flex flex-col gap-1">
       <section className="enter flex flex-col gap-3 rounded-2xl bg-(--success-soft) p-5 leading-[1.4]">
         <p className="flex items-center gap-3 text-xl font-bold">
           <Icon name="check_circle" size={32} className="pop text-(--success)" />
@@ -179,7 +182,9 @@ export function SentScreen({
             {guardianTitle}님께 보내기
           </p>
           <p className="text-lg text-muted">
-            아직 <span className="whitespace-nowrap">{guardianTitle}님께</span> 가지 않았어요. 아래 버튼을 눌러 카카오톡으로 보내 주세요.
+            아직 <span className="whitespace-nowrap">{guardianTitle}님께</span> 가지 않았어요.
+            <br />
+            아래 버튼을 눌러 카카오톡으로 보내 주세요.
           </p>
           {kakaoButton("카카오톡으로 보내기")}
           <Button variant="secondary" onClick={copy}>
@@ -187,6 +192,7 @@ export function SentScreen({
           </Button>
         </section>
       )}
+      </div>
     </Screen>
   );
 }

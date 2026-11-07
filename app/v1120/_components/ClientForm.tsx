@@ -3,21 +3,20 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { CARE_GRADES, FAMILY_RELATIONS, NO_CONTACT, STAFF_RELATIONS, type ClientProfile } from "../_types";
 import { saveClient } from "../_actions";
-import { Button, Card, Field, selectChipClass } from "./ui";
+import { Button, Field, selectChipClass } from "./ui";
 
-// C-07 등록 · C-08 수정 공용 폼 (Figma 514:604). 저장은 서버 액션 saveClient.
+// C-07 등록 · C-08 수정 공용 폼 (Figma 558:1696). 저장은 서버 액션 saveClient.
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const GENDERS = ["여", "남"];
 const RELATIONS = [...FAMILY_RELATIONS, ...STAFF_RELATIONS, NO_CONTACT];
 
 function Group({ title, i, children }: { title: string; i: number; children: ReactNode }) {
   return (
-    <div style={{ "--i": i } as CSSProperties}>
-      <Card className="gap-5">
-        <h2 className="text-xl font-bold">{title}</h2>
-        {children}
-      </Card>
-    </div>
+    // 흰 바탕 위 묶음이라 상자 없이 위아래 여백만 둔다 (Figma 기본 정보 등: 흰 면 p-20)
+    <section className="enter flex flex-col gap-5 py-5" style={{ "--i": i } as CSSProperties}>
+      <h2 className="text-xl font-bold">{title}</h2>
+      {children}
+    </section>
   );
 }
 
@@ -66,7 +65,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
           : null;
 
   return (
-    <form className="flex flex-col gap-3" action={saveClient}>
+    <form className="flex flex-col gap-3 pt-1" action={saveClient}>
       {initial && <input type="hidden" name="id" value={initial.id} />}
       {grade && <input type="hidden" name="careGrade" value={grade} />}
       {gender && <input type="hidden" name="gender" value={gender} />}
@@ -121,7 +120,6 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         )}
         <Chips
           legend="수급자와의 관계"
-          hint="가족이 없으시면 기관 사회복지사나 주민센터 담당자를 골라 주세요."
           options={RELATIONS}
           isOn={(r) => relation === r}
           onPick={setRelation}
@@ -138,7 +136,6 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
             value={guardianPhone}
             onChange={(e) => setGuardianPhone(e.target.value)}
             placeholder="예: 010-1234-5678"
-            hint="적어 두면 이 번호로 게시판에 초대할 수 있어요."
           />
         )}
       </Group>
@@ -152,7 +149,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       </Group>
 
       {/* 아래 버튼 (Figma 아래 버튼): 스크롤해도 화면 아래에 붙어 있다 */}
-      <div className="sticky bottom-0 -mx-5 -mb-5 bg-(--bg-secondary) px-5 pb-6 pt-4">
+      <div className="sticky bottom-0 -mx-5 -mb-5 bg-white px-5 pb-6 pt-4">
         <Button type="submit" disabled={!!missing} disabledReason={missing ?? undefined}>
           {submitLabel}
         </Button>

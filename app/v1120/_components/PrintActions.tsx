@@ -4,20 +4,16 @@ import { useState } from "react";
 import { Button, Icon } from "./ui";
 import { Spinner } from "./Pressable";
 
-// 서류 화면 아래 버튼 (Figma 516:765). "PDF로 저장"과 "인쇄하기"는 브라우저 인쇄 창을 연다 (PDF는 인쇄 창에서 "PDF로 저장").
+// 서류 화면 아래 버튼 칸 (Figma 558:2027): 흰 면, 위 16 · 옆 20 · 아래 24, 글자만 있는 버튼. "PDF로 저장"과 "인쇄하기"는 브라우저 인쇄 창을 연다 (PDF는 인쇄 창에서 "PDF로 저장").
 // share가 있으면 "보호자 게시판에 올리기": 그 수급자 게시판에 글로 올린다 (같은 기간은 한 번만)
 export function PrintActions({ share }: { share?: () => Promise<void> }) {
   const [shared, setShared] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return (
-    <div className="flex flex-col gap-2 pt-2 print:hidden">
-      <Button onClick={() => window.print()}>
-        <Icon name="picture_as_pdf" />
-        PDF로 저장
-      </Button>
-      <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={() => window.print()}>
-        <Icon name="print" />
+    <div className="mx-auto mt-auto flex w-full max-w-md flex-col gap-2 bg-white px-5 pt-4 pb-6 print:hidden">
+      <Button onClick={() => window.print()}>PDF로 저장</Button>
+      <Button variant="secondary" onClick={() => window.print()}>
         인쇄하기
       </Button>
       {share && (
@@ -37,8 +33,8 @@ export function PrintActions({ share }: { share?: () => Promise<void> }) {
           }}
           disabled={shared || busy}
           aria-busy={busy || undefined}
-          // 회색 바탕 위라 보조 버튼은 흰 면. 처리 중·올린 뒤에는 흐리게 하지 않고 상태를 보여 준다
-          className={shared ? "done-pulse bg-(--success-soft)! text-(--text-success)! disabled:opacity-100!" : busy ? "bg-white! disabled:opacity-100!" : "bg-white! active:bg-(--line)!"}
+          // 처리 중·올린 뒤에는 흐리게 하지 않고 상태를 보여 준다
+          className={shared ? "done-pulse bg-(--success-soft)! text-(--text-success)! disabled:opacity-100!" : busy ? "disabled:opacity-100!" : ""}
         >
           {shared ? (
             <>

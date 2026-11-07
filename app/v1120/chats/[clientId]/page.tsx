@@ -4,7 +4,7 @@ import { LiveRefresh, PostList } from "../../_components/Board";
 import { EmptyState, Screen, TopBar } from "../../_components/ui";
 import { contactTitle, NO_CONTACT } from "../../_types";
 
-// C-18 수급자 게시판 (요양보호사, Figma wireframe-1128 517:702). 보낸 보고서가 글 카드로 올라오고, 글을 누르면 댓글 (D-15 261101.ver)
+// C-18 수급자 게시판 (요양보호사, Figma 1120 수정본 558:2165). 보낸 보고서가 글 카드로 올라오고, 글을 누르면 댓글 (D-15 261101.ver)
 export default async function BoardPage({ params }: PageProps<"/v1120/chats/[clientId]">) {
   const { clientId } = await params;
   const [c, caregiver] = await Promise.all([myClient(clientId), requireCaregiver()]);

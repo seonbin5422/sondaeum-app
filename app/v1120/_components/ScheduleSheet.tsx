@@ -6,7 +6,7 @@ import type { ClientProfile } from "../_types";
 import { buzz } from "./Pressable";
 import { Icon } from "./Icon";
 
-// C-04 일정 달력 (Figma 511:885). 홈의 "일정 보기" 타일을 누르면 아래에서 올라오는 시트.
+// C-04 일정 달력 (Figma 558:988). 홈의 "일정 보기" 타일을 누르면 아래에서 올라오는 시트.
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
 function visitsOn(clients: ClientProfile[], d: Date) {
@@ -43,7 +43,7 @@ export function ScheduleSheet({ clients }: { clients: ClientProfile[] }) {
         onClick={() => setOpen(true)}
         className="press flex h-[150px] flex-col items-start gap-2 rounded-2xl bg-white p-4 text-left active:bg-(--line)"
       >
-        <span className="flex size-12 items-center justify-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-(--bg-brand)">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/v1120/home/home-calendar.svg" alt="" width={28} height={28} />
         </span>

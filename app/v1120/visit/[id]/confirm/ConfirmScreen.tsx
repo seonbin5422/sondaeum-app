@@ -34,21 +34,24 @@ export function ConfirmScreen({
   return (
     <>
       <Screen
+        white
         bottom={
-          <>
-            <p className="text-center text-base text-muted">{recipient ? "보낸" : "저장한"} 뒤에는 고칠 수 없어요.</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-center text-base font-medium text-muted">{recipient ? "보낸" : "저장한"} 뒤에는 고칠 수 없어요.</p>
             <form action={sendReport.bind(null, id)} className="flex">
               <Button type="submit" pendingLabel={recipient ? "보내는 중이에요" : "저장하는 중이에요"}>
                 {recipient ? "저장하고 보내기" : "저장하기"}
               </Button>
             </form>
-          </>
+          </div>
         }
       >
         <TopBar backHref={reviewHref} title="보낼 내용 보기" />
+        {/* Figma 558:2360: 흰 바탕에 칸 없이 나열하고 항목 사이는 가는 선. 공용 ReportSections의 흰 카드를 여기서만 선으로 바꾼다 */}
+        <div className="flex flex-col gap-1 [&>section]:rounded-none [&>section]:border-b [&>section]:border-(--line) [&>section]:px-1 [&>section]:py-5 [&_section_span.rounded-full]:bg-white">
         <p className="text-lg font-medium text-muted">{recipient ? `${recipient}께는 이렇게 보여요.` : "이렇게 저장돼요."}</p>
-        {/* 보고서 머리 (Figma 513:496) */}
-        <section className="enter flex flex-col gap-1 rounded-2xl bg-white p-5 leading-[1.4]">
+        {/* 보고서 머리 (Figma 558:2362) */}
+        <section className="enter flex flex-col gap-1 leading-[1.4]">
           <h2 className="text-[22px] font-bold tracking-[-0.02em]">
             <span className="whitespace-nowrap">{date}</span> 방문 보고서
           </h2>
@@ -57,6 +60,7 @@ export function ConfirmScreen({
           </p>
         </section>
         <ReportSections record={record} flat />
+        </div>
       </Screen>
 
       {sheetOpen && (

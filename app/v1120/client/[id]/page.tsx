@@ -4,7 +4,7 @@ import { myClient, myHistory, myUnreadByClient } from "../../_data";
 import { Card, Chip, Icon, LinkButton, ListRow, Screen, TopBar } from "../../_components/ui";
 import { contactTitle, NO_CONTACT } from "../../_types";
 
-// C-05 수급자 정보 (Figma 514:520). 기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면
+// C-05 수급자 정보 (Figma 558:1654). 기존에는 홈 위 모달, 1120.ver에서는 수급자 탭의 화면
 export default async function ClientPage({ params }: PageProps<"/v1120/client/[id]">) {
   const { id } = await params;
   const c = await myClient(id);
@@ -31,6 +31,8 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
     <Screen nav white>
       <TopBar backHref="/v1120/clients" title="수급자 정보" />
 
+      {/* Figma 본문: 블록 사이 12px */}
+      <div className="flex flex-col gap-3 pt-1">
       <div style={at(0)}>
         <Card className="items-center gap-3 p-6 text-center">
           <span className="flex size-[72px] items-center justify-center rounded-full bg-(--bg-secondary) text-[28px] font-bold text-muted">
@@ -56,7 +58,8 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
       )}
 
       <div style={at(2)}>
-        <Card>
+        {/* 흰 바탕 위라 건강·연락은 회색 면으로 묶는다 (Figma 건강·연락) */}
+        <section className="enter rounded-2xl bg-(--bg-secondary) p-5">
           <dl className="flex flex-col gap-4 leading-[1.4]">
             {rows.map(([k, v]) => (
               <div key={k} className="flex flex-col gap-0.5">
@@ -65,11 +68,11 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
               </div>
             ))}
           </dl>
-        </Card>
+        </section>
       </div>
 
       <div style={at(3)}>
-        <Card className="-mx-5 gap-0 rounded-none p-1">
+        <Card className="gap-0 p-1">
           <ListRow
             href={`/v1120/client/${c.id}/history`}
             icon={<Icon name="history" />}
@@ -88,7 +91,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
                 href={`/v1120/chats/${c.id}`}
                 icon={<MaskIcon src="/v1120/client-board.svg" />}
                 title={`${title} 게시판`}
-                desc={n > 0 ? <span className="font-bold text-(--text-brand)">새 댓글 {n}개</span> : "새 댓글이 없어요"}
+                desc={n > 0 ? `새 댓글 ${n}개` : "새 댓글이 없어요"}
               />
               <ListRow
                 href={`/v1120/client/${c.id}/invite`}
@@ -116,6 +119,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
         <LinkButton href={`/v1120/client/${c.id}/delete`} variant="danger" className="flex-1">
           수급자 삭제
         </LinkButton>
+      </div>
       </div>
     </Screen>
   );

@@ -24,22 +24,22 @@ const SYM: Record<Change, { s: string; c: string }> = {
   worse: { s: "▼", c: "text-(--text-danger)" },
 };
 
-// 회색 바탕 + 상단 바(Figma 공통/상단 바) + 흰 서류 카드 + 아래 버튼. 인쇄하면 흰 종이에 서류만 나온다
+// 흰 바탕 + 상단 바 + 서류 + 아래 버튼 칸 (Figma 558:1935·558:2031, 상자 없이). 인쇄하면 흰 종이에 서류만 나온다
 function Shell({ backHref, title, children, share }: { backHref: string; title: string; children: React.ReactNode; share?: () => Promise<void> }) {
   return (
-    <div className="flex flex-1 flex-col bg-(--bg-secondary) print:bg-white">
-      <main className="mx-auto flex w-full max-w-md flex-col gap-4 p-5 pb-10 print:max-w-none print:p-0">
+    <div className="flex flex-1 flex-col bg-white">
+      <main className="mx-auto flex w-full max-w-md flex-col gap-3 px-5 pt-5 pb-6 print:max-w-none print:p-0">
         {/* 들어온 화면(서류 만들기·게시글)으로 돌아간다. 링크로 바로 열었으면 backHref로 */}
         <TopBar back={<BackButton icon className={TOP_BACK} fallback={backHref} />} title={title} />
         {children}
-        <PrintActions share={share} />
       </main>
+      <PrintActions share={share} />
     </div>
   );
 }
 
-// 서류 카드: 흰 카드 r16 (Figma 요약 A4). 인쇄할 때는 여백·애니메이션 없이
-const paper = "print:animate-none! print:rounded-none print:p-0";
+// 서류 카드: 흰 면 r16, 안쪽 24 (Figma 요약 A4). 인쇄할 때는 여백·애니메이션 없이
+const paper = "p-6! print:animate-none! print:rounded-none print:p-0!";
 
 // 표: 연한 회색 면 r12, 머리 줄은 --line 면 (Figma 516:690). 줄 사이 선 없음
 function Trend({ head, rows }: { head: string[]; rows: { label: string; cells: { v: React.ReactNode; c: string }[] }[] }) {
@@ -47,7 +47,7 @@ function Trend({ head, rows }: { head: string[]; rows: { label: string; cells: {
     <table className="w-full table-fixed overflow-hidden rounded-xl bg-(--bg-secondary) text-center text-base print:bg-white">
       <thead className="bg-(--line) font-bold print:bg-(--bg-secondary)">
         <tr>
-          <th className="w-14 p-2" />
+          <th className="p-2" />
           {head.map((h, i) => (
             <th key={i} className="py-2">
               {h}
@@ -228,10 +228,14 @@ export function CareSheetView({ client: c, history, caregiverName, today, from, 
   return (
     <Shell backHref={backHref} title="급여제공기록지">
       <p className="text-base text-muted print:hidden">
-        장기요양급여 제공기록지(방문요양) 형식이에요. 기관이 발급하는 공식 사본은 아니에요.{" "}
-        <span className="whitespace-nowrap">
-          {fmt(from)} ~ {fmt(to)} · {visits.length}장
-        </span>
+        장기요양급여 제공기록지(방문요양) 형식이에요. 기관이 발급하는 공식 사본은 아니에요.
+        {/* 하루치는 Figma처럼 문장만, 여러 날이면 몇 장인지 덧붙인다 */}
+        {visits.length > 1 && (
+          <span className="whitespace-nowrap">
+            {" "}
+            {fmt(from)} ~ {fmt(to)} · {visits.length}장
+          </span>
+        )}
       </p>
       {visits.map((v) => (
         <div key={v.date} className="print:break-after-page">
@@ -246,7 +250,7 @@ export function CareSheetView({ client: c, history, caregiverName, today, from, 
           />
         </div>
       ))}
-      <footer className="rounded-xl bg-white px-4 py-3 text-base text-muted print:px-0">
+      <footer className="pt-3 text-base text-muted">
         <p className="font-bold">
           요양보호사가 손다음에 보낸 기록으로 만든 참고용 기록지예요. 기관이 발급하는 공식 사본이 아니어서 국민건강보험공단 제출 같은 공식 용도로는 쓸 수 없어요. 공식 기록은 소속 기관에 요청해 주세요.
         </p>

@@ -9,7 +9,7 @@ export default async function EditClientPage({ params }: PageProps<"/v1120/clien
   const c = await myClient(id);
   if (!c) notFound();
   return (
-    <Screen>
+    <Screen white>
       <TopBar backHref={`/v1120/client/${id}`} title={`${c.name} 정보 수정`} />
       <ClientForm initial={c} submitLabel="고친 내용 저장하기" />
     </Screen>

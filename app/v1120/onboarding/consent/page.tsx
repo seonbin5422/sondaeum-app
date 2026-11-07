@@ -8,7 +8,7 @@ import { buzz } from "../../_components/Pressable";
 import { ConsentDetails } from "../../_components/ConsentDetails";
 import { CONSENT_ITEMS as ITEMS } from "../../_consent";
 
-// C-21 동의 (LAW-3). 개인정보 / 건강정보(민감) / 보호자 제공 / 국외 이전(Groq)을 따로 받는다. 항목은 _consent.ts.
+// C-21 동의 (Figma 558:910, LAW-3). 상단 바는 제목 없이 뒤로만. 개인정보 / 건강정보(민감) / 보호자 제공 / 국외 이전(Groq)을 따로 받는다. 항목은 _consent.ts.
 
 export default function ConsentPage() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function ConsentPage() {
     if (!saved) {
       // 1단계를 거치지 않고 들어왔으면 저장할 값이 없으니 1단계로 돌려보낸다
       e.preventDefault();
-      router.replace("/v1120/onboarding");
+      router.replace("/v1120/onboarding/profile");
       return;
     }
     const { name, licenseNumber } = JSON.parse(saved);
@@ -44,7 +44,7 @@ export default function ConsentPage() {
         </form>
       }
     >
-      <TopBar backHref="/v1120/onboarding" title="처음 설정" />
+      <TopBar backHref="/v1120/onboarding/profile" />
       <header className="enter flex flex-col items-start gap-2 pt-1 leading-[1.4]">
         <StepBadge>2 / 2</StepBadge>
         <h1 className="text-2xl font-bold">동의가 필요해요</h1>
@@ -53,7 +53,7 @@ export default function ConsentPage() {
         </p>
       </header>
 
-      <div className="enter rounded-2xl border border-(--line) bg-white p-1" style={{ "--i": 1 } as CSSProperties}>
+      <div className="enter rounded-2xl bg-white py-1" style={{ "--i": 1 } as CSSProperties}>
         <ConsentRow
           on={all}
           onChange={(v) => setAgreed(Object.fromEntries(ITEMS.map((i) => [i.key, v])))}
@@ -62,7 +62,7 @@ export default function ConsentPage() {
         />
       </div>
 
-      <ul className="enter flex flex-col rounded-2xl bg-white p-1" style={{ "--i": 2 } as CSSProperties}>
+      <ul className="enter flex flex-col rounded-2xl bg-white py-1" style={{ "--i": 2 } as CSSProperties}>
         {ITEMS.map((i) => (
           <li key={i.key}>
             <ConsentRow

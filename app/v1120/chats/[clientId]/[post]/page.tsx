@@ -5,7 +5,7 @@ import { CommentThread, PostSummary } from "../../../_components/Board";
 import { Screen, TopBar } from "../../../_components/ui";
 import { contactTitle, NO_CONTACT } from "../../../_types";
 
-// C-18 게시글 상세 (요양보호사, Figma "와이어 · C-18 게시글 상세"): 보고서 요약 + 댓글, 입력칸은 아래 고정
+// C-18 게시글 상세 (요양보호사, Figma 1120 수정본 558:2220): 흰 바탕에 회색 요약 카드 + 댓글, 입력칸은 아래 고정
 export default async function PostPage({ params }: PageProps<"/v1120/chats/[clientId]/[post]">) {
   const { clientId, post: token } = await params;
   const [c, caregiver] = await Promise.all([myClient(clientId), requireCaregiver()]);
@@ -14,7 +14,7 @@ export default async function PostPage({ params }: PageProps<"/v1120/chats/[clie
   if (!post) notFound();
   const names = { caregiver: caregiver.name, guardian: `${c.guardianName} ${contactTitle(c.guardianRelation)}` };
   return (
-    <Screen>
+    <Screen white>
       <TopBar backHref={`/v1120/chats/${clientId}`} title={post.title} />
       <PostSummary
         post={post}

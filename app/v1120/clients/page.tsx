@@ -3,10 +3,10 @@ import { myClients, myUnreadByClient } from "../_data";
 import { restoreClient } from "../_actions";
 import { ChatLabel } from "../_components/Unread";
 import { PressLink } from "../_components/Pressable";
-import { Avatar, Button, Card, Chip, EmptyState, Icon, LinkButton, Screen } from "../_components/ui";
+import { Button, Card, Chip, EmptyState, Icon, LinkButton, Screen } from "../_components/ui";
 import { TitleBar } from "../client/TitleBar";
 
-// 수급자 탭 (Figma 514:422): 담당 수급자 목록 (기존 C-09 관리 화면을 합침). 삭제한 수급자는 아래에서 되살린다.
+// 수급자 탭 (Figma 558:1584): 담당 수급자 목록 (기존 C-09 관리 화면을 합침). 삭제한 수급자는 아래에서 되살린다.
 export default async function ClientsPage() {
   const [clients, unread] = await Promise.all([myClients(), myUnreadByClient()]);
   const active = clients.filter((c) => c.isActive);
@@ -15,8 +15,9 @@ export default async function ClientsPage() {
   return (
     <Screen nav tab>
       <TitleBar title="수급자" />
-      <p className="text-lg text-muted">담당 수급자 {active.length}명</p>
 
+      {/* Figma 본문: 카드·삭제한 수급자·등록 버튼이 모두 12px 간격 */}
+      <div className="flex flex-col gap-3 pt-1">
       {active.length === 0 && <EmptyState>수급자를 등록해 주세요.</EmptyState>}
 
       <ul className="flex flex-col gap-3">
@@ -26,7 +27,8 @@ export default async function ClientsPage() {
             <li key={c.id} style={{ "--i": Math.min(i, 5) } as CSSProperties}>
               <Card className="gap-3">
                 <PressLink href={`/v1120/client/${c.id}`} pendingText={false} className="-m-2 flex items-center gap-3 rounded-xl p-2 active:bg-(--bg-secondary)">
-                  <Avatar name={c.name} />
+                  {/* Figma 아바타는 48px·20px 본문색 글자라 공용 Avatar(56px) 대신 여기서 그린다 */}
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary) text-xl font-bold">{c.name.slice(0, 1)}</span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1 leading-[1.4]">
                     <span className="text-xl font-bold">{c.name} 수급자</span>
                     <span className="text-base text-muted">
@@ -42,9 +44,9 @@ export default async function ClientsPage() {
                   <PressLink href={`/v1120/client/${c.id}/history`} className={shortcut}>
                     방문 기록
                   </PressLink>
-                  {/* 세 버튼이 한 줄이라 "서류 만들기"는 좁은 폰에서 두 줄이 된다. 글자를 줄이지 않고 낱말을 줄인다 (들어가면 제목은 "서류 만들기") */}
+                  {/* Figma(448px)는 "서류 만들기". 좁은 폰에선 세 버튼이 한 줄에 안 들어가 "만들기"를 숨긴다 */}
                   <PressLink href={`/v1120/client/${c.id}/documents`} className={shortcut}>
-                    서류
+                    서류<span className="max-[400px]:hidden">&nbsp;만들기</span>
                   </PressLink>
                   <PressLink href={`/v1120/chats/${c.id}`} className={shortcut}>
                     <ChatLabel n={n} />
@@ -55,8 +57,6 @@ export default async function ClientsPage() {
           );
         })}
       </ul>
-
-      <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
 
       {removed.length > 0 && (
         <Card className="gap-2">
@@ -83,6 +83,9 @@ export default async function ClientsPage() {
           ))}
         </Card>
       )}
+
+      <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
+      </div>
     </Screen>
   );
 }

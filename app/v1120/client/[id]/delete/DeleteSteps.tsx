@@ -7,7 +7,7 @@ import { deleteClient, permanentDeleteClient } from "../../../_actions";
 
 const at = (i: number) => ({ "--i": i }) as CSSProperties;
 
-// C-10 삭제 확인 (Figma 515:640) · C-11 완전히 지우기 (Figma 515:671)
+// C-10 삭제 확인 (Figma 558:1849) · C-11 완전히 지우기 (Figma 558:1870). 둘 다 흰 바탕, 상단 바는 뒤로만
 export function DeleteSteps({ id, name, permanent, backHref }: { id: string; name: string; permanent: boolean; backHref: string }) {
   const router = useRouter();
   const [moved, setMoved] = useState(false);
@@ -16,6 +16,7 @@ export function DeleteSteps({ id, name, permanent, backHref }: { id: string; nam
   if (!permanent) {
     return (
       <Screen
+        white
         bottom={
           <>
             <form action={deleteClient.bind(null, id)} className="flex">
@@ -29,8 +30,8 @@ export function DeleteSteps({ id, name, permanent, backHref }: { id: string; nam
           </>
         }
       >
-        <TopBar backHref={backHref} title="수급자 삭제" />
-        <div className="pt-5" style={at(0)}>
+        <TopBar backHref={backHref} />
+        <div className="pt-6" style={at(0)}>
           <Card className="p-6">
             <span className="flex size-[72px] items-center justify-center rounded-full bg-(--danger-soft) text-(--danger)">
               <Icon name="delete" size={36} />
@@ -38,19 +39,12 @@ export function DeleteSteps({ id, name, permanent, backHref }: { id: string; nam
             <h1 className="text-2xl font-bold leading-[1.4]">
               {name} <span className="whitespace-nowrap">정보를 삭제할까요?</span>
             </h1>
-            <ul className="flex flex-col gap-4 text-lg">
-              {[
-                "목록과 홈에서 보이지 않아요.",
-                <>
-                  14일 동안은 수급자 탭 아래 <span className="whitespace-nowrap">&quot;삭제한 수급자&quot;에서</span> 되살릴 수 있어요.
-                </>,
-                "보호자 게시판 링크는 바로 닫혀요.",
-              ].map((t, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Icon name="info" className="mt-0.5 text-muted" />
-                  <span className="flex-1">{t}</span>
-                </li>
-              ))}
+            <ul className="text-lg leading-[1.4]">
+              <li>목록과 홈에서 보이지 않아요.</li>
+              <li>
+                14일 동안은 수급자 탭 아래 <span className="whitespace-nowrap">&quot;삭제한 수급자&quot;에서</span> 되살릴 수 있어요.
+              </li>
+              <li>보호자 게시판 링크는 바로 닫혀요.</li>
             </ul>
           </Card>
         </div>
@@ -61,6 +55,7 @@ export function DeleteSteps({ id, name, permanent, backHref }: { id: string; nam
   const ok = moved && typed.trim() === name;
   return (
     <Screen
+      white
       bottom={
         <form action={permanentDeleteClient.bind(null, id)} className="flex">
           <Button
@@ -75,14 +70,18 @@ export function DeleteSteps({ id, name, permanent, backHref }: { id: string; nam
         </form>
       }
     >
-      <TopBar backHref={backHref} title="완전히 지우기" />
+      <TopBar backHref={backHref} />
+      {/* Figma 본문: 블록 사이 12px */}
+      <div className="flex flex-col gap-3 pt-1">
       <div style={at(0)}>
-        <Card className="gap-2 p-6">
+        <Card className="gap-2 px-5 py-6">
           <h1 className="text-2xl font-bold leading-[1.4]">
             {name} 수급자 기록을 <span className="whitespace-nowrap">완전히 지울까요?</span>
           </h1>
-          <p className="text-lg text-muted">
-            방문 기록, 보고서, 게시판 글과 댓글이 모두 지워지고 <span className="whitespace-nowrap">되살릴 수 없어요.</span>
+          <p className="text-lg leading-[1.4] text-muted">
+            방문 기록, 보고서, 게시판 글과 댓글이
+            <br />
+            모두 지워지고 되살릴 수 없어요.
           </p>
         </Card>
       </div>
@@ -119,6 +118,7 @@ export function DeleteSteps({ id, name, permanent, backHref }: { id: string; nam
             />
           </label>
         </Card>
+      </div>
       </div>
     </Screen>
   );

@@ -5,7 +5,7 @@ import { PressLink } from "../../_components/Pressable";
 import { Icon, Screen, TopBar } from "../../_components/ui";
 import { ConsentDetails } from "../../_components/ConsentDetails";
 
-// 내 정보 > 동의한 내용 보기 (Figma wireframe-1128 517:931). 처음 설정(C-21)에서 모두 동의해야 쓸 수 있다. 날짜는 LAW-3 동의 기록(Caregiver.consentedAt)
+// 내 정보 > 동의한 내용 보기 (Figma 1120 수정본 558:2310). 처음 설정(C-21)에서 모두 동의해야 쓸 수 있다. 날짜는 LAW-3 동의 기록(Caregiver.consentedAt)
 export default async function MyConsentPage() {
   const me = await requireCaregiver();
   const agreed = new Set((me.consentItems ?? "").split(","));
@@ -15,6 +15,8 @@ export default async function MyConsentPage() {
   return (
     <Screen white>
       <TopBar backHref="/v1120/me" title="동의한 내용" />
+      {/* 안내·항목·링크 사이 12px (수정본) */}
+      <div className="flex flex-col gap-3">
       <p className="text-lg leading-[1.4] text-muted">
         처음 시작할 때 아래 항목에 동의했어요.{" "}
         <span className="whitespace-nowrap">{when ? `(${when})` : "(동의 날짜는 10월 13일부터 기록해요)"}</span>
@@ -42,6 +44,7 @@ export default async function MyConsentPage() {
       >
         개인정보 처리방침 전체 보기 ›
       </PressLink>
+      </div>
     </Screen>
   );
 }

@@ -47,8 +47,9 @@ export function Screen({
       {(bottom || nav) && (
         <div className="fixed inset-x-0 bottom-0 z-10">
           {bottom && (
-            <div className="bg-gradient-to-t from-(--screen-bg) via-(--screen-bg) to-transparent pt-6">
-              <div className="mx-auto flex w-full max-w-md flex-col gap-3 p-5 pt-0">{bottom}</div>
+            // 1128 수정안 (11/7): 아래 버튼 칸은 흰 면, 위 16 · 옆 20 · 아래 24, 버튼 사이 8
+            <div className="bg-white">
+              <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-6 pt-4">{bottom}</div>
             </div>
           )}
           {nav && <BottomNav guardianToken={guardianToken} />}
@@ -59,7 +60,7 @@ export function Screen({
   );
 }
 
-// 공통/상단 바 (Figma 508:100): 흰 64px, 뒤로 48px 왼쪽 고정, 제목 22px 가운데. 화면 맨 위에 붙도록 Screen 여백을 되돌린다
+// 공통/상단 바 (Figma 508:100): 흰 64px, 뒤로 48px 왼쪽 고정, 제목 22px은 1128 수정안(11/7)대로 뒤로 바로 옆 왼쪽 정렬, 본문까지 20. 화면 맨 위에 붙도록 Screen 여백을 되돌린다
 // 상단 바 뒤로 버튼 자리 (내용 칸 왼쪽). BackButton icon도 같은 자리를 쓴다
 export const TOP_BACK =
   "absolute left-[max(0.5rem,calc(50%-13.5rem))] top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full active:bg-(--bg-secondary)";
@@ -67,14 +68,14 @@ export const TOP_BACK =
 // back: 링크 대신 다른 뒤로 버튼(예: 들어온 화면으로 돌아가는 BackButton)을 넣을 때
 export function TopBar({ backHref, title, back }: { backHref?: string; title?: string; back?: ReactNode }) {
   return (
-    <div className="sticky top-0 z-10 full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16 print:hidden">
+    <div className="sticky top-0 z-10 full-bleed -mt-5 mb-1 flex h-16 items-center bg-white px-16 print:hidden">
       {back ?? (
         <PressLink href={backHref ?? "/v1120"} pendingText={false} className={TOP_BACK}>
           <Icon name="arrow_back" size={28} />
           <span className="sr-only">뒤로</span>
         </PressLink>
       )}
-      {title && <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">{title}</h1>}
+      {title && <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">{title}</h1>}
     </div>
   );
 }

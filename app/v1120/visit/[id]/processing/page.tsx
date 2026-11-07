@@ -65,7 +65,7 @@ export default function ProcessingPage() {
       white
       bottom={
         failed && (
-          <>
+          <div className="flex flex-col gap-2">
             {manualError && (
               <p className="text-center text-base font-bold text-(--text-danger)" role="alert">
                 {manualError}
@@ -83,23 +83,24 @@ export default function ProcessingPage() {
             <Button variant="secondary" onClick={fillByHand} disabled={manual}>
               {manual ? <><Spinner />기록지를 여는 중이에요</> : "직접 채우기"}
             </Button>
-          </>
+          </div>
         )
       }
     >
-      {/* 공통/상단 바에서 뒤로를 뺀 모양: 정리 중에는 돌아갈 곳이 없다 */}
-      <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
-        <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">기록 정리</h1>
+      {/* 공통/상단 바에서 뒤로를 뺀 모양: 정리 중에는 돌아갈 곳이 없어 제목을 왼쪽에 둔다 (Figma 558:1409) */}
+      <div className="full-bleed -mt-5 flex h-16 items-center bg-white pl-[max(1.25rem,calc(50%-12.75rem))] pr-16">
+        <h1 className="text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">기록 정리</h1>
       </div>
 
       <section
         key={failed ? "failed" : "working"}
-        className={`enter mt-24 flex flex-col items-center gap-4 py-8 text-center leading-[1.4] ${failed ? "-mx-5 px-5" : "px-5"}`}
+        // Figma: 상단 바 아래 정리 중은 240px, 실패는 216px 띄운다 (Screen gap 16 포함)
+        className={`enter flex flex-col items-center gap-4 pb-8 text-center leading-[1.4] ${failed ? "mt-[200px]" : "mt-[224px] px-5"}`}
         aria-live="polite"
       >
         {failed ? (
           <>
-            <span className="pop flex size-[120px] items-center justify-center rounded-full bg-(--danger-soft) text-(--danger)">
+            <span className="pop flex size-[120px] items-center justify-center rounded-full bg-(--bg-secondary) text-muted">
               <Icon name="error" size={56} />
             </span>
             <p className="text-[22px] font-bold tracking-[-0.02em]">정리하지 못했어요</p>
@@ -109,13 +110,16 @@ export default function ProcessingPage() {
           </>
         ) : (
           <>
-            <Ring />
             <p className="text-[22px] font-bold tracking-[-0.02em]">
               AI가 기록지에 맞춰 <span className="whitespace-nowrap">정리하고 있어요</span>
             </p>
             <p className="text-lg text-muted">
-              10초 정도 걸려요. 화면을 닫아도 녹음 내용은 저장돼 있어요.
+              10초 정도 걸려요.
+              <br />
+              화면을 닫아도 녹음 내용은 저장돼 있어요.
             </p>
+            {/* Figma는 글 아래 막대지만, 사용자 결정(11/7)으로 같은 자리에 도는 원 + % */}
+            <Ring />
           </>
         )}
       </section>

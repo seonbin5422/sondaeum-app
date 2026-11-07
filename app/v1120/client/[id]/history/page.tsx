@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import { myClient, myHistory } from "../../../_data";
 import { PressLink } from "../../../_components/Pressable";
-import { Card, Icon, LinkButton, Screen, StatusBadge, TopBar } from "../../../_components/ui";
+import { Icon, LinkButton, Screen, StatusBadge, TopBar } from "../../../_components/ui";
 
 // C-22 수급자 방문 기록 (DIF-9, 와이어 없음). 날짜별 방문과 보고서, 서류 만들기로 이어지는 입구.
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
@@ -23,14 +23,17 @@ export default async function HistoryPage({ params }: PageProps<"/v1120/client/[
     <Screen nav>
       <TopBar backHref={`/v1120/client/${id}`} title={`${c.name} 수급자 방문 기록`} />
 
-      <Card className="gap-3">
-        <p className="text-lg">
+      {/* Figma 본문: 블록·월 제목 사이 모두 12px */}
+      <div className="flex flex-col gap-3 pt-1">
+      {/* 서류 안내 (Figma 558:1794): 연한 귤색 면 위 흰 버튼 */}
+      <section className="enter flex flex-col gap-3 rounded-2xl bg-(--bg-brand) p-5">
+        <p className="text-lg leading-[1.4]">
           병원에 가시거나 기관에 낼 때는 <span className="whitespace-nowrap">기간을 골라</span> 서류로 만들어요.
         </p>
-        <LinkButton href={`/v1120/client/${id}/documents`} variant="secondary">
+        <LinkButton href={`/v1120/client/${id}/documents`} variant="secondary" className="!bg-white active:!bg-(--line)">
           서류 만들기
         </LinkButton>
-      </Card>
+      </section>
 
       {visits.length === 0 && <p className="text-lg text-muted">아직 방문 기록이 없어요.</p>}
 
@@ -72,6 +75,7 @@ export default async function HistoryPage({ params }: PageProps<"/v1120/client/[
           </ul>
         </section>
       ))}
+      </div>
     </Screen>
   );
 }

@@ -5,15 +5,16 @@ import { PressLink } from "../_components/Pressable";
 import { EmptyState, Icon, Screen } from "../_components/ui";
 import { contactTitle, NO_CONTACT } from "../_types";
 
-// 게시판 탭 (Figma wireframe-1128 517:635): 흰 상단 바 "게시판" 아래 회색 바탕에 수급자별 흰 카드. 보낸 보고서가 글로 올라오고 댓글로 이야기한다 (DIF-5, D-15)
+// 게시판 탭 (Figma 1120 수정본 558:2125): 흰 상단 바 왼쪽 제목 "게시판" 아래 회색 바탕에 수급자별 흰 카드. 보낸 보고서가 글로 올라오고 댓글로 이야기한다 (DIF-5, D-15)
 export default async function ChatsPage() {
   const [all, latest, unread] = await Promise.all([myClients(), myBoardSummary(), myUnreadByClient()]);
   // 보호자가 없는 수급자는 게시판이 없다 (D-49)
   const rooms = all.filter((c) => c.isActive && c.guardianRelation !== NO_CONTACT);
   return (
     <Screen nav tab>
-      <div className="full-bleed -mt-5 flex h-16 items-center justify-center bg-white px-16">
-        <h1 className="text-center text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">게시판</h1>
+      {/* 탭 화면 제목은 왼쪽 (수정본). 본문은 상단 바에서 20px 아래 */}
+      <div className="full-bleed -mt-5 mb-1 flex h-16 items-center bg-white">
+        <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">게시판</h1>
       </div>
       {rooms.length === 0 ? (
         <EmptyState>수급자를 등록하면 게시판이 생겨요.</EmptyState>

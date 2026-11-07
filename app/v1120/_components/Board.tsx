@@ -6,7 +6,7 @@ import { buzz, LinkButton, PressLink, Spinner } from "./Pressable";
 import { Icon } from "./Icon";
 import { caregiverTitle, type BoardComment, type BoardPost } from "../_types";
 
-// C-18 수급자 게시판 · G-02 보호자 게시판 (DIF-5, D-15 261101.ver, Figma wireframe-1128 517:702·517:762).
+// C-18 수급자 게시판 · G-02 보호자 게시판 (DIF-5, D-15 261101.ver, Figma 1120 수정본 558:2165·558:2220).
 // 목록은 글 카드(보낸 보고서 하나 = 글 하나), 이야기는 게시글 상세에서 댓글로. 최신 글이 위, 댓글은 오래된 것이 위.
 
 const POLL_MS = 5_000;
@@ -66,8 +66,9 @@ export function SortSelect({ value, onChange }: { value: Sort; onChange: (v: Sor
 export function PostList({ posts, names, me, hrefBase }: { posts: BoardPost[]; names: Names; me: "caregiver" | "guardian"; hrefBase: string }) {
   const [sort, setSort] = useState<Sort>("new");
   const list = sort === "new" ? posts : [...posts].reverse();
+  // 목록 머리와 첫 카드 사이도 카드 사이처럼 12px (수정본)
   return (
-    <>
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between leading-[1.4]">
         <h2 className="text-lg font-bold">보고서 {posts.length}개</h2>
         <SortSelect value={sort} onChange={setSort} />
@@ -79,7 +80,7 @@ export function PostList({ posts, names, me, hrefBase }: { posts: BoardPost[]; n
           </li>
         ))}
       </ol>
-    </>
+    </div>
   );
 }
 
@@ -122,21 +123,22 @@ export function PostCard({ post, names, href, me }: { post: BoardPost; names: Na
   );
 }
 
-// 게시글 상세의 요약 카드 (Figma 517:771). 전체(fullHref)는 보고서면 G-01, 서류면 진료 참고용 요약 화면
+// 게시글 상세의 요약 카드 (Figma 558:2225). 흰 화면 위 회색 카드, 안의 요약 칸·버튼은 흰 면. 전체(fullHref)는 보고서면 G-01, 서류면 진료 참고용 요약 화면
 export function PostSummary({ post, names, fullHref }: { post: BoardPost; names: Names; fullHref: string }) {
   const doc = post.kind === "summary";
   return (
-    <section className="enter flex flex-col gap-3 rounded-2xl bg-white p-5">
+    <section className="enter flex flex-col gap-3 rounded-2xl bg-(--bg-secondary) p-5">
       <Author name={caregiverTitle(names.caregiver)} sub={`${when(post.at)} · ${doc ? "올린 서류" : "보낸 보고서"}`} />
       {post.physicalNote && (
-        <div className="flex flex-col gap-0.5 rounded-xl bg-(--bg-secondary) px-3.5 py-3 text-lg leading-[1.4]">
-          <span className="text-muted">한 일</span>
-          <span className="font-bold">{post.physicalNote}</span>
+        // 수정본은 "식사 | 점심 반 공기"처럼 이름·값 줄. 글에 따로 저장된 값은 한 일뿐이라 한 줄
+        <div className="flex justify-between gap-3 rounded-xl bg-white px-3.5 py-2 text-lg leading-[1.4]">
+          <span className="shrink-0 py-1.5 text-muted">한 일</span>
+          <span className="py-1.5 text-right font-bold">{post.physicalNote}</span>
         </div>
       )}
       <p className="text-base font-bold leading-[1.4] text-muted">{doc ? "기간" : "특이사항"}</p>
       <p className="text-lg leading-[1.4]">{post.notes ?? "특이사항이 없어요."}</p>
-      <LinkButton href={fullHref} variant="secondary">
+      <LinkButton href={fullHref} variant="secondary" className="bg-white! active:bg-(--line)!">
         {doc ? "요약 보기" : "보고서 전체 보기"}
       </LinkButton>
     </section>
@@ -220,7 +222,7 @@ export function CommentThread({
         {shown.map((c) => {
           const mine = c.from === me;
           return (
-            <li key={c.id} className={`flex flex-col gap-2 rounded-2xl p-4 ${mine ? "bg-(--bg-brand)" : "bg-white"} ${seen.has(c.id) ? "" : "enter"}`}>
+            <li key={c.id} className={`flex flex-col gap-2 rounded-2xl p-4 ${mine ? "bg-(--bg-brand)" : ""} ${seen.has(c.id) ? "" : "enter"}`}>
               <div className="flex flex-wrap items-center gap-x-2 leading-[1.4]">
                 <SmallAvatar
                   name={c.from === "caregiver" ? names.caregiver : names.guardian}

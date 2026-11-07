@@ -446,7 +446,7 @@ export function ReviewScreen({
                 onClick={speech.recording ? finishTalk : speech.start}
                 disabled={speech.supported === false}
               >
-                {speech.recording ? "● 다 말했어요" : "🎤 기록 추가하기"}
+                {speech.recording ? "● 다 말했어요" : "기록 추가하기"}
               </Button>
             )}
             {speech.error && <p className="text-base font-bold text-(--text-danger)">{speech.error}</p>}

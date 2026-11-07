@@ -240,7 +240,6 @@ export function RecordScreen({
 
   return (
     <Screen
-      plainBottom // 아래 칸은 흰 면 대신 화면 바탕색, 그림자 없이 (사용자 11/7)
       bottom={
         <>
           {/* Figma 580:2283: 녹음 버튼은 화면 아래 가운데 원(Figma 112px, 사용자 11/7 요청으로 88px). 녹음 중에는 빨간 원 + 정지 */}

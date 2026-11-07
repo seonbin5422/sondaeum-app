@@ -9,7 +9,7 @@ export default async function LoginPage() {
 
   // 흰 바탕, 위는 브랜드 알약·소개, 가운데 연한 귤색 안내 상자, 아래 흰 버튼 칸
   return (
-    <div className="flex flex-1 flex-col bg-white">
+    <div className="v1120-white flex flex-1 flex-col bg-white">
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <header className="flex flex-col gap-5 px-6 pt-24 pb-10 leading-[1.4]">
           {/* 알약 안 "손다음" 글자는 브랜드 글꼴이라 Figma에서 글자째 내보낸 그림을 쓴다 */}

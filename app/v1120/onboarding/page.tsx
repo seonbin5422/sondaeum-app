@@ -17,7 +17,7 @@ export default function OnboardingIntroPage() {
   const s = STEPS[step];
   const last = step === STEPS.length - 1;
   return (
-    <div className="flex flex-1 flex-col bg-white">
+    <div className="v1120-white flex flex-1 flex-col bg-white">
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <div className="flex items-center justify-between pt-2 pr-5 pl-2">
           {/* 첫 장은 뒤로 갈 곳이 없어 숨기되, 건너뛰기 자리가 같도록 칸은 남긴다 */}

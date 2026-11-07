@@ -103,7 +103,7 @@ export function DocumentPicker({ basePath, sentDates, today: TODAY }: { basePath
       )}
 
       {/* 아래 버튼 칸 (Figma 558:1932): 흰 면, 위 16 · 옆 20 · 아래 24. 내용이 짧으면 화면 맨 아래에 붙는다 */}
-      <div className="full-bleed -mb-5 mt-auto bg-white">
+      <div className="full-bleed -mb-5 mt-auto bg-(--screen-bg)">
         <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pt-4 pb-6">
           {range && count > 0 && <p className="text-center text-base font-medium leading-[1.4] text-muted">보낸 기록만 모아요. 방문 {count}번이 들어가요.</p>}
           <Button disabled={!!reason} disabledReason={reason} onClick={() => range && router.push(`${basePath}/${doc}?from=${range[0]}&to=${range[1]}`)}>

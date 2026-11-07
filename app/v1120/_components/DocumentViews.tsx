@@ -27,7 +27,7 @@ const SYM: Record<Change, { s: string; c: string }> = {
 // 흰 바탕 + 상단 바 + 서류 + 아래 버튼 칸 (Figma 558:1935·558:2031, 상자 없이). 인쇄하면 흰 종이에 서류만 나온다
 function Shell({ backHref, title, children, share }: { backHref: string; title: string; children: React.ReactNode; share?: () => Promise<void> }) {
   return (
-    <div className="flex flex-1 flex-col bg-white">
+    <div className="v1120-white flex flex-1 flex-col bg-white">
       <main className="mx-auto flex w-full max-w-md flex-col gap-3 px-5 pt-5 pb-6 print:max-w-none print:p-0">
         {/* 들어온 화면(서류 만들기·게시글)으로 돌아간다. 링크로 바로 열었으면 backHref로 */}
         <TopBar back={<BackButton icon className={TOP_BACK} fallback={backHref} />} title={title} />

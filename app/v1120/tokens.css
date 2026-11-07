@@ -113,6 +113,13 @@
 
 /* iOS 26 Safari는 theme-color 대신 body 바탕색으로 시간·배터리 줄을 칠한다 (사용자 11/7 아이폰 확인).
    그래서 body를 화면 바탕과 같게: 기본 회색, 흰 화면은 흰색, 홈은 귤색 머리에 맞춰 귤색 */
+/* 화면 바탕색. 상단 바·아래 버튼 칸·시간 줄이 이 값을 따른다. 흰 화면은 .v1120-white (Screen white, 서류·로그인·온보딩) */
+.v1120 {
+  --screen-bg: #f4f4f4;
+}
+.v1120 .v1120-white {
+  --screen-bg: #ffffff;
+}
 body:has(.v1120) {
   background: #f4f4f4;
 }

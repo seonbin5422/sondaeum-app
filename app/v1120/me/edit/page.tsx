@@ -20,7 +20,7 @@ export default async function EditMePage() {
             name="licenseNumber"
             defaultValue={me.licenseNumber ?? ""}
             required
-            hint="자격증에 적힌 번호예요."
+            hint="자격증의 '제 ○○○○-○○○○○○○ 호'에 적힌 번호예요."
           />
         </div>
       </Screen>

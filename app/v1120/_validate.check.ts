@@ -7,8 +7,8 @@ const bad = (rule: Parameters<typeof checkField>[0], v: string) => assert.notEqu
 
 ok("name", "홍길순"); ok("name", "김○○"); ok("name", "Kim Minji"); ok("name", "");
 bad("name", "ㄱㄱ"); bad("name", "홍"); bad("name", "홍길순1");
-ok("license", "2019-서울-012345"); ok("license", "2010123456");
-bad("license", "123"); bad("license", "asdfgh"); bad("license", "서울서울서울");
+ok("license", "2019-1234567"); ok("license", "제 2019-1234567 호"); ok("license", "20191234567");
+bad("license", "123"); bad("license", "2019-서울-012345"); bad("license", "2019-12345"); bad("license", "1234-1234567");
 ok("careNo", "L1234567890"); ok("careNo", "l1234-567890"); bad("careNo", "1234567890"); bad("careNo", "L12345");
 ok("mobile", "010-1234-5678"); ok("mobile", "01012345678"); bad("mobile", "02-123-4567"); bad("mobile", "010-12");
 ok("phone", "053-123-4567"); ok("phone", "010 1234 5678"); bad("phone", "1234"); bad("phone", "전화없음");

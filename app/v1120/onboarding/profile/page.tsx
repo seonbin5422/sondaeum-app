@@ -56,8 +56,8 @@ export default function OnboardingPage() {
           label="요양보호사 자격번호 (필수)"
           value={license}
           onChange={(e) => setLicense(e.target.value)}
-          placeholder="예: 2019-서울-012345"
-          hint="자격증에 적힌 번호예요."
+          placeholder="예: 2019-1234567"
+          hint="자격증의 '제 ○○○○-○○○○○○○ 호'에 적힌 번호예요."
         />
       </div>
     </Screen>

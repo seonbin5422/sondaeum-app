@@ -69,7 +69,7 @@ export function visitInfo(visitId: string) {
 }
 
 
-export const caregiverLicense = "2019-서울-012345";
+export const caregiverLicense = "2019-1234567";
 
 export const clients: ClientProfile[] = [
   {

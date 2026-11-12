@@ -56,6 +56,8 @@ export function score(c: Case, r: CareRecord) {
   for (const w of GUARDIAN_BANNED) if (has(guardian, w)) problems.push(`보호자 글에서 요양보호사를 높임: ${w}`);
   // 11/13 2차 평가에서 나온 주어 오류: 어르신이 한 일(먹기·자기·복용)을 요양보호사가 한 것처럼 씀
   for (const m of guardian?.match(/요양보호사가[^.]*?(복용했|드셨|주무셨|잡수셨|섭취했|식사했)/g) ?? []) problems.push(`보호자 글 주어 틀림: ${m}`);
+  // 11/13 배포 확인에서 나온 것: '요양보호사가 설거지와 빨래를 20분 하셨어요'처럼 요양보호사 문장을 높임
+  for (const m of guardian?.match(/요양보호사가[^.]*?(하셨|주셨|드리셨)어요/g) ?? []) if (!GUARDIAN_BANNED.some((w) => m.includes(w))) problems.push(`보호자 글에서 요양보호사를 높임: ${m}`);
   return { fieldsOk, fields: fieldKeys.length, mustOk, must: must.length, problems };
 }
 

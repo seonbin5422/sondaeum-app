@@ -297,7 +297,7 @@ export async function saveSignatures(visitId: string, value: unknown) {
   });
 }
 
-// C-15 "저장하고 보내기": 보낸 뒤에는 고칠 수 없다
+// C-15 "저장하고 공유하기": 보낸 뒤에는 고칠 수 없다
 export async function sendReport(visitId: string) {
   const v = await ownVisitOrThrow(visitId);
   if (!v.report) throw new Error("정리된 기록이 없어요.");

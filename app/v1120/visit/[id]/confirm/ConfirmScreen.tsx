@@ -40,7 +40,7 @@ export function ConfirmScreen({
             <p className="text-center text-base font-medium text-muted">{recipient ? "보낸" : "저장한"} 뒤에는 고칠 수 없어요.</p>
             <form action={sendReport.bind(null, id)} className="flex">
               <Button type="submit" pendingLabel={recipient ? "보내는 중이에요" : "저장하는 중이에요"}>
-                {recipient ? "저장하고 보내기" : "저장하기"}
+                {recipient ? "저장하고 공유하기" : "저장하기"}
               </Button>
             </form>
           </div>

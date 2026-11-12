@@ -264,7 +264,7 @@ export function ReviewScreen({
   const set = <K extends keyof CareRecord>(k: K, v: Partial<CareRecord[K]>) =>
     update({ ...r, [k]: { ...(r[k] as object), ...v } } as CareRecord);
 
-  const cogMissing = Object.values(r.cognitive).some((v) => v === null);
+  const cogMissing = Object.values(r.cognitive).every((v) => v === null); // 하나라도 말했으면 나머지는 안 한 것 (missingItems와 같은 기준)
   const changeMissing = Object.values(r.change).some((v) => v === null);
   const bowelMissing = r.bowel.stoolAccidents === null || r.bowel.urineAccidents === null;
   const cogValues = Object.values(r.cognitive).filter((v): v is number => v !== null);
@@ -478,9 +478,10 @@ export function ReviewScreen({
         <Button
           onClick={toConfirm}
           disabled={confirmed < steps.length}
-          disabledReason={`항목을 하나씩 확인해 주세요 (${confirmed}/${steps.length})`}
+          disabledReason="위 항목을 다 확인하면 눌러져요"
         >
-          다음
+          {/* 11/13 2차 평가: 칸 안의 '확인했어요, 다음'과 이름이 같아 헷갈려서, 가는 곳(C-15 보낼 내용 보기)으로 */}
+          보낼 내용 보기
         </Button>
       }
     >

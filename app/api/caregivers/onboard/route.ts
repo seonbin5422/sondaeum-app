@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/absoluteUrl";
 import { verifySession } from "@/lib/dal";
 import { CONSENT_ITEMS } from "@/app/v1120/_consent";
+import { checkField } from "@/app/v1120/_validate";
 
 export async function POST(req: NextRequest) {
   const { caregiverId } = await verifySession();
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
   if (next === "/v1120" && !allAgreed) {
     return NextResponse.json({ error: "모든 항목에 동의해야 쓸 수 있어요." }, { status: 400 });
   }
+  // 화면 검사를 건너뛴 요청도 막는다 (1120 입력칸 형식, _validate.ts)
+  const wrong = next === "/v1120" ? (checkField("name", name) ?? checkField("license", licenseNumber)) : null;
+  if (wrong) return NextResponse.json({ error: wrong }, { status: 400 });
 
   await prisma.caregiver.update({
     where: { id: caregiverId },

@@ -4,6 +4,8 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import { CARE_GRADES, FAMILY_RELATIONS, NO_CONTACT, STAFF_RELATIONS, type ClientProfile } from "../_types";
 import { saveClient } from "../_actions";
 import { Button, Field, selectChipClass } from "./ui";
+import { CheckedField } from "./CheckedField";
+import { checkField } from "../_validate";
 
 // C-07 등록 · C-08 수정 공용 폼 (Figma 558:1696). 저장은 서버 액션 saveClient.
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -62,7 +64,9 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         ? "보호자 성함을 적어 주세요"
         : days.length === 0
           ? "방문 요일을 골라 주세요"
-          : null;
+          : (checkField("name", name) ??
+            checkField("careNo", careNo) ??
+            (noContact ? null : (checkField("name", guardian) ?? checkField("mobile", guardianPhone))));
 
   return (
     <form className="flex flex-col gap-3 pt-1" action={saveClient}>
@@ -75,8 +79,9 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
       ))}
 
       <Group title="기본 정보" i={0}>
-        <Field label="수급자 이름 (필수)" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
-        <Field
+        <CheckedField rule="name" label="수급자 이름 (필수)" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 홍길순" />
+        <CheckedField
+          rule="careNo"
           label="장기요양인정번호 (필수)"
           name="careRegistrationNumber"
           value={careNo}
@@ -85,7 +90,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
           hint="장기요양인정서에 적힌 번호예요."
         />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="나이" name="age" inputMode="numeric" defaultValue={initial?.age ?? ""} placeholder="예: 82" />
+          <CheckedField rule="age" label="나이" name="age" inputMode="numeric" defaultValue={initial?.age ?? ""} placeholder="예: 82" />
           {/* 다시 누르면 고른 것을 푼다 (모르면 비워 둠) */}
           <Chips legend="성별" options={GENDERS} isOn={(g) => gender === g} onPick={(g) => setGender(gender === g ? "" : g)} />
         </div>
@@ -116,7 +121,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
 
       <Group title="보호자" i={2}>
         {!noContact && (
-          <Field label="보호자 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
+          <CheckedField rule="name" label="보호자 성함 (필수)" name="guardianName" value={guardian} onChange={(e) => setGuardian(e.target.value)} placeholder="예: 김○○" />
         )}
         <Chips
           legend="수급자와의 관계"
@@ -129,7 +134,8 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
             보고서를 보내지 않고 방문 기록과 서류로만 남겨요. 보호자가 생기면 <span className="whitespace-nowrap">정보 수정에서</span> 바꿀 수 있어요.
           </p>
         ) : (
-          <Field
+          <CheckedField
+            rule="mobile"
             label="보호자 연락처"
             name="guardianPhone"
             inputMode="tel"
@@ -145,7 +151,7 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
         <Field label="알레르기" name="allergies" defaultValue={initial?.allergies ?? ""} placeholder="없으면 비워 두세요" />
         <Field label="병력" name="medicalHistory" defaultValue={initial?.medicalHistory ?? ""} placeholder="예: 고혈압" />
         <Field label="복용 중인 약" name="medicationNotes" defaultValue={initial?.medicationNotes ?? ""} placeholder="예: 혈압약(아침)" />
-        <Field label="수급자 연락처" name="phone" inputMode="tel" defaultValue={initial?.phone ?? ""} placeholder="예: 010-0000-0000" />
+        <CheckedField rule="phone" label="수급자 연락처" name="phone" inputMode="tel" defaultValue={initial?.phone ?? ""} placeholder="예: 010-0000-0000" />
       </Group>
 
       {/* 아래 버튼 (Figma 아래 버튼): 스크롤해도 화면 아래에 붙어 있다 */}

@@ -183,9 +183,10 @@ export function SentScreen({
             {guardianTitle}님께 보내기
           </p>
           <p className="text-lg text-muted">
-            아직 <span className="whitespace-nowrap">{guardianTitle}님께</span> 가지 않았어요.
+            {/* DIF-1-5(11/13 2차 평가): '저장하고 보내기' 뒤에 '아직 안 갔다'고 하면 보낸 건지 헷갈려서, 남은 한 단계로 안내 */}
+            마지막 한 단계예요.
             <br />
-            아래 버튼을 눌러 카카오톡으로 보내 주세요.
+            카카오톡으로 보내면 <span className="whitespace-nowrap">{guardianTitle}님이</span> 바로 볼 수 있어요.
           </p>
           {kakaoButton("카카오톡으로 보내기")}
           <Button variant="secondary" onClick={copy}>

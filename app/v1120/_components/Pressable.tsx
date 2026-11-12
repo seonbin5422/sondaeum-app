@@ -48,7 +48,7 @@ export function Button({
   const busy = pending && props.type === "submit";
   return (
     <div className="flex w-full flex-col gap-2">
-      {props.disabled && disabledReason && <p className="text-center text-base text-(--text-danger)">{disabledReason}</p>}
+      {props.disabled && disabledReason && <p className="text-center text-base text-muted">{disabledReason}</p>}
       <button
         className={`${buttonBase} ${variantClasses[variant]} ${className}`}
         onPointerDown={(e) => {

@@ -12,6 +12,7 @@ import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
 import { boardOpenUntil, kstTodayRange, requireCaregiver } from "./_data";
 import { cleanSignatures, isEmptySignatures } from "./_signatures";
+import { assertFields } from "./_validate";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
 
@@ -51,6 +52,8 @@ export async function saveClient(form: FormData) {
   if (!name || !careRegistrationNumber || (!guardianName && !noContact) || days.length === 0 || !start || !end) {
     throw new Error("필수 항목을 모두 적어 주세요.");
   }
+  assertFields([["name", name], ["careNo", careRegistrationNumber], ["age", form.get("age")], ["phone", form.get("phone")]]);
+  if (!noContact) assertFields([["name", guardianName], ["mobile", form.get("guardianPhone")]]);
   const grade = text(form, "careGrade");
   const age = text(form, "age");
 
@@ -376,6 +379,7 @@ export async function updateMe(form: FormData) {
   const name = text(form, "name");
   const licenseNumber = text(form, "licenseNumber");
   if (!name || !licenseNumber) throw new Error("이름과 자격번호를 적어 주세요.");
+  assertFields([["name", name], ["license", licenseNumber]]);
   await prisma.caregiver.update({ where: { id: caregiver.id }, data: { name, licenseNumber } });
   redirect("/v1120/me");
 }

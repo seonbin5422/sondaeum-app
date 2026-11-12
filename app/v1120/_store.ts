@@ -35,14 +35,8 @@ export function saveDraft(visitId: string, patch: Partial<VisitDraft>) {
 export function missingItems(r: CareRecord): string[] {
   const out: string[] = [];
   if (r.physical.minutes === null) out.push("신체활동지원: 제공시간");
-  const cog = [
-    ["인지자극활동", r.cognitive.stimulation],
-    ["일상생활 함께하기", r.cognitive.dailyLiving],
-    ["인지행동변화 관리", r.cognitive.behaviorManagement],
-    ["의사소통·말벗·격려", r.cognitive.emotional],
-  ] as const;
-  const cogMissing = cog.filter(([, v]) => v === null).map(([n]) => n);
-  if (cogMissing.length) out.push(`인지·정서 지원: ${cogMissing.join(", ")}`);
+  // 인지·정서는 한 가지라도 말했으면 나머지는 안 한 것으로 본다 (11/13 2차 평가: 말벗 30분을 말했는데 '확인 필요'가 붙음)
+  if (Object.values(r.cognitive).every((v) => v === null)) out.push("인지·정서 지원: 제공시간");
   if (r.household.minutes === null) out.push("가사·일상생활지원: 제공시간");
   const ch = [
     ["신체", r.change.physical],

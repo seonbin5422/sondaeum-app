@@ -24,7 +24,8 @@ export default async function LoginPage() {
             <ul className="flex flex-col gap-2.5">
               <li>따로 가입하지 않아도 돼요</li>
               <li>보내기 전에 꼭 확인할 수 있어요</li>
-              <li>잘못 눌러도 다시 고칠 수 있어요</li>
+              {/* 11/13 2차 평가: 온보딩의 '보낸 뒤에는 고칠 수 없어요'와 맞춤 */}
+              <li>보내기 전까지는 언제든 고칠 수 있어요</li>
             </ul>
           </div>
         </div>

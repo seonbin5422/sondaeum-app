@@ -54,6 +54,8 @@ export function score(c: Case, r: CareRecord) {
   if (/요\s*(\.|$)/m.test(notes)) problems.push("특이사항이 '~요'로 끝남");
   for (const a of c.guardianMust ?? []) if (guardian && !has(guardian, a)) problems.push(`보호자 글에 빠짐: ${show(a)}`);
   for (const w of GUARDIAN_BANNED) if (has(guardian, w)) problems.push(`보호자 글에서 요양보호사를 높임: ${w}`);
+  // 11/13 2차 평가에서 나온 주어 오류: 어르신이 한 일(먹기·자기·복용)을 요양보호사가 한 것처럼 씀
+  for (const m of guardian?.match(/요양보호사가[^.]*?(복용했|드셨|주무셨|잡수셨|섭취했|식사했)/g) ?? []) problems.push(`보호자 글 주어 틀림: ${m}`);
   return { fieldsOk, fields: fieldKeys.length, mustOk, must: must.length, problems };
 }
 
@@ -148,7 +150,7 @@ for (const { c, run } of todo) {
 // 점수는 고른 사례 전체를 지금 지시문 기준으로 낸다 (지난번에 돌린 것도 포함)
 const rows = cases.flatMap((c) => Array.from({ length: runs }, (_, i) => done.get(key(c, i + 1)))).filter((r): r is Row => !!r);
 const sum = (f: (r: Row) => number) => rows.reduce((n, r) => n + f(r), 0);
-const banned = sum((r) => r.problems.filter((p) => p.includes("안 됨") || p.includes("높임") || p.includes("~요")).length);
+const banned = sum((r) => r.problems.filter((p) => p.includes("안 됨") || p.includes("높임") || p.includes("~요") || p.includes("주어")).length);
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}% (${a}/${b})` : "-");
 if (stopped) console.log(`\n${stopped}`);
 console.log(`

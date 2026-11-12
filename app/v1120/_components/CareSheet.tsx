@@ -13,7 +13,12 @@ function Row({ label, value, tone }: { label: string; value: string; tone?: "off
   return (
     <div className={`flex items-start gap-3 py-1.5 ${tone === "off" ? "text-muted" : ""}`}>
       <span className="min-w-0 flex-1 text-muted">{label}</span>
-      <span className={`shrink-0 whitespace-nowrap font-bold ${tone === "danger" ? "text-(--text-danger)" : ""}`}>{value}</span>
+      {/* 11/13 2차 평가: '확인 필요'가 굵은 검정 글씨면 적어 넣은 값처럼 보여서 기록 확인 화면의 배지와 같은 모양으로 */}
+      {value === "확인 필요" ? (
+        <span className="shrink-0 whitespace-nowrap rounded-full bg-(--bg-brand) px-3 py-0.5 text-base font-bold text-(--text-brand)">{value}</span>
+      ) : (
+        <span className={`shrink-0 whitespace-nowrap font-bold ${tone === "danger" ? "text-(--text-danger)" : ""}`}>{value}</span>
+      )}
     </div>
   );
 }
@@ -52,7 +57,10 @@ export function CareSheet({
   const min = (n: number | null) => (n === null ? "확인 필요" : `${n}분`);
   const cnt = (n: number | null) => (n === null ? "확인 필요" : `${n}회`);
   const check = (label: string, v: boolean | null) => <Row label={label} value={mark(v)} tone={v ? undefined : "off"} />;
-  const minutes = (label: string, n: number | null) => <Row label={label} value={min(n)} tone={n === 0 ? "off" : undefined} />;
+  // 인지·정서는 한 가지라도 말했으면 나머지는 안 한 것(—), 하나도 없을 때만 확인 필요 (missingItems와 같은 기준)
+  const cogSaid = Object.values(r.cognitive).some((v) => v !== null);
+  const minutes = (label: string, n: number | null) =>
+    n === null && cogSaid ? <Row label={label} value="—" tone="off" /> : <Row label={label} value={min(n)} tone={n === 0 ? "off" : undefined} />;
   const change = (label: string, v: Change | null) => <Row label={label} value={v ? CH[v] : "확인 필요"} tone={v === "worse" ? "danger" : undefined} />;
   return (
     <Card className="gap-4 leading-[1.4] print:animate-none! print:rounded-none print:p-0">

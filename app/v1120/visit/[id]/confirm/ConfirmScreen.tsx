@@ -67,7 +67,7 @@ export function ConfirmScreen({
         <div className="fixed inset-0 z-20 flex items-end bg-black/40" role="dialog" aria-modal="true" aria-labelledby="missing-title">
           <div className="enter mx-auto flex w-full max-w-md flex-col gap-4 rounded-t-3xl bg-white p-6">
             <h2 id="missing-title" className="text-xl font-bold">
-              아직 확인하지 않은 항목이 <span className="whitespace-nowrap">{missing.length}개</span> 있어요
+              아직 확인하지 않은 <span className="whitespace-nowrap">칸이 있어요</span>
             </h2>
             <ul className="flex flex-col gap-1 rounded-xl bg-(--bg-brand) px-4 py-3 text-lg font-bold text-(--text-brand)">
               {missing.map((m) => (

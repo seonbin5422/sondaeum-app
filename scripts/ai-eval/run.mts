@@ -3,6 +3,7 @@
 //   ... run.mts --runs 3                 사례마다 3번 (AI 결과가 실행마다 달라서 발표 숫자는 3번 평균으로)
 //   ... run.mts --only 17,18             몇 개만
 //   ... run.mts --resume                 지금 지시문으로 아직 안 돌린 사례만 (하루 한도에 걸려 멈췄을 때 이어서)
+//   ... run.mts --stt                    녹음 글 대신 stt.mts가 받아쓴 글(stt-results.jsonl 마지막 값)을 넣는다. 결과 버전에 '+stt'가 붙음
 //   ... run.mts --pairs                  AI 없이 입력 → 모범 특이사항 예시 쌍을 표로 출력
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -70,6 +71,20 @@ const arg = (name: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const all: Case[] = JSON.parse(readFileSync(new URL("./cases.json", import.meta.url), "utf8"));
+// --stt: 받아쓰기 오류가 섞인 글로 AI 정리를 시험한다 (받아쓴 글이 없는 사례는 뺀다)
+const sttMode = args.includes("--stt");
+if (sttMode) {
+  const stt = new Map<string, string>();
+  for (const l of readFileSync(new URL("./stt-results.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean)) {
+    const r = JSON.parse(l);
+    stt.set(r.id, r.text);
+  }
+  for (let i = all.length - 1; i >= 0; i--) {
+    const t = stt.get(all[i].id);
+    if (t) all[i] = { ...all[i], input: t };
+    else all.splice(i, 1);
+  }
+}
 const only = arg("--only")?.split(",").map((s) => s.padStart(2, "0"));
 const cases = only ? all.filter((c) => only.some((o) => c.id.startsWith(o))) : all;
 
@@ -85,7 +100,7 @@ const runs = Number(arg("--runs") ?? 1);
 // --resume: 지금 지시문으로 이미 채점한 사례·회차는 건너뛰고 남은 것만 돌린다 (무료 키 하루 한도 때문에 며칠에 나눠 돌림)
 const RESULTS = new URL("./results.jsonl", import.meta.url);
 const sha = (t: string) => createHash("sha1").update(t).digest("hex").slice(0, 8);
-const version = sha(readFileSync(new URL("../../app/v1120/_ai.ts", import.meta.url), "utf8"));
+const version = sha(readFileSync(new URL("../../app/v1120/_ai.ts", import.meta.url), "utf8")) + (sttMode ? "+stt" : "");
 type Row = { at: string; version: string; id: string; caseHash: string; run: number; passed: boolean; fieldsOk: number; fields: number; mustOk: number; must: number; problems: string[] };
 const saved: Row[] = existsSync(RESULTS)
   ? readFileSync(RESULTS, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))

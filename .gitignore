@@ -45,3 +45,6 @@ next-env.d.ts
 # prisma sqlite db
 /dev.db
 /dev.db-journal
+
+# 받아쓰기 평가용 TTS 음성 (stt.mts가 다시 만듦)
+scripts/ai-eval/audio/

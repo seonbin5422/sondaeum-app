@@ -121,7 +121,8 @@ const { fillRecord } = await import("../../app/v1120/_ai");
 async function fill(input: string) {
   for (let i = 0; ; i++) {
     try {
-      return (await fillRecord(input)).record;
+      const out = await fillRecord(input);
+      return { ...out.record, fixes: "fixes" in out ? out.fixes : [] };
     } catch (e) {
       // 하루 한도(TPD)는 기다려도 안 풀리니 바로 멈춘다
       if (i >= 4 || /per day|TPD/.test((e as Error).message)) throw e;
@@ -134,16 +135,20 @@ async function fill(input: string) {
 
 let stopped = "";
 for (const { c, run } of todo) {
+  // 무료 키는 120b 분당 8,000토큰이라 정리 1번(약 5,700)+교정 1번이면 1분에 하나만 된다 (11/13)
+  if (c !== todo[0].c || run !== todo[0].run) await new Promise((r) => setTimeout(r, 45_000));
   let r;
   try {
     r = await fill(c.input);
   } catch (e) {
-    stopped = `${c.id}에서 멈춤 (다음에 --resume으로 여기부터): ${(e as Error).message.slice(0, 120)}`;
+    stopped = `${c.id}에서 멈춤 (다음에 --resume으로 여기부터): ${(e as Error).message.slice(0, 400)}`;
     break;
   }
   const s = score(c, r);
   if (s.problems.length) s.problems.push(`→ 특이사항: ${r.notes ?? "(없음)"}`);
-  const row: Row = { at: new Date().toISOString(), version, id: c.id, caseHash: sha(JSON.stringify(c)), run, passed: !s.problems.length, fieldsOk: s.fieldsOk, fields: s.fields, mustOk: s.mustOk, must: s.must, problems: s.problems };
+  const fixes = (r as { fixes?: { from: string; to: string }[] }).fixes ?? [];
+  if (fixes.length) console.log(`  교정: ${fixes.map((f) => `${f.from}→${f.to}`).join(", ")}`);
+  const row: Row = { at: new Date().toISOString(), version, id: c.id, caseHash: sha(JSON.stringify(c)), run, passed: !s.problems.length, fieldsOk: s.fieldsOk, fields: s.fields, mustOk: s.mustOk, must: s.must, problems: s.problems, ...(fixes.length ? { fixes } : {}) };
   appendFileSync(RESULTS, JSON.stringify(row) + "\n");
   done.set(key(c, run), row);
   console.log(`${row.passed ? "✓" : "✗"} ${c.id}${runs > 1 ? ` #${run}` : ""}${row.passed ? "" : `\n    ${s.problems.join("\n    ")}`}`);

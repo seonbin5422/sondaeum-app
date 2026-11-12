@@ -176,15 +176,65 @@ export function fixRecordText(r: CareRecord): CareRecord {
   return { ...r, physicalNote: fixEumForm(r.physicalNote), notes: fixEumForm(r.notes), guardianNotes: fixEumForm(r.guardianNotes ?? null) };
 }
 
-export async function fillRecord(redacted: string) {
+// 받아쓰기 교정 (11/13): 크롬·whisper가 소리가 비슷한 다른 낱말로 적은 곳(이불→입을, 기침→지침)을 정리 전에 고친다.
+// 지시문 한 줄(옛 규칙 14)로는 0곳 고쳐서 따로 묻는다. AI는 고칠 목록만 내고 바꾸기는 코드가 해서, 목록 밖 글자는 바뀌지 않는다
+const FIX_PROMPT = `입력은 요양보호사가 방문 중 말한 것을 기계가 받아쓴 글입니다. 받아쓰기가 소리가 비슷한 다른 낱말로 잘못 적은 곳을 찾아 고칠 목록을 만듭니다.
+- 돌봄 상황(식사·배변·잠·몸 상태·증상·약·이동·목욕·옷·이불·가족 연락)에서 말이 안 되는 낱말이고, 소리가 비슷한 낱말을 넣으면 앞뒤 뜻이 꼭 맞을 때만 고칩니다.
+- 사투리·높임말·아기말·구어체는 받아쓰기 오류가 아니므로 그대로 둡니다(예: '쪼매', '묵고', '잡수시고'는 고치지 않음).
+- 숫자와 [수급자]·[보호자] 같은 대괄호 표시는 고치지 않습니다. 내용을 더하거나 빼지 않습니다.
+- 확실하지 않으면 고치지 않습니다. 고칠 곳이 없으면 빈 목록입니다.
+- from은 입력에 있는 글자 그대로의 짧은 말, to는 바꿀 말입니다.
+예: '혈안 재 보니 130에 80' → {"from":"혈안","to":"혈압"} / '손등에 보섭 발라 드렸어요' → {"from":"보섭","to":"보습제"} / '허리에 파수 부쳐 드렸어요' → {"from":"파수 부쳐","to":"파스 붙여"}`;
+const FIX_SCHEMA = obj({ fixes: { type: "array", items: obj({ from: { type: "string" }, to: { type: "string" } }) } });
+export type Fix = { from: string; to: string };
+
+// 목록을 글에 적용한다. 입력에 없는 말·숫자·대괄호 표시·긴 말은 버린다
+export function applyFixes(text: string, fixes: Fix[]) {
+  const used = fixes.filter(
+    ({ from, to }) => from && to && from !== to && from.length <= 12 && to.length <= 12 && text.includes(from) && !/[\d[\]]/.test(from + to),
+  );
+  return { text: used.reduce((t, { from, to }) => t.split(from).join(to), text), fixes: used };
+}
+
+export async function fixMishearing(text: string): Promise<{ text: string; fixes: Fix[] }> {
+  try {
+    const groq = new Groq({ apiKey: cleanEnv(process.env.GROQ_API_KEY) });
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-20b", // 교정은 쉬운 일이라 작은 모델 (Groq 한도도 모델마다 따로라 정리 한도를 덜 씀)
+      temperature: 0,
+      reasoning_effort: "low",
+      messages: [
+        { role: "system", content: FIX_PROMPT },
+        { role: "user", content: text },
+      ],
+      response_format: { type: "json_schema", json_schema: { name: "fixes", strict: true, schema: FIX_SCHEMA } },
+    });
+    const raw = JSON.parse(completion.choices[0]?.message?.content ?? "{}") as { fixes?: Fix[] };
+    return applyFixes(text, Array.isArray(raw.fixes) ? raw.fixes : []);
+  } catch {
+    return { text, fixes: [] }; // 교정이 실패해도 정리는 원래 글로 한다
+  }
+}
+
+// 근거 문장은 고친 글에서 나오므로, 원래 받아쓴 글에 없으면 고친 말을 되돌려 '내가 한 말'과 맞춘다
+function unfixQuotes(quotes: SaidQuotes, original: string, fixes: Fix[]): SaidQuotes {
+  const whole = squash(original);
+  const back = (q: string | null) =>
+    q && !whole.includes(squash(q)) ? fixes.reduce((t, { from, to }) => t.split(to).join(from), q) : q;
+  return Object.fromEntries(Object.entries(quotes).map(([k, q]) => [k, back(q)])) as SaidQuotes;
+}
+
+export async function fillRecord(original: string) {
+  const { text: redacted, fixes } = await fixMishearing(original);
+  const done = (r: { record: CareRecord; quotes: SaidQuotes }) => ({ ...r, quotes: unfixQuotes(r.quotes, original, fixes), fixes });
   const raw = await askAi(redacted);
   const first = checkAiRecord(raw, redacted);
-  if (!notesLost(raw, first)) return first;
+  if (!notesLost(raw, first)) return done(first);
   // 다시 묻는 것도 실패하면(무료 한도 등) 첫 결과를 쓴다. SEC-3 호출 수는 한 번으로 센다
   try {
-    return checkAiRecord(await askAi(redacted), redacted);
+    return done(checkAiRecord(await askAi(redacted), redacted));
   } catch {
-    return first;
+    return done(first);
   }
 }
 

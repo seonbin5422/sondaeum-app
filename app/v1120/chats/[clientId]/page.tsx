@@ -3,6 +3,8 @@ import { myBoard, myClient, requireCaregiver } from "../../_data";
 import { LiveRefresh, PostList } from "../../_components/Board";
 import { EmptyState, Screen, TopBar } from "../../_components/ui";
 import { contactTitle, NO_CONTACT } from "../../_types";
+import { Coach } from "../../_components/Coach";
+import { COACH } from "../../_coachSteps";
 
 // C-18 수급자 게시판 (요양보호사, Figma 1120 수정본 558:2165). 보낸 보고서가 글 카드로 올라오고, 글을 누르면 댓글 (D-15 261101.ver)
 export default async function BoardPage({ params }: PageProps<"/v1120/chats/[clientId]">) {
@@ -20,6 +22,7 @@ export default async function BoardPage({ params }: PageProps<"/v1120/chats/[cli
       ) : (
         <PostList posts={posts} names={names} me="caregiver" hrefBase={`/v1120/chats/${clientId}`} />
       )}
+      <Coach id="board" steps={COACH.board} />
     </Screen>
   );
 }

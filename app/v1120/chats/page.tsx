@@ -4,6 +4,8 @@ import { CountBadge } from "../_components/Unread";
 import { PressLink } from "../_components/Pressable";
 import { EmptyState, Icon, Screen } from "../_components/ui";
 import { contactTitle, NO_CONTACT } from "../_types";
+import { Coach } from "../_components/Coach";
+import { COACH } from "../_coachSteps";
 
 // 게시판 탭 (Figma 1120 수정본 558:2125): 흰 상단 바 왼쪽 제목 "게시판" 아래 회색 바탕에 수급자별 흰 카드. 보낸 보고서가 글로 올라오고 댓글로 이야기한다 (DIF-5, D-15)
 export default async function ChatsPage() {
@@ -23,7 +25,7 @@ export default async function ChatsPage() {
           {rooms.map((c, i) => {
             const post = latest.get(c.id);
             return (
-              <li key={c.id} className="enter" style={{ "--i": Math.min(i, 6) } as CSSProperties}>
+              <li key={c.id} data-coach={i === 0 ? "room" : undefined} className="enter" style={{ "--i": Math.min(i, 6) } as CSSProperties}>
                 <PressLink
                   href={`/v1120/chats/${c.id}`}
                   pendingText={false}
@@ -61,6 +63,7 @@ export default async function ChatsPage() {
           })}
         </ul>
       )}
+      <Coach id="chats" steps={COACH.chats} />
     </Screen>
   );
 }

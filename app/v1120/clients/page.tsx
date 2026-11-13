@@ -2,6 +2,8 @@ import type { CSSProperties } from "react";
 import { myClients, myUnreadByClient } from "../_data";
 import { cancelPermanentDelete, deleteClient, restoreClient } from "../_actions";
 import { Snackbar } from "../_components/Snackbar";
+import { Coach } from "../_components/Coach";
+import { COACH } from "../_coachSteps";
 import { ChatLabel } from "../_components/Unread";
 import { PressLink } from "../_components/Pressable";
 import { Button, Card, Chip, EmptyState, Icon, LinkButton, Screen } from "../_components/ui";
@@ -25,7 +27,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/v1120/cl
         {active.map((c, i) => {
           const n = unread.get(c.id) ?? 0;
           return (
-            <li key={c.id} style={{ "--i": Math.min(i, 5) } as CSSProperties}>
+            <li key={c.id} data-coach={i === 0 ? "client-card" : undefined} style={{ "--i": Math.min(i, 5) } as CSSProperties}>
               <Card className="gap-3">
                 <PressLink href={`/v1120/client/${c.id}`} pendingText={false} className="-m-2 flex items-center gap-3 rounded-xl p-2 active:bg-(--bg-secondary)">
                   {/* Figma 아바타는 48px·20px 본문색 글자라 공용 Avatar(56px) 대신 여기서 그린다 */}
@@ -41,7 +43,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/v1120/cl
                 <div>
                   <Chip>{c.scheduleLabel}</Chip>
                 </div>
-                <div className="flex gap-2">
+                <div data-coach={i === 0 ? "client-shortcuts" : undefined} className="flex gap-2">
                   <PressLink href={`/v1120/client/${c.id}/history`} className={shortcut}>
                     방문 기록
                   </PressLink>
@@ -60,6 +62,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/v1120/cl
       </ul>
 
       {removed.length > 0 && (
+        <div data-coach="removed">
         <Card className="gap-2">
           <h2 className="text-lg font-bold">삭제한 수급자</h2>
           <p className="text-base text-muted">
@@ -83,10 +86,14 @@ export default async function ClientsPage({ searchParams }: PageProps<"/v1120/cl
             </div>
           ))}
         </Card>
+        </div>
       )}
 
-      <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
+      <div data-coach="add-client">
+        <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
       </div>
+      </div>
+      {!done && <Coach id="clients" steps={COACH.clients} />}
       <DoneSnackbar done={done} id={typeof id === "string" ? id : ""} name={clients.find((c) => c.id === id)?.name} />
     </Screen>
   );

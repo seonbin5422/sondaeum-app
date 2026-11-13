@@ -32,6 +32,19 @@ export const COACH = {
     { target: "talk-more", title: "빠진 내용 더 말하기", body: "빠진 내용이 있거나 글자가 틀렸으면 이 버튼을 누르세요. 녹음 화면에서 더 말하거나 \"글로 쓰기\"로 고칠 수 있어요." },
     ...REVIEW_REST,
   ],
+  clients: [
+    { target: "client-card", title: "담당 어르신 카드", body: "이름을 누르면 어르신 정보와 보호자 연락처를 보고 고칠 수 있어요." },
+    { target: "client-shortcuts", title: "바로 가기", body: "\"방문 기록\"은 지난 기록, \"서류\"는 기록지 PDF, \"게시판\"은 보호자와 나눈 이야기예요." },
+    { target: "removed", title: "삭제한 수급자", body: "잘못 지웠어도 14일 안에는 \"되살리기\"로 돌려놓을 수 있어요." },
+    { target: "add-client", title: "새 어르신 등록", body: "새로 맡은 어르신은 여기서 등록해요. 등록하면 보호자를 게시판에 초대할 수 있어요." },
+  ],
+  chats: [
+    { target: "room", title: "어르신마다 게시판이 있어요", body: "보낸 방문 보고서가 글로 올라와요. 보호자가 댓글을 달면 어르신 동그라미 위에 빨간 숫자가 떠요. 누르면 들어가요." },
+  ],
+  board: [
+    { target: "post", title: "보고서 글", body: "글을 누르면 보고서 내용과 보호자 댓글을 보고, 댓글로 답할 수 있어요." },
+    { target: "sort", title: "순서 바꾸기", body: "최신 글부터 또는 오래된 글부터 볼 수 있어요." },
+  ],
   guardianHome: [
     { target: "reports", title: "방문 보고서", body: "요양보호사가 보낸 방문 보고서를 날짜별로 모아 볼 수 있어요." },
     { target: "documents", title: "서류 만들기", body: "기간을 골라 기록지를 PDF로 받을 수 있어요." },

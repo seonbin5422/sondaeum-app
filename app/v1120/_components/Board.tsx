@@ -72,11 +72,13 @@ export function PostList({ posts, names, me, hrefBase }: { posts: BoardPost[]; n
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between leading-[1.4]">
         <h2 className="text-lg font-bold">보고서 {posts.length}개</h2>
-        <SortSelect value={sort} onChange={setSort} />
+        <div data-coach="sort">
+          <SortSelect value={sort} onChange={setSort} />
+        </div>
       </div>
       <ol className="flex flex-col gap-3">
         {list.map((p, i) => (
-          <li key={p.shareToken} className="enter" style={{ "--i": Math.min(i, 6) } as CSSProperties}>
+          <li key={p.shareToken} data-coach={i === 0 ? "post" : undefined} className="enter" style={{ "--i": Math.min(i, 6) } as CSSProperties}>
             <PostCard post={p} names={names} me={me} href={`${hrefBase}/${p.shareToken}`} />
           </li>
         ))}

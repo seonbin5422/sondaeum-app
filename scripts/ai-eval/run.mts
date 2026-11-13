@@ -77,11 +77,13 @@ const arg = (name: string) => {
 const all: Case[] = JSON.parse(readFileSync(new URL("./cases.json", import.meta.url), "utf8"));
 // --stt: 받아쓰기 오류가 섞인 글로 AI 정리를 시험한다 (받아쓴 글이 없는 사례는 뺀다)
 const sttMode = args.includes("--stt");
+// --stt-model whisper-large-v3: 그 모델이 받아쓴 글로 (기본은 앱과 같은 turbo)
+const sttModel = arg("--stt-model") ?? "whisper-large-v3-turbo";
 if (sttMode) {
   const stt = new Map<string, string>();
   for (const l of readFileSync(new URL("./stt-results.jsonl", import.meta.url), "utf8").split("\n").filter(Boolean)) {
     const r = JSON.parse(l);
-    stt.set(r.id, r.text);
+    if (r.model === sttModel) stt.set(r.id, r.text);
   }
   for (let i = all.length - 1; i >= 0; i--) {
     const t = stt.get(all[i].id);
@@ -104,7 +106,7 @@ const runs = Number(arg("--runs") ?? 1);
 // --resume: 지금 지시문으로 이미 채점한 사례·회차는 건너뛰고 남은 것만 돌린다 (무료 키 하루 한도 때문에 며칠에 나눠 돌림)
 const RESULTS = new URL("./results.jsonl", import.meta.url);
 const sha = (t: string) => createHash("sha1").update(t).digest("hex").slice(0, 8);
-const version = sha(readFileSync(new URL("../../app/v1120/_ai.ts", import.meta.url), "utf8")) + (sttMode ? "+stt" : "");
+const version = sha(readFileSync(new URL("../../app/v1120/_ai.ts", import.meta.url), "utf8")) + (sttMode ? "+stt" + (sttModel === "whisper-large-v3-turbo" ? "" : `:${sttModel}`) : "");
 type Row = { at: string; version: string; id: string; caseHash: string; run: number; passed: boolean; fieldsOk: number; fields: number; mustOk: number; must: number; problems: string[] };
 const saved: Row[] = existsSync(RESULTS)
   ? readFileSync(RESULTS, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))

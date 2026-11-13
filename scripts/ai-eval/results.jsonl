@@ -95,3 +95,13 @@
 {"at":"2026-11-13T15:51:43.593Z","version":"78129e18+stt","id":"46-경기·서울","caseHash":"ff5287be","run":1,"passed":false,"fieldsOk":0,"fields":0,"mustOk":1,"must":2,"problems":["특이사항에 빠짐: 기침","→ 특이사항: 감기 증상 호소함. 따뜻한 물 제공함."]}
 {"at":"2026-11-13T15:52:33.121Z","version":"78129e18+stt","id":"47-crude-words","caseHash":"251edb44","run":1,"passed":false,"fieldsOk":2,"fields":2,"mustOk":0,"must":2,"problems":["특이사항에 빠짐: 구토|토하","특이사항에 빠짐: 입","→ 특이사항: 대소변 실수 없음 확인. 점심 식사 섭취함. 구강청결 도움함."]}
 {"at":"2026-11-13T15:53:20.918Z","version":"78129e18+stt","id":"53-honor-yakju","caseHash":"f30c2c4c","run":1,"passed":false,"fieldsOk":0,"fields":0,"mustOk":0,"must":1,"problems":["특이사항에 빠짐: 음주|술","→ 특이사항: 어제 저녁에 약주 한잔 하셨다고 함."]}
+{"at":"2026-11-13T16:47:33.034Z","version":"5cc9c493","id":"26-경상","caseHash":"b311cf42","run":1,"passed":true,"fieldsOk":0,"fields":0,"mustOk":4,"must":4,"problems":[]}
+{"at":"2026-11-13T16:48:20.837Z","version":"5cc9c493","id":"29-전라","caseHash":"73d43081","run":1,"passed":true,"fieldsOk":0,"fields":0,"mustOk":3,"must":3,"problems":[]}
+{"at":"2026-11-13T16:49:09.411Z","version":"5cc9c493","id":"34-충청","caseHash":"81056afa","run":1,"passed":false,"fieldsOk":0,"fields":0,"mustOk":3,"must":4,"problems":["특이사항에 빠짐: 자꾸|계속|여러","→ 특이사항: 기침 지속함. 따뜻한 숭늉 제공함. 지팡이 제공함."]}
+{"at":"2026-11-13T16:49:56.899Z","version":"5cc9c493","id":"37-강원","caseHash":"1f98b6aa","run":1,"passed":false,"fieldsOk":0,"fields":0,"mustOk":3,"must":4,"problems":["특이사항에 빠짐: 며칠","→ 특이사항: 새벽에 소변 보시며 두 번씩 일어나심."]}
+{"at":"2026-11-13T16:51:29.716Z","version":"5cc9c493","id":"41-평안·함경","caseHash":"5b9471bf","run":1,"passed":true,"fieldsOk":0,"fields":0,"mustOk":3,"must":3,"problems":[]}
+{"at":"2026-11-13T16:52:17.083Z","version":"5cc9c493","id":"44-경기·서울","caseHash":"6c78ce80","run":1,"passed":false,"fieldsOk":1,"fields":1,"mustOk":1,"must":3,"problems":["특이사항에 빠짐: 소변","특이사항에 빠짐: 묽은|설사","→ 특이사항: 물대변 2회 보셨음. 기저귀 3회 교환함."]}
+{"at":"2026-11-13T16:53:04.170Z","version":"5cc9c493","id":"46-경기·서울","caseHash":"997e55bd","run":1,"passed":true,"fieldsOk":0,"fields":0,"mustOk":2,"must":2,"problems":[]}
+{"at":"2026-11-13T16:54:07.348Z","version":"5cc9c493","id":"52-honor-meal-sleep","caseHash":"0fc00c50","run":1,"passed":true,"fieldsOk":0,"fields":0,"mustOk":2,"must":2,"problems":[]}
+{"at":"2026-11-13T16:55:39.252Z","version":"5cc9c493","id":"53-honor-yakju","caseHash":"f30c2c4c","run":1,"passed":true,"fieldsOk":0,"fields":0,"mustOk":1,"must":1,"problems":[]}
+{"at":"2026-11-13T16:57:12.597Z","version":"5cc9c493","id":"54-honor-went-home","caseHash":"c0ec18f4","run":1,"passed":false,"fieldsOk":0,"fields":0,"mustOk":1,"must":1,"problems":["특이사항이 '~요'로 끝남","→ 특이사항: 따님이 오셔서 저녁을 드시고 댁으로 돌아가셨어요."]}

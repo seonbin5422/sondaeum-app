@@ -2,6 +2,7 @@ import Groq from "groq-sdk";
 import { cleanEnv } from "@/lib/env";
 import type { CareRecord, Change } from "./_types";
 import { minutesIn, type SaidQuotes } from "./_extract";
+import { glossary } from "./_glossary";
 
 // C-13 정리: 개인정보를 지운 녹음 글(_redact.ts)로 AI가 급여제공기록지(D-24) 칸을 채운다 (LAW-1·2).
 // AI가 실패하면 _actions.ts가 _extract.ts(낱말 찾기) 결과를 쓴다.
@@ -133,7 +134,7 @@ export function checkAiRecord(raw: unknown, input: string): { record: CareRecord
 export const notesLost = (raw: unknown, checked: { record: CareRecord }) =>
   !!str((raw as { notes?: unknown } | null)?.notes) && checked.record.notes === null;
 
-async function askAi(redacted: string) {
+async function askAi(redacted: string, retryNote = "") {
   // 키가 없을 때 파일을 불러오기만 해도 죽지 않게 부를 때 만든다
   const groq = new Groq({ apiKey: cleanEnv(process.env.GROQ_API_KEY) });
   const completion = await groq.chat.completions.create({
@@ -142,7 +143,8 @@ async function askAi(redacted: string) {
     reasoning_effort: "low", // 무료 한도(분당 토큰)를 아끼려고
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: redacted },
+      // 사전 뜻·다시 묻는 까닭은 녹음 글 뒤에 붙인다. 근거 문장 검사(checkAiRecord)는 녹음 글만 보므로 여기서 베껴 와도 걸러진다
+      { role: "user", content: redacted + glossary(redacted) + retryNote },
     ],
     response_format: { type: "json_schema", json_schema: { name: "care_record", strict: true, schema: SCHEMA } },
   });
@@ -176,13 +178,32 @@ export function fixRecordText(r: CareRecord): CareRecord {
   return { ...r, physicalNote: fixEumForm(r.physicalNote), notes: fixEumForm(r.notes), guardianNotes: fixEumForm(r.guardianNotes ?? null) };
 }
 
+// 녹음 글 문장 중 어느 칸의 근거 문장(quotes)과도 8글자 이상 겹치지 않는 문장 = AI가 통째로 빼먹은 말 (11/14: '약주 한잔'·'따님이 다녀감'이 특이사항째 빠짐)
+// shortcut: 문장부호로만 나눈다. 크롬 받아쓰기처럼 마침표가 없는 글은 한 문장이 되어 거의 걸리지 않는다, 문장 안에서 빠진 사실도 못 잡는다
+export function uncovered(input: string, quotes: SaidQuotes): string[] {
+  const said = squash(Object.values(quotes).filter(Boolean).join(""));
+  return input
+    .split(/(?<=[.?!])\s+|\n+/)
+    .map((t) => t.trim())
+    .filter((t) => {
+      const q = squash(t);
+      if (q.length < 8) return false;
+      for (let i = 0; i + 8 <= q.length; i++) if (said.includes(q.slice(i, i + 8))) return false;
+      return true;
+    });
+}
+
 export async function fillRecord(redacted: string) {
   const raw = await askAi(redacted);
   const first = checkAiRecord(raw, redacted);
-  if (!notesLost(raw, first)) return first;
-  // 다시 묻는 것도 실패하면(무료 한도 등) 첫 결과를 쓴다. SEC-3 호출 수는 한 번으로 센다
+  const missed = uncovered(redacted, first.quotes);
+  if (!notesLost(raw, first) && !missed.length) return first;
+  // 한 번만 다시 묻는다. 다시 묻는 것도 실패하면(무료 한도 등) 첫 결과를 쓴다. SEC-3 호출 수는 한 번으로 센다
+  const note = missed.length ? `\n\n[다시 정리] 앞서 정리했을 때 아래 문장에서 말한 사실이 어느 칸에도 들어가지 않았어요. 말한 사실은 하나도 빼지 말고(일상 사실도 notes에) 처음부터 다시 정리하세요.\n${missed.map((m) => `- ${m}`).join("\n")}` : "";
   try {
-    return checkAiRecord(await askAi(redacted), redacted);
+    const second = checkAiRecord(await askAi(redacted, note), redacted);
+    if (!missed.length || uncovered(redacted, second.quotes).length < missed.length) return second;
+    return first;
   } catch {
     return first;
   }

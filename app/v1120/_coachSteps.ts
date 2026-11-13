@@ -61,7 +61,7 @@ export const COACH = {
 
 // 사용법 둘러보기 (사용자 11/14): 처음 가입해 빈 화면이면 짚을 게 없어서, 수급자를 등록한 뒤 체험 계정 예시 화면 캡처로 흐름을 보여 준다.
 // ring = 캡처(390×844 화면) 위 강조 칸 [x, y, 폭, 높이]. shortcut: 화면을 바꾸면 캡처를 다시 찍는다 — public/v1120/tour/*.webp
-export type TourStep = { img: string; ring: [number, number, number, number]; title: string; body: string };
+export type TourStep = { img: string; ring: [number, number, number, number]; title: string; body: string; white?: boolean }; // white: 흰 바탕 화면 캡처
 export const TOUR: TourStep[] = [
   { img: "home", ring: [12, 190, 366, 240], title: "방문이 끝나면 \"기록하기\"", body: "홈의 \"이번 방문\" 칸에서 \"기록하기\"를 눌러요. 지금 보이는 건 예시 화면이에요." },
   { img: "mic", ring: [143, 724, 104, 104], title: "말로 기록해요", body: "동그란 버튼을 누르고 오늘 한 일을 편하게 말해요. 사투리도 괜찮아요. 다 말하면 한 번 더 눌러요." },
@@ -69,7 +69,7 @@ export const TOUR: TourStep[] = [
   { img: "sections", ring: [12, 370, 366, 104], title: "기록지 칸이 채워져요", body: "말한 내용에 맞는 칸에 체크가 생겨요. 다 말했으면 \"다 말했어요\"를 눌러요. 빠진 칸은 소리로 다시 여쭤봐요." },
   { img: "said", ring: [12, 148, 366, 244], title: "AI가 기록지에 맞춰 정리해요", body: "\"내가 한 말\"과 AI가 정리한 칸이 맞는지 비교해 보세요." },
   { img: "step", ring: [12, 296, 366, 268], title: "하나씩 확인하고 고쳐요", body: "항목을 펼쳐 맞으면 \"확인했어요, 다음\", 틀리면 눌러서 고쳐요." },
-  { img: "send", ring: [12, 756, 366, 72], title: "보호자에게 보내요", body: "보호자가 받을 보고서를 확인하고 \"저장하고 공유하기\"를 눌러요. 보낸 뒤에는 고칠 수 없어요." },
+  { img: "send", white: true, ring: [12, 756, 366, 72], title: "보호자에게 보내요", body: "보호자가 받을 보고서를 확인하고 \"저장하고 공유하기\"를 눌러요. 보낸 뒤에는 고칠 수 없어요." },
   { img: "board", ring: [12, 76, 366, 164], title: "보호자와 게시판으로 이야기해요", body: "보낸 보고서가 게시판에 올라와요. 보호자가 댓글을 달면 빨간 숫자가 떠요." },
   { img: "home", ring: [12, 426, 366, 166], title: "일정과 서류", body: "\"일정 보기\"로 이번 주 방문을, \"서류 만들기\"로 기간을 골라 기록지 PDF를 만들어요." },
 ];

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { myClients } from "../_data";
-import { Avatar, Card, EmptyState, ListRow, Screen, TopBar } from "../_components/ui";
+import { Avatar, Card, EmptyState, LinkButton, ListRow, Screen, TopBar } from "../_components/ui";
 
 // 홈 "서류 만들기": 수급자가 여럿이면 여기서 고른다 (전에는 수급자 탭으로 보내서 메뉴가 바뀐 줄 알았음, 팀 피드백 11/6)
 export default async function PickClientForDocumentsPage() {
@@ -11,7 +11,10 @@ export default async function PickClientForDocumentsPage() {
       <TopBar backHref="/v1120" title="서류 만들기" />
       <p className="enter py-2 text-xl font-bold leading-[1.4]">누구의 서류를 만들까요?</p>
       {active.length === 0 ? (
-        <EmptyState>수급자를 등록해 주세요.</EmptyState>
+        <>
+          <EmptyState>수급자를 등록하면 그 어르신의 서류를 만들 수 있어요.</EmptyState>
+          <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
+        </>
       ) : (
         <Card className="gap-0! p-0! overflow-hidden">
           {active.map((c) => (

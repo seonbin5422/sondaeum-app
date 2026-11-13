@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { myBoardSummary, myClients, myUnreadByClient } from "../_data";
 import { CountBadge } from "../_components/Unread";
 import { PressLink } from "../_components/Pressable";
-import { EmptyState, Icon, Screen } from "../_components/ui";
+import { EmptyState, Icon, LinkButton, Screen } from "../_components/ui";
 import { contactTitle, NO_CONTACT } from "../_types";
 import { Coach } from "../_components/Coach";
 import { COACH } from "../_coachSteps";
@@ -12,6 +12,7 @@ export default async function ChatsPage() {
   const [all, latest, unread] = await Promise.all([myClients(), myBoardSummary(), myUnreadByClient()]);
   // 보호자가 없는 수급자는 게시판이 없다 (D-49)
   const rooms = all.filter((c) => c.isActive && c.guardianRelation !== NO_CONTACT);
+  const none = !all.some((c) => c.isActive);
   return (
     <Screen nav tab>
       {/* 탭 화면 제목은 왼쪽 (수정본). 본문은 상단 바에서 20px 아래 */}
@@ -19,7 +20,11 @@ export default async function ChatsPage() {
         <h1 className="mx-auto w-full max-w-md px-5 text-[22px] font-bold leading-[1.4] tracking-[-0.02em]">게시판</h1>
       </div>
       {rooms.length === 0 ? (
-        <EmptyState>수급자를 등록하면 게시판이 생겨요.</EmptyState>
+        // 수급자가 없으면 등록부터, 있는데 보호자가 없으면 게시판을 열 사람이 없다 (D-49)
+        <>
+          <EmptyState>{none ? "수급자와 보호자를 등록하면 게시판이 생겨요." : "보호자를 등록한 수급자가 없어요. 수급자 정보에서 보호자를 넣으면 게시판이 생겨요."}</EmptyState>
+          {none && <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}
+        </>
       ) : (
         <ul className="flex flex-col gap-3">
           {rooms.map((c, i) => {

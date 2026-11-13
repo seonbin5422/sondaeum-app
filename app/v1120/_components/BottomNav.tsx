@@ -37,7 +37,7 @@ export function BottomNav({ guardianToken }: { guardianToken?: string }) {
   }, [pathname, guardianToken]);
   const tabs = guardianToken ? guardianTabs(guardianToken) : TABS;
   return (
-    <nav aria-label="메뉴" className="bg-white pb-[env(safe-area-inset-bottom)]">
+    <nav data-coach="nav" aria-label="메뉴" className="bg-white pb-[env(safe-area-inset-bottom)]">
       <ul className={`mx-auto grid h-[76px] max-w-md py-1.5 ${guardianToken ? "grid-cols-3" : "grid-cols-4"}`}>
         {tabs.map((t) => {
           const active = t.match(pathname);

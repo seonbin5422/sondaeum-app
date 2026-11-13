@@ -8,6 +8,8 @@ import { ScheduleSheet } from "./_components/ScheduleSheet";
 import { ResumeSheet } from "./_components/ResumeSheet";
 import { PressLink } from "./_components/Pressable";
 import { Button, Card, Chip, LinkButton, Screen } from "./_components/ui";
+import { Coach } from "./_components/Coach";
+import { COACH } from "./_coachSteps";
 import { kstNowHm, notifications, todayVisitList, visitHref, type HomeVisit } from "./notifications/_today";
 
 const order = (i: number) => ({ "--i": i }) as CSSProperties;
@@ -37,6 +39,7 @@ export default async function HomePage() {
         <img src="/v1120/home/home-deco.svg" alt="" aria-hidden width={267} height={297} className="pointer-events-none absolute top-3 left-1/2 mix-blend-soft-light" />
         <div className="relative flex h-12 items-center justify-between">
           <Image src="/brand/logo-full.svg" alt="손다음" width={118} height={42} priority className="brightness-0 invert" />
+          <div data-coach="bell">
           <PressLink href="/v1120/notifications" pendingText={false} className="relative flex size-12 items-center justify-center rounded-full active:bg-white/30">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/v1120/home/bell.svg" alt="" width={36} height={36} />
@@ -47,6 +50,7 @@ export default async function HomePage() {
             )}
             <span className="sr-only">알림{alerts > 0 ? ` ${alerts}개` : ""}</span>
           </PressLink>
+          </div>
         </div>
         <div className="relative flex flex-col gap-0.5 leading-[1.4] text-black">
           <p className="text-lg">{caregiverTitle(caregiver.name)}님,</p>
@@ -55,7 +59,7 @@ export default async function HomePage() {
           </h1>
         </div>
         {left.length > 0 && (
-          <div className="enter relative mt-1 flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
+          <div data-coach="resume" className="enter relative mt-1 flex items-center gap-3 rounded-2xl bg-white px-4 py-3" style={order(1)}>
             {/* Figma 558:936: 한 줄에 문구 + "이어서 하기". 2건 이상이면 "이어서 하기"가 시트를 열어 고르게 한다 */}
             <p className="min-w-0 flex-1 text-lg font-bold leading-[1.4] text-muted">
               마무리 못 한 기록 <span className="whitespace-nowrap">{left.length}건이</span> 있어요.
@@ -84,7 +88,7 @@ export default async function HomePage() {
           </Card>
         )}
 
-        <div className="enter grid grid-cols-2 gap-3" style={order(3)}>
+        <div data-coach="shortcuts" className="enter grid grid-cols-2 gap-3" style={order(3)}>
           <ScheduleSheet clients={clients} />
           <PressLink
             // 서류는 수급자마다 만든다: 한 명이면 바로 그 수급자 서류로, 여럿이면 서류 만들기 안에서 고른다
@@ -118,13 +122,14 @@ export default async function HomePage() {
           </>
         )}
       </div>
+      <Coach id="home" steps={COACH.home} />
     </Screen>
   );
 }
 
 function NextVisit({ visit }: { visit: HomeVisit }) {
   return (
-    <section className="enter flex flex-col items-start gap-4 rounded-2xl bg-white p-5 ring-2 ring-inset ring-accent" style={order(2)}>
+    <section data-coach="next-visit" className="enter flex flex-col items-start gap-4 rounded-2xl bg-white p-5 ring-2 ring-inset ring-accent" style={order(2)}>
       {/* 귤색 링: 지금 할 방문을 다른 칸과 구분 (Figma 558:959) */}
       <span className="rounded-full bg-accent px-3 py-1 text-base font-bold leading-[1.4]">이번 방문</span>
       <div className="flex items-center gap-3">

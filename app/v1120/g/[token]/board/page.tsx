@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { guardianBoard } from "../../../_data";
 import { BoardExpired, LiveRefresh, PostCard } from "../../../_components/Board";
 import { BackButton } from "../../../_components/BackButton";
+import { Coach } from "../../../_components/Coach";
+import { COACH } from "../../../_coachSteps";
 import { caregiverTitle, contactTitle } from "../../../_types";
 
 // G-02 보호자 게시판 (Figma "와이어 · G-02 보호자 게시판", D-15 261101.ver). 로그인 없이 받은 보고서 링크로 들어와 그 어르신의 보고서를 모두 본다
@@ -29,12 +31,13 @@ export default async function GuardianBoardPage({ params }: PageProps<"/v1120/g/
       </p>
       {b.posts.length === 0 && <p className="py-10 text-center text-lg text-muted">아직 보낸 보고서가 없어요. 방문 보고서를 보내면 여기에 올라와요.</p>}
       <ol className="flex flex-col gap-4">
-        {b.posts.map((p) => (
-          <li key={p.shareToken}>
+        {b.posts.map((p, i) => (
+          <li key={p.shareToken} data-coach={i === 0 ? "post" : undefined}>
             <PostCard post={p} names={names} me="guardian" href={`/v1120/g/${p.shareToken}/post`} />
           </li>
         ))}
       </ol>
+      <Coach id="guardian-board" steps={COACH.guardianBoard} />
     </main>
   );
 }

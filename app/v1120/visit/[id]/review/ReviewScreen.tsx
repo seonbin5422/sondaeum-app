@@ -4,6 +4,8 @@ import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Icon, LinkButton, Screen, TopBar, selectChipClass } from "../../../_components/ui";
 import { Spinner } from "../../../_components/Pressable";
+import { Coach } from "../../../_components/Coach";
+import { COACH } from "../../../_coachSteps";
 import { addToNotes, saveRecord } from "../../../_actions";
 import { useSpeech } from "../../../_components/useSpeech";
 import { changedFields, type SaidQuotes } from "../../../_extract";
@@ -120,7 +122,7 @@ function SaidCard({ text }: { text: string }) {
   const [all, setAll] = useState(false);
   const long = text.length > 120;
   return (
-    <section className="enter flex flex-col gap-2 rounded-2xl bg-white p-5 leading-[1.4]">
+    <section data-coach="said" className="enter flex flex-col gap-2 rounded-2xl bg-white p-5 leading-[1.4]">
       <h2 className="text-lg font-bold">내가 한 말</h2>
       <p className={`whitespace-pre-wrap text-lg ${all || !long ? "" : "line-clamp-4"}`}>{text}</p>
       {long && (
@@ -489,7 +491,7 @@ export function ReviewScreen({
       <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title="기록 확인" />
       {saveError && <p className="text-base font-bold text-(--text-danger)" role="alert">{saveError}</p>}
 
-      <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-white p-1">
+      <div data-coach="tabs" role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-white p-1">
         {(
           [
             ["check", "기록 확인"],
@@ -541,7 +543,7 @@ export function ReviewScreen({
         </p>
       </div>
       {resumed && (
-        <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={talkMore}>
+        <Button data-coach="talk-more" variant="secondary" className="bg-white! active:bg-(--line)!" onClick={talkMore}>
           🎤 빠진 내용 더 말하기
         </Button>
       )}
@@ -578,6 +580,7 @@ export function ReviewScreen({
       <LinkButton href="/v1120" variant="secondary" className="bg-white! active:bg-(--line)!">
         나중에 하기 (홈으로)
       </LinkButton>
+      {tab === "check" && <Coach id="review" steps={resumed ? COACH.reviewResumed : COACH.review} />}
     </Screen>
   );
 }

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { caregiverName, chatTokenToClient, findClient } from "../../_mock";
 import { Avatar, Chip, LinkButton, Screen } from "../../_components/ui";
+import { Coach } from "../../_components/Coach";
+import { COACH } from "../../_coachSteps";
 
 // G-04 보호자 홈 (D-44). 어르신 정보는 보기만, 고칠 내용은 게시판 댓글로 요양보호사에게 말한다
 export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[token]">) {
@@ -35,10 +37,14 @@ export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[
       </section>
 
       <div className="flex flex-col gap-3">
-        <LinkButton href={`/v1120/c/${token}/reports`}>보고서 모아보기</LinkButton>
-        <LinkButton href={`/v1120/c/${token}/documents`} variant="secondary">
-          서류 만들기
-        </LinkButton>
+        <div data-coach="reports">
+          <LinkButton href={`/v1120/c/${token}/reports`}>보고서 모아보기</LinkButton>
+        </div>
+        <div data-coach="documents">
+          <LinkButton href={`/v1120/c/${token}/documents`} variant="secondary">
+            서류 만들기
+          </LinkButton>
+        </div>
       </div>
 
       <section className="flex flex-col gap-2">
@@ -53,6 +59,7 @@ export default async function GuardianHomePage({ params }: PageProps<"/v1120/c/[
         </dl>
         <p className="text-base text-muted">바뀐 내용이 있으면 게시판 댓글로 요양보호사에게 알려 주세요.</p>
       </section>
+      <Coach id="guardian-home" steps={COACH.guardianHome} />
     </Screen>
   );
 }

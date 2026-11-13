@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Icon, Screen, TopBar } from "../../../_components/ui";
 import { buzz, Spinner } from "../../../_components/Pressable";
+import { Coach } from "../../../_components/Coach";
+import { COACH } from "../../../_coachSteps";
 import { useSpeech } from "../../../_components/useSpeech";
 import { finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
@@ -245,6 +247,7 @@ export function RecordScreen({
           {/* Figma 580:2283: 녹음 버튼은 화면 아래 가운데 원(Figma 112px, 사용자 11/7 요청으로 88px). 녹음 중에는 빨간 원 + 정지 */}
           <button
             type="button"
+            data-coach="mic"
             onPointerDown={buzz}
             onClick={speech.recording ? speech.stop : () => (hush(), speech.start())}
             disabled={speech.supported === false}
@@ -315,6 +318,7 @@ export function RecordScreen({
       )}
 
       {/* Figma 수정안: 녹음 중·채워진 칸은 귤색 2px — 테두리 대신 안쪽 링 (브랜드색은 면적으로) */}
+      <div data-coach="transcript">
       <Card className={`gap-2! ${speech.recording ? "ring-2 ring-inset ring-accent" : ""}`}>
         {/* Figma 580:2147: 녹음 중 표시는 "녹음 내용" 제목 옆 */}
         <div className="flex flex-wrap items-center gap-2">
@@ -370,13 +374,14 @@ export function RecordScreen({
         {speech.error && <p className="text-base font-bold text-(--text-danger)">{speech.error}</p>}
         {saveError && <p className="text-base font-bold text-(--text-danger)">{saveError}</p>}
       </Card>
+      </div>
 
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording} onClick={openTyping}>
+          <Button data-coach="type" variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording} onClick={openTyping}>
             글로 쓰기
           </Button>
-          <Button variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording || uploading} onClick={() => fileInput.current?.click()}>
+          <Button data-coach="upload" variant="secondary" className="bg-white! active:bg-(--line)!" disabled={speech.recording || uploading} onClick={() => fileInput.current?.click()}>
             {uploading ? <><Spinner />글로 바꾸는 중</> : "음성 파일 올리기"}
           </Button>
           <input
@@ -407,6 +412,7 @@ export function RecordScreen({
             return (
               <li
                 key={sec.title}
+                data-coach={i === 0 ? "sections" : undefined}
                 className={`flex items-center gap-4 rounded-2xl px-5 py-4 transition-colors ${done ? "bg-(--bg-brand) ring-2 ring-inset ring-accent" : "bg-white"}`}
               >
                 {done ? (
@@ -431,6 +437,7 @@ export function RecordScreen({
       </section>
       {/* 아래에 붙은 녹음 버튼·버튼 두 개가 마지막 칸을 가리지 않게 (Screen pb-40은 버튼 하나 기준) */}
       {showActions && <div aria-hidden className="h-28 shrink-0" />}
+      <Coach id="record" steps={COACH.record} />
 
     </Screen>
   );

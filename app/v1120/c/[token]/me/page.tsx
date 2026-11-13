@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { chatTokenToClient, findClient } from "../../../_mock";
 import { Avatar, Screen } from "../../../_components/ui";
+import { CoachReplay } from "../../../_components/Coach";
 
 // G-05 보호자 내 정보 (D-44). 보호자 로그인 전이라 요양보호사가 등록한 보호자 정보를 보여 준다
 export default async function GuardianMePage({ params }: PageProps<"/v1120/c/[token]/me">) {
@@ -28,6 +29,14 @@ export default async function GuardianMePage({ params }: PageProps<"/v1120/c/[to
               ›
             </span>
           </Link>
+        </li>
+        <li>
+          <CoachReplay home={`/v1120/c/${token}`}>
+            <span className="flex-1 text-lg font-bold">사용법 다시 보기</span>
+            <span className="text-muted" aria-hidden>
+              ›
+            </span>
+          </CoachReplay>
         </li>
       </ul>
     </Screen>

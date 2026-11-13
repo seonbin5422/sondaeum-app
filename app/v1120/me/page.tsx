@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { requireCaregiver } from "../_data";
 import { logout } from "../_actions";
 import { Icon, ListRow, Screen } from "../_components/ui";
+import { CoachReplay } from "../_components/Coach";
 import { caregiverTitle } from "../_types";
 
 // 내 정보 탭 (C-06 요양보호사 프로필 + 설정, Figma 1120 수정본 558:2281). 흰 바탕에 상자 없이 프로필과 메뉴 줄, 로그아웃도 메뉴 줄
@@ -29,6 +30,13 @@ export default async function MePage() {
         <ListRow href="/v1120/me/edit" icon={<Icon name="edit" />} title="내 정보 고치기" />
         <ListRow href="/v1120/me/consent" icon={<Icon name="check_circle" />} title="동의한 내용 보기" />
         <ListRow href="/v1120/privacy" icon={<Icon name="shield" />} title="개인정보 처리방침" />
+        <CoachReplay home="/v1120">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary)">
+            <Icon name="info" />
+          </span>
+          <span className="flex-1 text-lg font-bold leading-[1.4]">사용법 다시 보기</span>
+          <Icon name="chevron_right" className="text-muted" />
+        </CoachReplay>
         {/* 로그아웃도 같은 목록 줄 (수정본). ListRow는 링크만 받아서 같은 모양의 제출 버튼으로 */}
         <form action={logout}>
           <button type="submit" className="press flex min-h-16 w-full items-center gap-3 px-4 py-3.5 text-left active:bg-(--bg-secondary)">

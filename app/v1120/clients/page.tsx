@@ -1,14 +1,15 @@
 import type { CSSProperties } from "react";
 import { myClients, myUnreadByClient } from "../_data";
-import { restoreClient } from "../_actions";
+import { cancelPermanentDelete, deleteClient, restoreClient } from "../_actions";
+import { Snackbar } from "../_components/Snackbar";
 import { ChatLabel } from "../_components/Unread";
 import { PressLink } from "../_components/Pressable";
 import { Button, Card, Chip, EmptyState, Icon, LinkButton, Screen } from "../_components/ui";
 import { TitleBar } from "../client/TitleBar";
 
 // 수급자 탭 (Figma 558:1584): 담당 수급자 목록 (기존 C-09 관리 화면을 합침). 삭제한 수급자는 아래에서 되살린다.
-export default async function ClientsPage() {
-  const [clients, unread] = await Promise.all([myClients(), myUnreadByClient()]);
+export default async function ClientsPage({ searchParams }: PageProps<"/v1120/clients">) {
+  const [clients, unread, { done, id }] = await Promise.all([myClients(), myUnreadByClient(), searchParams]);
   const active = clients.filter((c) => c.isActive);
   const removed = clients.filter((c) => !c.isActive);
   const shortcut = "flex h-12 flex-1 items-center justify-center gap-1 rounded-xl bg-(--bg-secondary) px-3 text-base font-bold whitespace-nowrap active:bg-(--line)";
@@ -86,6 +87,18 @@ export default async function ClientsPage() {
 
       <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
       </div>
+      <DoneSnackbar done={done} id={typeof id === "string" ? id : ""} name={clients.find((c) => c.id === id)?.name} />
     </Screen>
   );
+}
+
+// 삭제·되살리기·완전히 지우기 뒤 알림과 되돌리기. 되돌리기도 같은 동작이라 한 번 더 누르면 다시 바뀐다
+function DoneSnackbar({ done, id, name }: { done: string | string[] | undefined; id: string; name?: string }) {
+  if (!id) return null;
+  const who = name ? `${name} 수급자를` : "수급자를";
+  if (done === "deleted") return <Snackbar key={done + id} message={`${who} 삭제했어요.`} undo={restoreClient.bind(null, id)} />;
+  if (done === "restored") return <Snackbar key={done + id} message={`${who} 되살렸어요.`} undo={deleteClient.bind(null, id)} />;
+  if (done === "purge") return <Snackbar key={done + id} message="14일 뒤 완전히 지워져요." undo={cancelPermanentDelete.bind(null, id)} />;
+  if (done === "purge-cancel") return <Snackbar key={done + id} message={"완전히 지우기를 취소했어요. 아래 \"삭제한 수급자\"에 다시 있어요."} />;
+  return null;
 }

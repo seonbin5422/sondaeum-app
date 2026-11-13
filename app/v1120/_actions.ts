@@ -91,20 +91,27 @@ export async function saveClient(form: FormData) {
 export async function deleteClient(id: string) {
   await ownClientOrThrow(id);
   await prisma.client.update({ where: { id }, data: { isActive: false } });
-  redirect("/v1120/clients");
+  redirect(`/v1120/clients?done=deleted&id=${id}`);
 }
 
 export async function restoreClient(id: string) {
   await ownClientOrThrow(id);
   await prisma.client.update({ where: { id }, data: { isActive: true } });
-  redirect("/v1120/clients");
+  redirect(`/v1120/clients?done=restored&id=${id}`);
 }
 
 // C-11 완전히 지우기: 기록 은폐를 막으려고 14일 뒤에 실제로 지운다 (옛 permanent-delete와 같은 방식)
 export async function permanentDeleteClient(id: string) {
   await ownClientOrThrow(id);
   await prisma.client.update({ where: { id }, data: { purgeAt: new Date(Date.now() + FOURTEEN_DAYS_MS) } });
-  redirect("/v1120/clients");
+  redirect(`/v1120/clients?done=purge&id=${id}`);
+}
+
+// 완전히 지우기 되돌리기 (스낵바): 지우기 전 14일 안에는 "삭제한 수급자"로 돌려놓는다
+export async function cancelPermanentDelete(id: string) {
+  await ownClientOrThrow(id);
+  await prisma.client.update({ where: { id }, data: { purgeAt: null } });
+  redirect(`/v1120/clients?done=purge-cancel&id=${id}`);
 }
 
 export async function logout() {

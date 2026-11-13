@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button, buzz } from "./Pressable";
@@ -18,7 +18,7 @@ const seen = (id: string) => {
     return false;
   }
 };
-const markSeen = (id: string) => {
+export const markSeen = (id: string) => {
   try {
     localStorage.setItem(KEY + id, "1");
   } catch {}
@@ -44,8 +44,9 @@ export function Coach({ id, steps }: { id: string; steps: CoachStep[] }) {
 
   // 들어오는 움직임(.enter)이 끝난 뒤에 시작해야 짚는 자리가 맞는다
   useEffect(() => {
-    if (seen(id)) return;
     const t = setTimeout(() => {
+      // 기다린 뒤에 본다: 둘러보기 제안(TourOffer)이 같은 화면에서 먼저 '본 것'으로 표시할 수 있게
+      if (seen(id)) return;
       const shown = steps.filter((s) => find(s.target));
       if (shown.length) setList(shown);
     }, 700);
@@ -107,38 +108,110 @@ export function Coach({ id, steps }: { id: string; steps: CoachStep[] }) {
           below ? "bottom-0 pb-[calc(16px+env(safe-area-inset-bottom))]" : "top-0 pt-[calc(16px+env(safe-area-inset-top))]"
         }`}
       >
-        <section ref={card} tabIndex={-1} key={i} className="enter flex flex-col gap-3 rounded-2xl bg-white p-5 leading-[1.4] outline-none">
-          <span className="w-fit rounded-full bg-(--bg-brand) px-3 py-1 text-base font-bold text-(--text-brand)">
-            사용법 <span className="whitespace-nowrap">{i + 1} / {list.length}</span>
-          </span>
-          <h2 id="coach-title" className="text-[22px] font-bold tracking-[-0.02em]">
-            {step.title}
-          </h2>
-          <p className="text-lg" aria-live="polite">
-            {step.body}
-          </p>
-          <div className="flex gap-2 pt-1">
-            {!last && (
-              <div className="flex flex-1">
-                <Button variant="secondary" onClick={close}>
-                  그만 보기
-                </Button>
-              </div>
-            )}
-            <div className="flex flex-[2]">
-              <Button onClick={() => (last ? close() : setI(i + 1))}>
-                {last ? "알겠어요" : "다음"}
-              </Button>
-            </div>
-          </div>
-        </section>
+        <CoachCard
+          key={i}
+          cardRef={card}
+          chip={`사용법 ${i + 1} / ${list.length}`}
+          title={step.title}
+          body={step.body}
+          secondary={last ? undefined : { label: "그만 보기", onClick: close }}
+          primary={{ label: last ? "알겠어요" : "다음", onClick: () => (last ? close() : setI(i + 1)) }}
+        />
       </div>
     </div>,
     document.querySelector(".v1120") ?? document.body,
   );
 }
 
-// 내 정보 "사용법 다시 보기": 본 기록을 지우고 홈으로 가서 처음부터 다시 보여 준다
+type Action = { label: string; onClick: () => void };
+// 코치마크·둘러보기가 함께 쓰는 설명 카드
+export function CoachCard({ chip, title, body, cardRef, secondary, primary, onClose }: { chip: string; title: string; body: string; cardRef?: RefObject<HTMLElement | null>; secondary?: Action; primary: Action; onClose?: () => void }) {
+  return (
+    <section ref={cardRef} tabIndex={-1} className="enter flex flex-col gap-3 rounded-2xl bg-white p-5 leading-[1.4] outline-none">
+      <div className="flex items-center justify-between gap-2">
+        <span className="w-fit rounded-full bg-(--bg-brand) px-3 py-1 text-base font-bold text-(--text-brand)">{chip}</span>
+        {onClose && (
+          <button type="button" onClick={onClose} className="press -my-2 -mr-2 min-h-12 shrink-0 rounded-xl px-2 text-base font-bold text-muted active:bg-(--bg-secondary)">
+            그만 보기
+          </button>
+        )}
+      </div>
+      <h2 id="coach-title" className="text-[22px] font-bold tracking-[-0.02em]">
+        {title}
+      </h2>
+      <p className="text-lg" aria-live="polite">
+        {body}
+      </p>
+      <div className="flex gap-2 pt-1">
+        {secondary && (
+          <div className="flex flex-1">
+            <Button variant="secondary" onClick={secondary.onClick}>
+              {secondary.label}
+            </Button>
+          </div>
+        )}
+        <div className="flex flex-[2]">
+          <Button onClick={primary.onClick}>{primary.label}</Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 둘러보기(/v1120/tour) 차례: 수급자 없는 홈을 본 기기는 'pending' → 등록 뒤 홈에서 제안 → 열거나 "나중에"면 'done'
+const TOUR_KEY = "sondaeum-tour";
+const tourState = () => {
+  try {
+    return localStorage.getItem(TOUR_KEY);
+  } catch {
+    return null;
+  }
+};
+export const setTour = (v: "pending" | "done") => {
+  try {
+    localStorage.setItem(TOUR_KEY, v);
+  } catch {}
+};
+
+// 수급자가 없는 홈에 둔다: 등록을 마치면 둘러보기를 제안하도록 표시만 한다
+export function TourPending() {
+  useEffect(() => {
+    if (tourState() !== "done") setTour("pending");
+  }, []);
+  return null;
+}
+
+// 수급자가 있는 홈에 둔다: 처음 등록한 뒤 한 번 둘러보기를 제안한다. 제안하면 홈 코치마크는 둘러보기가 대신한다
+export function TourOffer() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (tourState() !== "pending") return;
+    markSeen("home");
+    setOpen(true); // eslint-disable-line react-hooks/set-state-in-effect -- 브라우저 저장값을 읽은 뒤에만 정할 수 있다
+  }, []);
+  if (!open) return null;
+  const later = () => {
+    setTour("done");
+    setOpen(false);
+  };
+  return createPortal(
+    <div className="fixed inset-0 z-40 flex items-end bg-black/45" role="dialog" aria-modal="true" aria-labelledby="coach-title">
+      <div className="mx-auto flex w-full max-w-md flex-col px-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
+        <CoachCard
+          chip="등록을 마쳤어요"
+          title="사용법을 둘러볼까요?"
+          body="예시 화면으로 기록하기부터 보호자에게 보내기까지 차례대로 보여 드려요. 1분이면 돼요."
+          secondary={{ label: "나중에", onClick: later }}
+          primary={{ label: "둘러보기", onClick: () => router.push("/v1120/tour") }}
+        />
+      </div>
+    </div>,
+    document.querySelector(".v1120") ?? document.body,
+  );
+}
+
+// 내 정보 "사용법 다시 보기": 본 기록을 지우고 home(요양보호사는 둘러보기, 보호자는 홈)으로 가서 처음부터 다시 보여 준다
 export function CoachReplay({ home, children }: { home: string; children: ReactNode }) {
   const router = useRouter();
   return (

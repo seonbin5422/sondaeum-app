@@ -30,7 +30,7 @@ export default async function MePage() {
         <ListRow href="/v1120/me/edit" icon={<Icon name="edit" />} title="내 정보 고치기" />
         <ListRow href="/v1120/me/consent" icon={<Icon name="check_circle" />} title="동의한 내용 보기" />
         <ListRow href="/v1120/privacy" icon={<Icon name="shield" />} title="개인정보 처리방침" />
-        <CoachReplay home="/v1120">
+        <CoachReplay home="/v1120/tour">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-(--bg-secondary)">
             <Icon name="info" />
           </span>

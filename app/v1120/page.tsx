@@ -8,7 +8,7 @@ import { ScheduleSheet } from "./_components/ScheduleSheet";
 import { ResumeSheet } from "./_components/ResumeSheet";
 import { PressLink } from "./_components/Pressable";
 import { Button, Card, Chip, LinkButton, Screen } from "./_components/ui";
-import { Coach } from "./_components/Coach";
+import { Coach, TourOffer, TourPending } from "./_components/Coach";
 import { COACH } from "./_coachSteps";
 import { kstNowHm, notifications, todayVisitList, visitHref, type HomeVisit } from "./notifications/_today";
 
@@ -84,7 +84,11 @@ export default async function HomePage() {
         {list.length === 0 && (
           <Card className="items-start">
             <p className="text-lg font-bold">오늘은 예정된 방문이 없어요.</p>
-            {active.length === 0 && <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>}
+            {active.length === 0 && (
+              <div data-coach="add-client" className="w-full">
+                <LinkButton href="/v1120/client/new">+ 수급자 등록하기</LinkButton>
+              </div>
+            )}
           </Card>
         )}
 
@@ -122,7 +126,17 @@ export default async function HomePage() {
           </>
         )}
       </div>
-      <Coach id="home" steps={COACH.home} />
+      {active.length === 0 ? (
+        <>
+          <Coach id="home-empty" steps={COACH.homeEmpty} />
+          <TourPending />
+        </>
+      ) : (
+        <>
+          <TourOffer />
+          <Coach id="home" steps={COACH.home} />
+        </>
+      )}
     </Screen>
   );
 }

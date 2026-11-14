@@ -68,11 +68,11 @@ export function ConfirmScreen({
           </p>
         </section>
         <ReportSections record={record} flat />
-        {/* 확인 서명 (D-48 261114.ver): 요양보호사 서명은 매번 필수, 수급자·보호자 서명은 받을 수 있을 때. 못 받으면 사유를 적는다 */}
+        {/* 확인 서명 (D-48 261114.ver): 요양보호사 서명만, 매번 필수. 보호자는 받은 보고서(G-01)에서 서명해 제출한다 */}
         <section className="enter flex flex-col gap-3 leading-[1.4]">
           <h2 className="text-xl font-bold">확인 서명</h2>
-          <p className="text-base text-muted">요양보호사 서명은 꼭 해야 보낼 수 있어요. 수급자나 보호자 서명은 받을 수 있으면 받고, 못 받으면 사유를 적어 주세요.</p>
-          <SignatureSection visitId={id} initial={signatures} caregiverName={caregiverName} onChange={onSig} />
+          <p className="text-base text-muted">요양보호사 서명은 꼭 해야 보낼 수 있어요.{recipient ? ` ${recipient}은 받은 보고서에서 따로 서명해요.` : ""}</p>
+          <SignatureSection visitId={id} initial={signatures} caregiverName={caregiverName} onChange={onSig} caregiverOnly />
         </section>
         </div>
       </Screen>

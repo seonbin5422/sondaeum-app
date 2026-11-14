@@ -124,27 +124,32 @@ function Warn({ children }: { children: ReactNode }) {
   return <p className="rounded-xl bg-(--danger-soft) px-4 py-3 text-base font-bold text-(--text-danger)">{children}</p>;
 }
 
-// 서비스 시작·끝 시각 입력 (분 단위). 휴대폰은 시각 고르기 창이 뜬다
+// 서비스 시작·끝 시각 입력 (분 단위)
 function TimeBox({ label, value, onChange }: { label: string; value: string; onChange: (v: string | null) => void }) {
-  const empty = !/^\d{2}:\d{2}$/.test(value);
+  // 시·분 선택 상자 두 개: 시각 입력칸(type=time)은 맥 사파리에 고르기 창이 없어 눌러도 아무것도 안 뜬다 (사용자 11/14). 선택 상자는 PC·휴대폰 모두 목록이 뜬다
+  const ok = /^\d{2}:\d{2}$/.test(value);
+  const [h, m] = ok ? value.split(":") : ["", ""];
+  const pick = (nh: string, nm: string) => onChange(nh && nm ? `${nh}:${nm}` : null);
+  const box = "h-[52px] min-w-16 cursor-pointer appearance-none rounded-xl px-3 text-center text-lg font-bold outline-none focus:ring-[3px] focus:ring-accent/50";
+  const bg = ok ? "bg-(--bg-secondary)" : "bg-(--bg-brand)";
   return (
-    <label className={`flex h-[52px] flex-1 items-center gap-2 rounded-xl px-3 focus-within:ring-[3px] focus-within:ring-accent/50 ${empty ? "bg-(--bg-brand)" : "bg-(--bg-secondary)"}`}>
-      <span className="shrink-0 text-base text-muted">{label}</span>
-      <input
-        type="time"
-        step={60}
-        aria-label={`서비스 ${label} 시각`}
-        className="w-full min-w-0 cursor-pointer bg-transparent text-lg font-bold outline-none"
-        // PC 크롬은 칸을 눌러도 고르기 창이 안 뜨고 작은 시계 아이콘을 눌러야 떠서, 칸 어디를 눌러도 띄운다 (사용자 11/14)
-        onClick={(e) => {
-          try {
-            e.currentTarget.showPicker();
-          } catch {}
-        }}
-        value={empty ? "" : value}
-        onChange={(e) => onChange(e.target.value || null)}
-      />
-    </label>
+    <div className="flex items-center gap-2 text-lg">
+      <span className="w-10 shrink-0 font-medium">{label}</span>
+      <select aria-label={`서비스 ${label} 시`} className={`${box} ${bg}`} value={h} onChange={(e) => pick(e.target.value, m || "00")}>
+        {!ok && <option value="">--</option>}
+        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+      <span>시</span>
+      <select aria-label={`서비스 ${label} 분`} className={`${box} ${bg}`} value={m} onChange={(e) => pick(h || "00", e.target.value)}>
+        {!ok && <option value="">--</option>}
+        {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+      <span>분</span>
+    </div>
   );
 }
 
@@ -357,9 +362,8 @@ export function ReviewScreen({
       title: "서비스 시간", time: `${svc.start}–${svc.end}`, missing: !svc.ok,
       body: (
         <>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2">
             <TimeBox label="시작" value={svc.start} onChange={(t) => update({ ...r, serviceStart: t })} />
-            <span className="text-lg text-muted">~</span>
             <TimeBox label="끝" value={svc.end} onChange={(t) => update({ ...r, serviceEnd: t })} />
           </div>
           <p className="text-lg font-bold">{svc.ok ? `총 ${svc.minutes}분` : "시작과 끝 시각을 넣어 주세요."}</p>

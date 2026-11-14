@@ -4,7 +4,8 @@ import { ReportSections } from "../../_components/ReportView";
 import { chatTokenToClient, historyByClient, sampleGuardianReport } from "../../_mock";
 import { BackButton } from "../../_components/BackButton";
 import { LinkButton, Screen, TopBar, TOP_BACK } from "../../_components/ui";
-import type { GuardianReportProps } from "../../_types";
+import { caregiverTitle, type GuardianReportProps } from "../../_types";
+import { GuardianSignForm } from "../../_components/SignatureBox";
 
 // G-01 보호자 보고서 (와이어 263:692). ?order=improved 를 붙이면 개선안(263:822, PR #9 머지 보류) 순서로 본다.
 // 보낸 기록(DB)이 있으면 그것을, 없으면(이력 화면의 임시 데이터) 예시 보고서를 보여 준다.
@@ -57,11 +58,20 @@ export function GuardianReport({ token, order, sent, fromBoard = false }: { toke
 
       <ReportSections record={record} order={order} flat />
 
+      {/* 확인 서명 (D-48 261114.ver): 요양보호사가 보낸 뒤 보호자가 여기서 서명해 제출한다. 급여제공기록지 서명칸에 들어간다 */}
+      {sent && (
+        <section className="enter flex flex-col gap-3 rounded-2xl bg-white p-5 leading-[1.4]">
+          <h2 className="text-xl font-bold">확인 서명</h2>
+          <p className="text-base text-muted">보고서 내용을 확인하셨으면 서명해 주세요. 기관에 내는 급여제공기록지에 함께 들어가요.</p>
+          <GuardianSignForm token={token} signed={!!sent.recipientSigned} />
+        </section>
+      )}
+
       {/* 게시판의 "보고서 전체 보기"로 들어왔으면 게시판으로 돌아가는 버튼은 안 보인다(뒤로가기로 돌아감) */}
       {sent && !fromBoard && <LinkButton href={`/v1120/g/${token}/board`}>게시판으로 이동하기</LinkButton>}
 
       <p className="rounded-2xl bg-white p-5 text-base leading-[1.4] text-muted">
-        {head.caregiverName} 요양보호사가 작성하고 확인한 기록이에요. 의료적 판단이 아니에요. 궁금한 점은 담당 기관에
+        {caregiverTitle(head.caregiverName)}가 작성하고 확인한 기록이에요. 의료적 판단이 아니에요. 궁금한 점은 담당 기관에
         물어봐 주세요.
       </p>
     </Screen>

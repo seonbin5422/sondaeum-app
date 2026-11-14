@@ -307,6 +307,23 @@ export async function saveSignatures(visitId: string, value: unknown) {
   });
 }
 
+// 보호자 확인 서명 (D-48 261114.ver): 요양보호사가 보낸 뒤 보호자가 받은 보고서(/g/[token])에서 서명해 제출한다.
+// 보고서 링크를 가진 사람만 들어올 수 있고(보고서 보기와 같은 권한), 요양보호사 서명은 그대로 두고 수급자·보호자 칸만 바꾼다
+export async function signAsGuardian(shareToken: string, strokes: unknown) {
+  const r = await prisma.report.findFirst({
+    where: { shareToken, sentAt: { not: null }, visit: { client: { isActive: true, purgeAt: null } } },
+    select: { id: true, signatures: true },
+  });
+  if (!r) throw new Error("보고서를 찾을 수 없어요.");
+  const { recipient } = cleanSignatures({ recipient: strokes, caregiver: [], reason: "" });
+  if (!recipient.length) throw new Error("서명을 해 주세요.");
+  let prev = { recipient: [], caregiver: [], reason: "" } as ReturnType<typeof cleanSignatures>;
+  try {
+    if (r.signatures) prev = cleanSignatures(JSON.parse(decryptText(r.signatures)));
+  } catch {}
+  await prisma.report.update({ where: { id: r.id }, data: { signatures: encryptText(JSON.stringify({ ...prev, recipient })) } });
+}
+
 // C-15 "저장하고 공유하기": 보낸 뒤에는 고칠 수 없다
 // 요양보호사 서명은 매번 필수 (D-48 261114.ver: 서명 누락은 청구 반려 사유). 서명칸의 늦은 자동 저장과 겹치지 않게 보낼 때 받은 서명을 함께 저장한다
 export async function sendReport(visitId: string, form: FormData) {

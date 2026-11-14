@@ -64,6 +64,7 @@ export type GuardianReportProps = {
   startedAt: string;
   endedAt: string;
   record: CareRecord;
+  recipientSigned?: boolean; // 보호자가 받은 보고서에서 확인 서명을 보냈는지 (D-48 261114.ver)
 };
 
 // 보호자와 수급자의 관계. 가족이 없는 어르신은 기관·공공 담당자가 받고, 아무도 없으면 "없음" (D-49)

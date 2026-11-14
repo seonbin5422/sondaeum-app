@@ -115,6 +115,15 @@ const sigForm = (caregiver: number[][][]) => {
 await assert.rejects(actions.sendReport(v1.id, sigForm([])), /요양보호사 서명/, "서명 없이 보내기 막음 (D-48 261114.ver)");
 await actions.sendReport(v1.id, sigForm([[[10, 10], [50, 40]]])).catch((e) => assert.ok(isRedirect(e), String(e))); // 보내면 보낸 화면으로 이동
 assert.equal((await prisma.visit.findUnique({ where: { id: v1.id } }))?.status, "SENT");
+// 보호자 확인 서명: 보낸 보고서 링크로 서명하면 요양보호사 서명은 그대로 두고 보호자 칸만 들어간다 (D-48 261114.ver)
+const sent1 = await prisma.report.findUnique({ where: { visitId: v1.id } });
+await assert.rejects(actions.signAsGuardian(sent1!.shareToken, []), /서명을 해 주세요/, "빈 보호자 서명 막음");
+await assert.rejects(actions.signAsGuardian("없는토큰", [[[1, 1]]]), /찾을 수 없어요/, "없는 링크");
+await actions.signAsGuardian(sent1!.shareToken, [[[5, 5], [9, 9]]]);
+const { decryptText } = await import("./crypto");
+const both = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));
+assert.equal(both.recipient.length, 1, "보호자 서명 저장");
+assert.equal(both.caregiver.length, 1, "요양보호사 서명 유지");
 const expires = (await prisma.client.findUnique({ where: { id: clientC.id } }))?.boardExpiresAt;
 assert.ok(expires && expires.getTime() > Date.now() + 89 * 86_400_000, "보내면 게시판 링크가 90일 열림");
 await assert.rejects(actions.saveTranscript(v1.id, "고친 말"), /이미 보낸 기록은 고칠 수 없어요/, "보낸 뒤 고치기 (STB-1)");

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { saveSignatures } from "../_actions";
+import { saveSignatures, signAsGuardian } from "../_actions";
 import { EMPTY_SIGNATURES, SIGN_H as H, SIGN_W as W } from "../_signatures";
 import type { Signatures, Stroke } from "../_types";
+import { Button } from "./Pressable";
 
 // 급여제공기록지 서명칸 (LAW-9). 손가락·펜이 지나간 점을 SVG 선으로 그린다.
 // 좌표는 칸 크기와 상관없는 0~W·0~H 값으로 모아서, 칸이 늘거나 줄어도(인쇄·화면 돌림) 서명이 그대로 따라간다.
@@ -100,7 +101,8 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
 
 // 급여제공기록지 아래 확인 서명. visitId가 있으면(요양보호사 쪽) 서명할 때마다 암호화해 저장하고, 없으면(보호자 쪽 임시 화면) 화면에만 둔다
 // onChange: 보내기 화면(C-15)이 요양보호사 서명이 있는지 알고, 보낼 때 함께 넘기려고 쓴다
-export function SignatureSection({ visitId, initial, caregiverName, onChange }: { visitId?: string; initial?: Signatures; caregiverName: string; onChange?: (s: Signatures) => void }) {
+// caregiverOnly: 보내기 화면(C-15)은 요양보호사 서명만. 보호자는 받은 보고서에서 따로 서명한다 (D-48 261114.ver)
+export function SignatureSection({ visitId, initial, caregiverName, onChange, caregiverOnly = false }: { visitId?: string; initial?: Signatures; caregiverName: string; onChange?: (s: Signatures) => void; caregiverOnly?: boolean }) {
   const [sig, setSig] = useState<Signatures>(initial ?? EMPTY_SIGNATURES);
   useEffect(() => onChange?.(sig), [sig, onChange]);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
@@ -125,10 +127,11 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange }: 
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
-        <SignatureBox label="수급자 또는 보호자" value={sig.recipient} onChange={(recipient) => setSig((s) => ({ ...s, recipient }))} />
+      <div className={caregiverOnly ? "flex flex-col" : "grid grid-cols-2 gap-3"}>
+        {!caregiverOnly && <SignatureBox label="수급자 또는 보호자" value={sig.recipient} onChange={(recipient) => setSig((s) => ({ ...s, recipient }))} />}
         <SignatureBox label={`요양보호사 ${caregiverName}`} value={sig.caregiver} onChange={(caregiver) => setSig((s) => ({ ...s, caregiver }))} />
       </div>
+      {!caregiverOnly && (
       <label className="flex flex-col gap-2 text-lg font-bold">
         서명 불가 사유
         <input
@@ -139,6 +142,7 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange }: 
           className="h-14 rounded-[15px] bg-(--bg-secondary) px-4 text-lg font-normal transition-shadow placeholder:text-muted focus:bg-white focus:outline-none focus:ring-[3px] focus:ring-accent/50 print:bg-white print:px-0 print:placeholder:text-transparent"
         />
       </label>
+      )}
       {visitId && (
         <p
           role="status"
@@ -148,6 +152,34 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange }: 
           {status === "saving" ? "서명 저장 중…" : status === "saved" ? "서명을 저장했어요" : status === "failed" ? "서명을 저장하지 못했어요. 다시 써 주세요." : ""}
         </p>
       )}
+    </>
+  );
+}
+
+// 보호자 보고서(G-01)의 확인 서명: 보호자가 서명해 제출하면 요양보호사 쪽 급여제공기록지 서명칸에 들어간다 (D-48 261114.ver)
+export function GuardianSignForm({ token, signed: signedBefore }: { token: string; signed: boolean }) {
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [state, setState] = useState<"idle" | "sending" | "done" | "failed">(signedBefore ? "done" : "idle");
+  if (state === "done") {
+    return <p className="rounded-xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--text-success)">서명을 보냈어요. 고마워요.</p>;
+  }
+  return (
+    <>
+      <SignatureBox label="수급자 또는 보호자" value={strokes} onChange={setStrokes} />
+      <Button
+        disabled={strokes.length === 0 || state === "sending"}
+        disabledReason={strokes.length === 0 ? "위 칸에 서명하면 보낼 수 있어요." : undefined}
+        onClick={() => {
+          setState("sending");
+          signAsGuardian(token, strokes).then(
+            () => setState("done"),
+            () => setState("failed"),
+          );
+        }}
+      >
+        {state === "sending" ? "보내는 중이에요" : "서명 보내기"}
+      </Button>
+      {state === "failed" && <p className="text-base font-bold text-(--text-danger)">서명을 보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.</p>}
     </>
   );
 }

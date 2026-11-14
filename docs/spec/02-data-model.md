@@ -73,7 +73,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `medicationMorning` / `Lunch` / `Evening` / `Bedtime` / `None` | Boolean | 복약 체크박스 |
 | `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화**. 1120 기록은 항목별 "내가 한 말"(`SaidQuotes`) |
 | `careRecord` | String? | 급여제공기록지 모양 `CareRecord` JSON, **암호화** (DIF-2, D-36). 아래 절 |
-| `signatures` | String? | 급여제공기록지 확인 서명 JSON, **암호화** (LAW-9, D-48). `{ recipient: Stroke[], caregiver: Stroke[], reason }` — `Stroke`는 서명칸 비율 좌표(0~400·0~120) 점 목록, `reason`은 서명 불가 사유(200자). 비면 `null`. 보낼 때(`sendReport`) 요양보호사 서명이 없으면 거절하고 받은 서명을 함께 저장한다(D-48 261114.ver). 1120 `saveSignatures`가 모양·크기(획 100·점 4000)를 확인하고 저장 |
+| `signatures` | String? | 급여제공기록지 확인 서명 JSON, **암호화** (LAW-9, D-48). `{ recipient: Stroke[], caregiver: Stroke[], reason }` — `Stroke`는 서명칸 비율 좌표(0~400·0~120) 점 목록, `reason`은 서명 불가 사유(200자). 비면 `null`. 보낼 때(`sendReport`) 요양보호사 서명이 없으면 거절하고 받은 서명을 함께 저장한다(D-48 261114.ver). 보호자는 보고서 링크에서 `signAsGuardian(shareToken, strokes)`로 `recipient`만 채운다. 1120 `saveSignatures`가 모양·크기(획 100·점 4000)를 확인하고 저장 |
 | `wasEdited` | Boolean | 요양보호사가 수정했는지 |
 | `shareToken` | String unique | 보호자 링크 `/g/[token]` |
 | `sentAt`, `viewedAt`, `viewCount` | | 전송·첫 열람 시각, 열람 횟수 |

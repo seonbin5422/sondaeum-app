@@ -4,9 +4,21 @@ import { serviceTimeOf } from "../../_data";
 import { fixRecordText } from "../../_ai";
 import { contactTitle, type CareRecord, type GuardianReportProps } from "../../_types";
 import { GuardianReport } from "./GuardianReport";
+import { cleanSignatures } from "../../_signatures";
 
 // G-01 보호자 보고서. 로그인 없이 링크(shareToken)로 연다. 보낸 기록만, 지운 수급자는 안 보인다.
 // shortcut: 링크 만료·미리보기 봇 제외(STB-5)·열람 기록은 아직 없음
+
+// 보호자 서명이 이미 들어왔는지. 풀 수 없으면 안 한 것으로 본다
+function recipientSigned(enc: string | null) {
+  if (!enc) return false;
+  try {
+    return cleanSignatures(JSON.parse(decryptText(enc))).recipient.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function sentReport(token: string): Promise<GuardianReportProps | null> {
   const r = await prisma.report.findUnique({
     where: { shareToken: token },
@@ -24,6 +36,7 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
     startedAt: time.startedAt,
     endedAt: time.endedAt,
     record,
+    recipientSigned: recipientSigned(r.signatures),
   };
 }
 

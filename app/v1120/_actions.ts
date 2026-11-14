@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { deleteSession } from "@/lib/session";
+import { deleteSession, getSessionCaregiverId } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText, openPII, sealPII } from "@/lib/crypto";
 import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
@@ -319,6 +319,9 @@ function savedSignatures(enc: string | null | undefined) {
 // 보호자 확인 서명 (D-48 261114.ver): 요양보호사가 보낸 뒤 보호자가 받은 보고서(/g/[token])에서 서명해 제출한다.
 // 보고서 링크를 가진 사람만 들어올 수 있고(보고서 보기와 같은 권한), 요양보호사 서명은 그대로 두고 수급자·보호자 칸만 바꾼다
 export async function signAsGuardian(shareToken: string, strokes: unknown) {
+  // 요양보호사로 로그인된 기기에서는 보호자 서명을 받지 않는다(대리 서명 막기, 사용자 11/14).
+  // shortcut: 로그아웃한 다른 브라우저에서 링크를 열면 막지 못한다, 보호자 카카오 로그인(P1)이 생기면 초대받은 보호자만 서명하게 바꾼다
+  if (await getSessionCaregiverId()) throw new Error("요양보호사 계정으로는 보호자 서명을 할 수 없어요.");
   const r = await prisma.report.findFirst({
     where: { shareToken, sentAt: { not: null }, visit: { client: { isActive: true, purgeAt: null } } },
     select: { id: true, signatures: true },

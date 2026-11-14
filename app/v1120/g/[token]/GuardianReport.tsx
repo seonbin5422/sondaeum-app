@@ -20,7 +20,7 @@ function formatVisit(startIso: string, endIso: string) {
   return `${s.getMonth() + 1}월 ${s.getDate()}일 (${days[s.getDay()]}) ${hm(s)} ~ ${hm(e)} · ${length}`;
 }
 
-export function GuardianReport({ token, order, sent, fromBoard = false }: { token: string; order: "base" | "improved"; sent: GuardianReportProps | null; fromBoard?: boolean }) {
+export function GuardianReport({ token, order, sent, fromBoard = false, asCaregiver = false }: { token: string; order: "base" | "improved"; sent: GuardianReportProps | null; fromBoard?: boolean; asCaregiver?: boolean }) {
   // 이력(C-22)·게시판 글에서 열면 그 날짜 기록을, 아니면 예시 보고서를 보여 준다
   const past = Object.values(historyByClient).flat().find((v) => v.visitId === token);
   const report = past
@@ -62,8 +62,16 @@ export function GuardianReport({ token, order, sent, fromBoard = false }: { toke
       {sent && (
         <section className="enter flex flex-col gap-3 rounded-2xl bg-white p-5 leading-[1.4]">
           <h2 className="text-xl font-bold">확인 서명</h2>
-          <p className="text-base text-muted">보고서 내용을 확인하셨으면 서명해 주세요. 기관에 내는 급여제공기록지에 함께 들어가요.</p>
-          <GuardianSignForm token={token} signed={!!sent.recipientSigned} />
+          {asCaregiver ? (
+            <p className="rounded-xl bg-(--bg-secondary) px-4 py-3 text-base leading-[1.4]">
+              {sent.recipientSigned ? "보호자가 서명을 보냈어요." : "보호자가 이 화면에서 서명해요."} 요양보호사로 로그인되어 있어 서명칸은 보이지 않아요.
+            </p>
+          ) : (
+            <>
+              <p className="text-base text-muted">보고서 내용을 확인하셨으면 서명해 주세요. 기관에 내는 급여제공기록지에 함께 들어가요.</p>
+              <GuardianSignForm token={token} signed={!!sent.recipientSigned} />
+            </>
+          )}
         </section>
       )}
 

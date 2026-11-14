@@ -4,6 +4,7 @@ import { serviceTimeOf } from "../../_data";
 import { fixRecordText } from "../../_ai";
 import { contactTitle, type CareRecord, type GuardianReportProps } from "../../_types";
 import { GuardianReport } from "./GuardianReport";
+import { getSessionCaregiverId } from "@/lib/session";
 import { cleanSignatures } from "../../_signatures";
 
 // G-01 보호자 보고서. 로그인 없이 링크(shareToken)로 연다. 보낸 기록만, 지운 수급자는 안 보인다.
@@ -43,5 +44,7 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
 export default async function GuardianReportPage({ params, searchParams }: PageProps<"/v1120/g/[token]">) {
   const { token } = await params;
   const { order, from } = await searchParams;
-  return <GuardianReport token={token} order={order === "improved" ? "improved" : "base"} sent={await sentReport(token)} fromBoard={from === "board"} />;
+  // 요양보호사로 로그인된 기기(보낸 화면의 "보호자가 보는 화면 확인하기" 등)에서는 서명칸을 보기만 한다
+  const asCaregiver = !!(await getSessionCaregiverId());
+  return <GuardianReport token={token} order={order === "improved" ? "improved" : "base"} sent={await sentReport(token)} fromBoard={from === "board"} asCaregiver={asCaregiver} />;
 }

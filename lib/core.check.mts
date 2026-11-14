@@ -117,6 +117,8 @@ await actions.sendReport(v1.id, sigForm([[[10, 10], [50, 40]]])).catch((e) => as
 assert.equal((await prisma.visit.findUnique({ where: { id: v1.id } }))?.status, "SENT");
 // 보호자 확인 서명: 보낸 보고서 링크로 서명하면 요양보호사 서명은 그대로 두고 보호자 칸만 들어간다 (D-48 261114.ver)
 const sent1 = await prisma.report.findUnique({ where: { visitId: v1.id } });
+await assert.rejects(actions.signAsGuardian(sent1!.shareToken, [[[5, 5]]]), /요양보호사 계정으로는/, "요양보호사로 로그인된 기기에서는 보호자 서명 막음");
+(globalThis as { __session?: string }).__session = undefined; // 보호자는 로그인 없이 링크로 연다
 await assert.rejects(actions.signAsGuardian(sent1!.shareToken, []), /서명을 해 주세요/, "빈 보호자 서명 막음");
 await assert.rejects(actions.signAsGuardian("없는토큰", [[[1, 1]]]), /찾을 수 없어요/, "없는 링크");
 await actions.signAsGuardian(sent1!.shareToken, [[[5, 5], [9, 9]]]);
@@ -124,6 +126,7 @@ const { decryptText } = await import("./crypto");
 const both = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));
 assert.equal(both.recipient.length, 1, "보호자 서명 저장");
 assert.equal(both.caregiver.length, 1, "요양보호사 서명 유지");
+await as(a.id);
 // 기록지 화면(saveSignatures)은 서명 불가 사유만 바꾼다: 수급자·보호자 칸(대리 서명)과 요양보호사 칸 모두 그대로
 await actions.saveSignatures(v1.id, { recipient: [[[100, 100], [200, 50]], [[1, 1]]], caregiver: [[[3, 3]]], reason: "" });
 const after = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));

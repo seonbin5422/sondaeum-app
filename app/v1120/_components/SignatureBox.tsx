@@ -99,6 +99,28 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
   );
 }
 
+// 보기만 하는 서명칸: 들어온 서명을 그리고, 없으면 누가 어디서 서명하는지 적는다
+function SignatureView({ label, value, empty }: { label: string; value: Stroke[]; empty: string }) {
+  return (
+    <div className="relative h-[140px] overflow-hidden rounded-xl bg-(--bg-secondary) print:bg-white">
+      <span className="pointer-events-none absolute inset-x-3 top-3 text-base font-medium leading-[1.4] text-muted">{label}</span>
+      {value.length === 0 ? (
+        <span className="absolute inset-x-3 bottom-3 text-center text-base text-muted print:hidden">{empty}</span>
+      ) : (
+        <svg role="img" aria-label={`${label} 서명 (서명함)`} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+          {value.map((s, i) =>
+            s.length === 1 ? (
+              <circle key={i} cx={s[0][0]} cy={s[0][1]} r={1.5} fill="#222222" />
+            ) : (
+              <path key={i} d={toPath(s)} fill="none" stroke="#222222" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+            ),
+          )}
+        </svg>
+      )}
+    </div>
+  );
+}
+
 // 급여제공기록지 아래 확인 서명. visitId가 있으면(요양보호사 쪽) 서명할 때마다 암호화해 저장하고, 없으면(보호자 쪽 임시 화면) 화면에만 둔다
 // onChange: 보내기 화면(C-15)이 요양보호사 서명이 있는지 알고, 보낼 때 함께 넘기려고 쓴다
 // caregiverOnly: 보내기 화면(C-15)은 요양보호사 서명만. 보호자는 받은 보고서에서 따로 서명한다 (D-48 261114.ver)
@@ -128,7 +150,13 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange, ca
   return (
     <>
       <div className={caregiverOnly ? "flex flex-col" : "grid grid-cols-2 gap-3"}>
-        {!caregiverOnly && <SignatureBox label="수급자 또는 보호자" value={sig.recipient} onChange={(recipient) => setSig((s) => ({ ...s, recipient }))} />}
+        {/* 요양보호사 쪽(visitId 있음)은 수급자·보호자 칸을 보기만 한다: 대리 서명 막기, 보호자는 받은 보고서에서 서명 (D-48 261114.ver) */}
+        {!caregiverOnly &&
+          (visitId ? (
+            <SignatureView label="수급자 또는 보호자" value={sig.recipient} empty="보호자가 받은 보고서에서 서명해요" />
+          ) : (
+            <SignatureBox label="수급자 또는 보호자" value={sig.recipient} onChange={(recipient) => setSig((s) => ({ ...s, recipient }))} />
+          ))}
         <SignatureBox label={`요양보호사 ${caregiverName}`} value={sig.caregiver} onChange={(caregiver) => setSig((s) => ({ ...s, caregiver }))} />
       </div>
       {!caregiverOnly && (

@@ -296,11 +296,22 @@ export async function saveRecord(visitId: string, record: CareRecord) {
 export async function saveSignatures(visitId: string, value: unknown) {
   const v = await ownVisitOrThrow(visitId, { editable: false });
   if (!v.report) throw new Error("정리된 기록이 없어요.");
-  const s = cleanSignatures(value);
+  // 수급자·보호자 칸은 요양보호사가 쓰지 못한다(대리 서명 막기). 보호자가 보고서에서 낸 서명을 그대로 둔다 (D-48 261114.ver)
+  const s = { ...cleanSignatures(value), recipient: savedRecipient(v.report.signatures) };
   await prisma.report.update({
     where: { visitId },
     data: { signatures: isEmptySignatures(s) ? null : encryptText(JSON.stringify(s)) },
   });
+}
+
+// 저장된 수급자·보호자 서명. 풀 수 없으면 없는 것으로 본다
+function savedRecipient(enc: string | null | undefined) {
+  if (!enc) return [];
+  try {
+    return cleanSignatures(JSON.parse(decryptText(enc))).recipient;
+  } catch {
+    return [];
+  }
 }
 
 // 보호자 확인 서명 (D-48 261114.ver): 요양보호사가 보낸 뒤 보호자가 받은 보고서(/g/[token])에서 서명해 제출한다.
@@ -332,6 +343,7 @@ export async function sendReport(visitId: string, form: FormData) {
     throw new Error("서명을 읽지 못했어요. 다시 서명해 주세요.");
   }
   if (!sig.caregiver.length) throw new Error("요양보호사 서명을 해야 보낼 수 있어요.");
+  sig = { ...sig, recipient: savedRecipient(v.report.signatures) }; // 수급자·보호자 칸은 화면에서 온 값을 쓰지 않는다
   await prisma.report.update({ where: { visitId }, data: { sentAt: new Date(), signatures: encryptText(JSON.stringify(sig)) } });
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
   await prisma.client.update({ where: { id: v.clientId }, data: { boardExpiresAt: boardOpenUntil() } }); // 보고서 링크를 보냈으니 게시판을 다시 90일 연다 (STB-5)

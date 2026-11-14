@@ -120,7 +120,9 @@ export type HistoryVisit = {
 
 // 서명 한 획 = 점 목록. 좌표는 서명칸 크기와 상관없는 0~400 · 0~120 값 (SignatureBox의 W·H)
 export type Stroke = [number, number][];
-export type Signatures = { recipient: Stroke[]; caregiver: Stroke[]; reason: string };
+// recipientMeta: 보호자가 보고서 링크에서 서명한 때와 기기 (D-48 261114.ver, 대리 서명 확인용). ipHash는 접속 주소를 알아볼 수 없게 바꾼 값
+export type SignMeta = { at: string; device: string; ipHash: string };
+export type Signatures = { recipient: Stroke[]; caregiver: Stroke[]; reason: string; recipientMeta?: SignMeta };
 
 // 수급자 게시판(DIF-5, D-15 261101.ver): 보낸 보고서 하나가 게시글 하나, 이야기는 댓글로
 export type BoardComment = { id: string; from: "caregiver" | "guardian"; at: string; text: string; readAt: string | null }; // at·readAt: ISO, readAt은 상대가 읽은 시각

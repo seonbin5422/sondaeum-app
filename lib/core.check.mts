@@ -18,7 +18,7 @@ const resolve = M._resolveFilename;
 // 서버 액션은 로그인 쿠키로 요양보호사를 찾는다. 테스트에서는 next/headers의 쿠키를 가짜로 바꿔 "지금 로그인한 사람"을 정한다
 const fakeHeaders = path.join(tmp, "next-headers.cjs");
 writeFileSync(fakeHeaders, `exports.cookies = async () => ({ get: () => (globalThis.__session ? { value: globalThis.__session } : undefined), set() {}, delete() {} });
-exports.headers = async () => new Headers();`);
+exports.headers = async () => new Headers({ "user-agent": "check-agent", "x-forwarded-for": "203.0.113.7" });`);
 M._resolveFilename = function (req, ...rest) {
   if (req === "server-only") return stub;
   if (req === "next/headers") return fakeHeaders;
@@ -126,12 +126,14 @@ const { decryptText } = await import("./crypto");
 const both = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));
 assert.equal(both.recipient.length, 1, "보호자 서명 저장");
 assert.equal(both.caregiver.length, 1, "요양보호사 서명 유지");
+assert.ok(both.recipientMeta?.at && both.recipientMeta.device === "check-agent" && both.recipientMeta.ipHash.length === 16 && !JSON.stringify(both).includes("203.0.113.7"), "서명 시각·기기 남김, 접속 주소는 바꾼 값만");
 await as(a.id);
 // 기록지 화면(saveSignatures)은 서명 불가 사유만 바꾼다: 수급자·보호자 칸(대리 서명)과 요양보호사 칸 모두 그대로
 await actions.saveSignatures(v1.id, { recipient: [[[100, 100], [200, 50]], [[1, 1]]], caregiver: [[[3, 3]]], reason: "" });
 const after = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));
 assert.deepEqual(after.recipient, both.recipient, "요양보호사가 보호자 칸을 못 바꿈");
 assert.deepEqual(after.caregiver, both.caregiver, "기록지 화면에서는 요양보호사 서명도 못 바꿈(보낼 때만)");
+assert.deepEqual(after.recipientMeta, both.recipientMeta, "서명 기록도 그대로");
 const expires = (await prisma.client.findUnique({ where: { id: clientC.id } }))?.boardExpiresAt;
 assert.ok(expires && expires.getTime() > Date.now() + 89 * 86_400_000, "보내면 게시판 링크가 90일 열림");
 await assert.rejects(actions.saveTranscript(v1.id, "고친 말"), /이미 보낸 기록은 고칠 수 없어요/, "보낸 뒤 고치기 (STB-1)");

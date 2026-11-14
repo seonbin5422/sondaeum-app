@@ -1,4 +1,4 @@
-import type { Signatures, Stroke } from "./_types";
+import type { SignMeta, Signatures, Stroke } from "./_types";
 
 // 급여제공기록지 서명 (LAW-9). 화면에서 온 값은 믿지 않고 모양·크기를 확인한 뒤 저장한다.
 export const SIGN_W = 400;
@@ -31,7 +31,16 @@ export function cleanSignatures(v: unknown): Signatures {
   if (!v || typeof v !== "object") throw new Error("서명 모양이 올바르지 않아요.");
   const o = v as Record<string, unknown>;
   const reason = typeof o.reason === "string" ? o.reason.trim().slice(0, MAX_REASON) : "";
-  return { recipient: cleanStrokes(o.recipient ?? []), caregiver: cleanStrokes(o.caregiver ?? []), reason };
+  const meta = cleanMeta(o.recipientMeta);
+  return { recipient: cleanStrokes(o.recipient ?? []), caregiver: cleanStrokes(o.caregiver ?? []), reason, ...(meta && { recipientMeta: meta }) };
+}
+
+function cleanMeta(v: unknown): SignMeta | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const m = v as Record<string, unknown>;
+  const str = (x: unknown, n: number) => (typeof x === "string" ? x.slice(0, n) : "");
+  const at = str(m.at, 40);
+  return at && !Number.isNaN(Date.parse(at)) ? { at, device: str(m.device, 200), ipHash: str(m.ipHash, 64) } : undefined;
 }
 
 export const isEmptySignatures = (s: Signatures) => !s.recipient.length && !s.caregiver.length && !s.reason;

@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { deleteSession, getSessionCaregiverId } from "@/lib/session";
+import { headers } from "next/headers";
+import { createHash } from "node:crypto";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText, openPII, sealPII } from "@/lib/crypto";
 import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
@@ -333,7 +335,15 @@ export async function signAsGuardian(shareToken: string, strokes: unknown) {
   try {
     if (r.signatures) prev = cleanSignatures(JSON.parse(decryptText(r.signatures)));
   } catch {}
-  await prisma.report.update({ where: { id: r.id }, data: { signatures: encryptText(JSON.stringify({ ...prev, recipient })) } });
+  // 서명한 때와 기기를 함께 남긴다: 누가 서명했는지 나중에 확인할 근거 (접속 주소는 원래 값을 두지 않고 바꾼 값만)
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim();
+  const recipientMeta = {
+    at: new Date().toISOString(),
+    device: (h.get("user-agent") ?? "").slice(0, 200),
+    ipHash: ip ? createHash("sha256").update(`${process.env.SESSION_SECRET ?? ""}:${ip}`).digest("hex").slice(0, 16) : "",
+  };
+  await prisma.report.update({ where: { id: r.id }, data: { signatures: encryptText(JSON.stringify({ ...prev, recipient, recipientMeta })) } });
 }
 
 // C-15 "저장하고 공유하기": 보낸 뒤에는 고칠 수 없다
@@ -348,7 +358,8 @@ export async function sendReport(visitId: string, form: FormData) {
     throw new Error("서명을 읽지 못했어요. 다시 서명해 주세요.");
   }
   if (!sig.caregiver.length) throw new Error("요양보호사 서명을 해야 보낼 수 있어요.");
-  sig = { ...sig, recipient: savedSignatures(v.report.signatures).recipient }; // 수급자·보호자 칸은 화면에서 온 값을 쓰지 않는다
+  const saved = savedSignatures(v.report.signatures);
+  sig = { ...sig, recipient: saved.recipient, recipientMeta: saved.recipientMeta }; // 수급자·보호자 칸은 화면에서 온 값을 쓰지 않는다
   await prisma.report.update({ where: { visitId }, data: { sentAt: new Date(), signatures: encryptText(JSON.stringify(sig)) } });
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
   await prisma.client.update({ where: { id: v.clientId }, data: { boardExpiresAt: boardOpenUntil() } }); // 보고서 링크를 보냈으니 게시판을 다시 90일 연다 (STB-5)

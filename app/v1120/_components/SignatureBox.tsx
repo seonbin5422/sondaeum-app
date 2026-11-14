@@ -164,6 +164,9 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange, ca
           <SignatureBox label={`요양보호사 ${caregiverName}`} value={sig.caregiver} onChange={(caregiver) => setSig((s) => ({ ...s, caregiver }))} />
         )}
       </div>
+      {!caregiverOnly && sig.recipientMeta && (
+        <p className="text-base text-muted">보호자 서명: {new Date(sig.recipientMeta.at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}, 보고서 링크에서</p>
+      )}
       {!caregiverOnly && (
       <label className="flex flex-col gap-2 text-lg font-bold">
         서명 불가 사유

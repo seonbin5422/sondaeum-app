@@ -7,7 +7,7 @@ import { Button, Icon } from "./ui";
 // C-19 서류 만들기 (와이어 308:57 → 308:2 → 307:2, D-29 초안). 서류 종류를 고르면 기간이 나타나고, 둘 다 고르면 버튼이 켜진다.
 // 보호자 G-03도 같은 화면을 쓴다 (D-26).
 
-type Doc = "summary" | "care-sheet";
+type Doc = "summary" | "care-sheet" | "status-change";
 type Period = "day" | "week" | "month" | "custom";
 
 const shift = (iso: string, days: number) => {
@@ -73,6 +73,7 @@ export function DocumentPicker({ basePath, sentDates, today: TODAY }: { basePath
         <div className="flex flex-col gap-3">
           <Option on={doc === "summary"} title="진료 참고용 요약" sub="병원에서 의사 선생님께 보여 드려요" onClick={() => setDoc("summary")} />
           <Option on={doc === "care-sheet"} title="급여제공기록지" sub="기관 서식 순서대로 정리해요" onClick={() => setDoc("care-sheet")} />
+          <Option on={doc === "status-change"} title="상태변화기록지" sub="평소와 달라진 날만 모아요" onClick={() => setDoc("status-change")} />
         </div>
       </section>
 

@@ -1,4 +1,4 @@
-import type { Change, ClientProfile, HistoryVisit } from "../_types";
+import { caregiverTitle as caregiverTitleOf, type Change, type ClientProfile, type HistoryVisit } from "../_types";
 import { CareSheet } from "./CareSheet";
 import { PrintActions } from "./PrintActions";
 import { Card, TopBar, TOP_BACK } from "./ui";
@@ -253,6 +253,72 @@ export function CareSheetView({ client: c, history, caregiverName, today, from, 
       <footer className="pt-3 text-base text-muted">
         <p className="font-bold">
           요양보호사가 손다음에 보낸 기록으로 만든 참고용 기록지예요. 기관이 발급하는 공식 사본이 아니어서 국민건강보험공단 제출 같은 공식 용도로는 쓸 수 없어요. 공식 기록은 소속 기관에 요청해 주세요.
+        </p>
+        <p>만든 날 {fmt(today)}</p>
+      </footer>
+    </Shell>
+  );
+}
+
+// 상태변화기록지 (D-61): 기간 중 평소와 달라진 날만 모은다. 변화상태(좋아짐·나빠짐), 배변 실수, 특이사항을 날짜순으로.
+// 공식 서식이 정해져 있지 않고 기관마다 달라서(협회·기사 안내 11/14) 손다음이 모은 기록을 그대로 옮긴 참고용이다
+const CHANGE_AREAS = [
+  ["physical", "신체기능"],
+  ["meal", "식사기능"],
+  ["cognitive", "인지기능"],
+] as const;
+const plainNote = (n: string | null) => (n && n.trim() !== "특이사항 없음." ? n : null);
+export function StatusChangeView({ client: c, history, caregiverName, today, from, to, backHref }: ViewProps) {
+  const visits = visitsIn(history, from, to);
+  const rows = visits
+    .map((v) => {
+      const changes = CHANGE_AREAS.filter(([k]) => v.record.change[k] === "worse" || v.record.change[k] === "improved").map(([k, l]) => ({ l, x: v.record.change[k]! }));
+      const { stoolAccidents: s, urineAccidents: u } = v.record.bowel;
+      const bowel = [s ? `대변 실수 ${s}번` : "", u ? `소변 실수 ${u}번` : ""].filter(Boolean).join(", ");
+      return { v, changes, bowel, note: plainNote(v.record.notes) };
+    })
+    .filter((r) => r.changes.length || r.bowel || r.note);
+
+  return (
+    <Shell backHref={backHref} title="상태변화기록지">
+      <Card className={`gap-4 leading-[1.4] ${paper}`}>
+        <header className="flex flex-col gap-1">
+          <h1 className="text-[22px] font-bold tracking-[-0.02em]">수급자 상태변화 기록</h1>
+          <p className="text-base font-medium text-muted">
+            {[`${c.name} 수급자`, c.age && `${c.age}세`, c.gender, `장기요양 ${c.careGrade ?? "등급 미입력"}`].filter(Boolean).join(" · ")}
+          </p>
+          <p className="text-base text-muted">
+            <span className="whitespace-nowrap">{fmt(from)} ~ {fmt(to)}</span> · <span className="whitespace-nowrap">방문 {visits.length}번 중 달라진 날 {rows.length}번</span>
+          </p>
+        </header>
+        {rows.length === 0 ? (
+          <p className="rounded-2xl bg-(--bg-secondary) p-4 text-base print:bg-white print:p-0">이 기간에는 지난번보다 좋아지거나 나빠졌다고 적은 날, 배변 실수, 특이사항이 없어요.</p>
+        ) : (
+          <ol className="flex flex-col gap-3">
+            {rows.map(({ v, changes, bowel, note }) => (
+              <li key={v.visitId} className="flex flex-col gap-1 rounded-2xl bg-(--bg-secondary) p-4 break-inside-avoid print:bg-white print:px-0">
+                <p className="text-lg font-bold">
+                  {fmtDay(v.date)} <span className="text-base font-medium text-muted">{v.start}~{v.end}</span>
+                </p>
+                {changes.length > 0 && (
+                  <p className="text-base font-medium">
+                    {changes.map(({ l, x }) => (
+                      <span key={l} className="mr-3 whitespace-nowrap">
+                        {l} <span className={SYM[x].c}>{SYM[x].s} {x === "worse" ? "나빠짐" : "좋아짐"}</span>
+                      </span>
+                    ))}
+                  </p>
+                )}
+                {bowel && <p className="text-base">배변: {bowel}</p>}
+                {note && <p className="text-base">{note}</p>}
+              </li>
+            ))}
+          </ol>
+        )}
+      </Card>
+      <footer className="pt-3 text-base text-muted">
+        <p className="font-bold">
+          {caregiverTitleOf(caregiverName)}가 손다음에 보낸 기록 중 평소와 달라진 날만 모은 참고용 기록이에요. 기관마다 상태변화기록지 서식이 다르니, 기관 서식이 있으면 그 서식에 옮겨 주세요. 진단이 아니에요.
         </p>
         <p>만든 날 {fmt(today)}</p>
       </footer>

@@ -1,4 +1,4 @@
-import { caregiverTitle as caregiverTitleOf, type Change, type ClientProfile, type HistoryVisit } from "../_types";
+import { caregiverTitle as caregiverTitleOf, type CareRecord, type Change, type ClientProfile, type HistoryVisit } from "../_types";
 import { CareSheet } from "./CareSheet";
 import { PrintActions } from "./PrintActions";
 import { Card, TopBar, TOP_BACK } from "./ui";
@@ -268,16 +268,40 @@ const CHANGE_AREAS = [
   ["cognitive", "인지기능"],
 ] as const;
 const plainNote = (n: string | null) => (n && n.trim() !== "특이사항 없음." ? n : null);
+// 한 방문에서 평소와 달라진 것: 좋아짐·나빠짐, 배변 실수, 특이사항
+export function statusChangeOf(r: CareRecord) {
+  const changes = CHANGE_AREAS.filter(([k]) => r.change[k] === "worse" || r.change[k] === "improved").map(([k, l]) => ({ l, x: r.change[k]! }));
+  const { stoolAccidents: s, urineAccidents: u } = r.bowel;
+  const bowel = [s ? `대변 실수 ${s}번` : "", u ? `소변 실수 ${u}번` : ""].filter(Boolean).join(", ");
+  const note = plainNote(r.notes);
+  return { changes, bowel, note, any: changes.length > 0 || !!bowel || !!note };
+}
+// 상태변화기록지 한 칸 (서류 만들기·기록 확인 탭이 같이 쓴다)
+// onGray: 회색 바탕 화면(기록 확인)에서는 흰 카드로
+export function StatusChangeEntry({ title, sub, record, onGray = false }: { title: string; sub: string; record: CareRecord; onGray?: boolean }) {
+  const { changes, bowel, note } = statusChangeOf(record);
+  return (
+    <div className={`flex flex-col gap-1 rounded-2xl p-4 break-inside-avoid print:bg-white print:px-0 ${onGray ? "bg-white" : "bg-(--bg-secondary)"}`}>
+      <p className="text-lg font-bold">
+        {title} <span className="text-base font-medium text-muted">{sub}</span>
+      </p>
+      {changes.length > 0 && (
+        <p className="text-base font-medium">
+          {changes.map(({ l, x }) => (
+            <span key={l} className="mr-3 whitespace-nowrap">
+              {l} <span className={SYM[x].c}>{SYM[x].s} {x === "worse" ? "나빠짐" : "좋아짐"}</span>
+            </span>
+          ))}
+        </p>
+      )}
+      {bowel && <p className="text-base">배변: {bowel}</p>}
+      {note && <p className="text-base">{note}</p>}
+    </div>
+  );
+}
 export function StatusChangeView({ client: c, history, caregiverName, today, from, to, backHref }: ViewProps) {
   const visits = visitsIn(history, from, to);
-  const rows = visits
-    .map((v) => {
-      const changes = CHANGE_AREAS.filter(([k]) => v.record.change[k] === "worse" || v.record.change[k] === "improved").map(([k, l]) => ({ l, x: v.record.change[k]! }));
-      const { stoolAccidents: s, urineAccidents: u } = v.record.bowel;
-      const bowel = [s ? `대변 실수 ${s}번` : "", u ? `소변 실수 ${u}번` : ""].filter(Boolean).join(", ");
-      return { v, changes, bowel, note: plainNote(v.record.notes) };
-    })
-    .filter((r) => r.changes.length || r.bowel || r.note);
+  const rows = visits.filter((v) => statusChangeOf(v.record).any);
 
   return (
     <Shell backHref={backHref} title="상태변화기록지">
@@ -295,22 +319,9 @@ export function StatusChangeView({ client: c, history, caregiverName, today, fro
           <p className="rounded-2xl bg-(--bg-secondary) p-4 text-base print:bg-white print:p-0">이 기간에는 지난번보다 좋아지거나 나빠졌다고 적은 날, 배변 실수, 특이사항이 없어요.</p>
         ) : (
           <ol className="flex flex-col gap-3">
-            {rows.map(({ v, changes, bowel, note }) => (
-              <li key={v.visitId} className="flex flex-col gap-1 rounded-2xl bg-(--bg-secondary) p-4 break-inside-avoid print:bg-white print:px-0">
-                <p className="text-lg font-bold">
-                  {fmtDay(v.date)} <span className="text-base font-medium text-muted">{v.start}~{v.end}</span>
-                </p>
-                {changes.length > 0 && (
-                  <p className="text-base font-medium">
-                    {changes.map(({ l, x }) => (
-                      <span key={l} className="mr-3 whitespace-nowrap">
-                        {l} <span className={SYM[x].c}>{SYM[x].s} {x === "worse" ? "나빠짐" : "좋아짐"}</span>
-                      </span>
-                    ))}
-                  </p>
-                )}
-                {bowel && <p className="text-base">배변: {bowel}</p>}
-                {note && <p className="text-base">{note}</p>}
+            {rows.map((v) => (
+              <li key={v.visitId}>
+                <StatusChangeEntry title={fmtDay(v.date)} sub={`${v.start}~${v.end}`} record={v.record} />
               </li>
             ))}
           </ol>

@@ -10,6 +10,7 @@ import { addToNotes, saveRecord } from "../../../_actions";
 import { useSpeech } from "../../../_components/useSpeech";
 import { changedFields, type SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
+import { StatusChangeEntry, statusChangeOf } from "../../../_components/DocumentViews";
 import { TimeWheel } from "../../../_components/WheelPicker";
 import type { CareRecord, Change } from "../../../_types";
 
@@ -218,7 +219,7 @@ export function ReviewScreen({
 }) {
   const router = useRouter();
   const [r, setR] = useState<CareRecord>(initialRecord);
-  const [tab, setTab] = useState<"check" | "sheet">("check");
+  const [tab, setTab] = useState<"check" | "sheet" | "status">("check");
   const [saveError, setSaveError] = useState("");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -541,11 +542,12 @@ export function ReviewScreen({
       <TopBar backHref={resumed ? "/v1120" : `/v1120/visit/${id}/record`} title="기록 확인" />
       {saveError && <p className="text-base font-bold text-(--text-danger)" role="alert">{saveError}</p>}
 
-      <div data-coach="tabs" role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-white p-1">
+      <div data-coach="tabs" role="tablist" className="grid grid-cols-3 gap-1 rounded-2xl bg-white p-1">
         {(
           [
             ["check", "기록 확인"],
             ["sheet", "급여제공기록지"],
+            ["status", "상태변화기록지"], // D-61: 오늘 기록이 상태변화기록지에 어떻게 실리는지
           ] as const
         ).map(([k, l]) => (
           <button
@@ -553,7 +555,7 @@ export function ReviewScreen({
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`press min-h-12 rounded-xl text-base font-bold ${tab === k ? "bg-(--bg-brand) text-(--text-brand)" : "text-muted active:bg-(--bg-secondary)"}`}
+            className={`press min-h-12 rounded-xl px-1 text-base font-bold leading-tight break-keep ${tab === k ? "bg-(--bg-brand) text-(--text-brand)" : "text-muted active:bg-(--bg-secondary)"}`}
           >
             {l}
           </button>
@@ -569,7 +571,16 @@ export function ReviewScreen({
         </div>
       )}
 
-      {tab === "sheet" ? (
+      {tab === "status" ? (
+        <>
+          <p className="text-base text-muted">오늘 기록 중 평소와 달라진 것만 상태변화기록지에 실려요. 고치려면 기록 확인 탭에서 바꿔 주세요.</p>
+          {statusChangeOf(r).any ? (
+            <StatusChangeEntry title={visitTime.date} sub={`${svc.start}~${svc.end}`} record={r} onGray />
+          ) : (
+            <p className="rounded-2xl bg-white p-5 text-base leading-[1.4]">오늘은 지난번보다 좋아지거나 나빠졌다고 적은 것, 배변 실수, 특이사항이 없어서 상태변화기록지에 실리지 않아요.</p>
+          )}
+        </>
+      ) : tab === "sheet" ? (
         <>
               <p className="text-base text-muted">오늘 기록을 기관 서식 순서로 본 화면이에요. 여기서 고친 값은 기록 확인 탭과 같아요.</p>
               <CareSheet

@@ -64,7 +64,8 @@ export function SortSelect({ value, onChange }: { value: Sort; onChange: (v: Sor
 }
 
 // 게시판 글 목록 (C-18). posts는 최신 글이 위로 온다
-export function PostList({ posts, names, me, hrefBase }: { posts: BoardPost[]; names: Names; me: "caregiver" | "guardian"; hrefBase: string }) {
+// 글 주소 = hrefBase/글토큰 + hrefSuffix (보호자: /v1120/g/글토큰/post)
+export function PostList({ posts, names, me, hrefBase, hrefSuffix = "" }: { posts: BoardPost[]; names: Names; me: "caregiver" | "guardian"; hrefBase: string; hrefSuffix?: string }) {
   const [sort, setSort] = useState<Sort>("new");
   const list = sort === "new" ? posts : [...posts].reverse();
   // 목록 머리와 첫 카드 사이도 카드 사이처럼 12px (수정본)
@@ -79,7 +80,7 @@ export function PostList({ posts, names, me, hrefBase }: { posts: BoardPost[]; n
       <ol className="flex flex-col gap-3">
         {list.map((p, i) => (
           <li key={p.shareToken} data-coach={i === 0 ? "post" : undefined} className="enter" style={{ "--i": Math.min(i, 6) } as CSSProperties}>
-            <PostCard post={p} names={names} me={me} href={`${hrefBase}/${p.shareToken}`} />
+            <PostCard post={p} names={names} me={me} href={`${hrefBase}/${p.shareToken}${hrefSuffix}`} />
           </li>
         ))}
       </ol>

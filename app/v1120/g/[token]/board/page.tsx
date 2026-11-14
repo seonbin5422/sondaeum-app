@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { guardianBoard } from "../../../_data";
-import { BoardExpired, LiveRefresh, PostCard } from "../../../_components/Board";
+import { BoardExpired, LiveRefresh, PostList } from "../../../_components/Board";
+import { EmptyState, Screen, TopBar, TOP_BACK } from "../../../_components/ui";
 import { BackButton } from "../../../_components/BackButton";
 import { Coach } from "../../../_components/Coach";
 import { COACH } from "../../../_coachSteps";
@@ -14,30 +15,27 @@ export default async function GuardianBoardPage({ params }: PageProps<"/v1120/g/
   if (!b) notFound();
   const title = contactTitle(b.guardianRelation);
   const names = { caregiver: b.caregiverName, guardian: `${b.guardianName} ${title}` };
+  // 요양보호사 게시판(C-18)과 같은 1128 모양: 회색 바탕·상단 바·흰 글 카드·정렬 (사용자 11/14 "UI가 다름")
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col gap-5 p-6">
+    <Screen>
       <LiveRefresh />
       {/* 초대 링크로 들어왔으면 돌아갈 보고서 화면이 없다 */}
-      {!b.viaInvite && <BackButton fallback={`/v1120/g/${token}`} />}
-      <header className="flex flex-col gap-1">
+      <TopBar title={`${b.clientName} 어르신 게시판`} back={b.viaInvite ? <span /> : <BackButton icon className={TOP_BACK} fallback={`/v1120/g/${token}`} />} />
+      <header className="enter flex flex-col gap-1 leading-[1.4]">
         <p className="text-base text-muted">
           안녕하세요, {b.guardianName} {title}님
         </p>
-        <h1 className="text-2xl font-bold">{b.clientName} 어르신 게시판</h1>
-        <p className="text-lg text-muted">{caregiverTitle(b.caregiverName)}가 보낸 방문 보고서예요. 궁금한 점은 글마다 댓글로 남겨 주세요.</p>
+        <p className="text-base">{caregiverTitle(b.caregiverName)}가 보낸 방문 보고서예요. 궁금한 점은 글마다 댓글로 남겨 주세요.</p>
       </header>
-      <p className="rounded-xl bg-accent-soft px-4 py-3 text-base text-accent-soft-foreground">
+      <p className="rounded-2xl bg-(--bg-brand) px-4 py-3 text-base leading-[1.4] text-(--text-brand)">
         받은 링크로 로그인 없이 들어왔어요. 어르신 기록이 담긴 링크라 다른 사람에게 보내지 말아 주세요.
       </p>
-      {b.posts.length === 0 && <p className="py-10 text-center text-lg text-muted">아직 보낸 보고서가 없어요. 방문 보고서를 보내면 여기에 올라와요.</p>}
-      <ol className="flex flex-col gap-4">
-        {b.posts.map((p, i) => (
-          <li key={p.shareToken} data-coach={i === 0 ? "post" : undefined}>
-            <PostCard post={p} names={names} me="guardian" href={`/v1120/g/${p.shareToken}/post`} />
-          </li>
-        ))}
-      </ol>
+      {b.posts.length === 0 ? (
+        <EmptyState>아직 보낸 보고서가 없어요. 방문 보고서를 보내면 여기에 올라와요.</EmptyState>
+      ) : (
+        <PostList posts={b.posts} names={names} me="guardian" hrefBase="/v1120/g" hrefSuffix="/post" />
+      )}
       <Coach id="guardian-board" steps={COACH.guardianBoard} />
-    </main>
+    </Screen>
   );
 }

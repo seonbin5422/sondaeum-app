@@ -27,6 +27,8 @@ export function GuardianReport({ token, order, sent, fromBoard = false, asCaregi
     ? { ...sampleGuardianReport, startedAt: `${past.date}T${past.start}:00+09:00`, endedAt: `${past.date}T${past.end}:00+09:00`, record: past.record }
     : sampleGuardianReport;
   const head = sent ?? report;
+  // 요양보호사로 로그인해 "보호자가 보는 화면"을 열었으면 게시판도 요양보호사 게시판(C-18)으로 (사용자 11/14)
+  const boardHref = asCaregiver && sent?.clientId ? `/v1120/chats/${sent.clientId}/${token}` : `/v1120/g/${token}/board`;
   const record = head.record;
 
   // 돌아갈 곳이 없을 때(카카오톡 링크로 바로 들어옴) 보낼 보호자 게시판. 보낸 기록이면 그 어르신의 실제 게시판
@@ -38,7 +40,7 @@ export function GuardianReport({ token, order, sent, fromBoard = false, asCaregi
     <Screen>
       <TopBar
         title="방문 보고서"
-        back={<BackButton icon className={TOP_BACK} fallback={sent ? `/v1120/g/${token}/board` : chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />}
+        back={<BackButton icon className={TOP_BACK} fallback={sent ? boardHref : chatToken ? `/v1120/c/${chatToken}/chat` : "/v1120"} />}
       />
       <div className="enter flex flex-col gap-1 rounded-2xl bg-(--bg-brand) p-5 text-base leading-[1.4] text-(--text-brand)">
         <p className="font-bold">급여제공기록지와 같은 항목으로 정리했어요</p>
@@ -76,7 +78,7 @@ export function GuardianReport({ token, order, sent, fromBoard = false, asCaregi
       )}
 
       {/* 게시판의 "보고서 전체 보기"로 들어왔으면 게시판으로 돌아가는 버튼은 안 보인다(뒤로가기로 돌아감) */}
-      {sent && !fromBoard && <LinkButton href={`/v1120/g/${token}/board`}>게시판으로 이동하기</LinkButton>}
+      {sent && !fromBoard && <LinkButton href={boardHref}>게시판으로 이동하기</LinkButton>}
 
       <p className="rounded-2xl bg-white p-5 text-base leading-[1.4] text-muted">
         {caregiverTitle(head.caregiverName)}가 작성하고 확인한 기록이에요. 의료적 판단이 아니에요. 궁금한 점은 담당 기관에

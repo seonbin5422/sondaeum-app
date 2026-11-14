@@ -80,11 +80,13 @@ export function kstWeekday(d = new Date()) {
   return WEEKDAY_LABELS.indexOf(new Intl.DateTimeFormat("ko-KR", { weekday: "short", timeZone: KST }).format(d));
 }
 
-// 서비스 시간 = 수급자를 등록할 때 정한 계약 시간(scheduleLabel의 시작~끝)을 방문한 날에 놓은 것.
-// 기록을 시작·끝낸 시각(Visit.startedAt·endedAt)과 다르다 (D-37)
-export function serviceTimeOf(scheduleLabel: string | null, visitDay: Date) {
+// 서비스 시간 = 요양보호사가 기록 확인에서 고친 실제 시각(record.serviceStart·End), 없으면 수급자를 등록할 때 정한 계약 시간(scheduleLabel의 시작~끝)을 방문한 날에 놓은 것.
+// 기록을 시작·끝낸 시각(Visit.startedAt·endedAt)과 다르다 (D-37, 261114.ver 실제 시각으로 고칠 수 있게)
+export function serviceTimeOf(scheduleLabel: string | null, visitDay: Date, actual?: Pick<CareRecord, "serviceStart" | "serviceEnd"> | null) {
   const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: KST }).format(visitDay);
-  const [start, end] = (getScheduleTimeRange(scheduleLabel) || "").split("-");
+  const [cs, ce] = (getScheduleTimeRange(scheduleLabel) || "").split("-");
+  const start = actual?.serviceStart || cs;
+  const end = actual?.serviceEnd || ce;
   // 계약 시간이 없는 옛 수급자는 시간을 비워 둔다
   const s = start ? new Date(`${ymd}T${start.padStart(5, "0")}:00+09:00`) : null;
   const e = end ? new Date(`${ymd}T${end.padStart(5, "0")}:00+09:00`) : null;
@@ -321,7 +323,9 @@ export async function myVisit(visitId: string) {
     edited: v.report?.wasEdited ?? false,
     shareToken: v.report?.shareToken ?? null,
     sentAt: v.report?.sentAt ?? null,
-    time: serviceTimeOf(v.client.scheduleLabel, v.startedAt ?? v.createdAt),
+    time: serviceTimeOf(v.client.scheduleLabel, v.startedAt ?? v.createdAt, json<CareRecord>(v.report?.careRecord)),
+    contractTime: serviceTimeOf(v.client.scheduleLabel, v.startedAt ?? v.createdAt),
+    signatures: readSignatures(v.report?.signatures),
   };
 }
 
@@ -345,7 +349,7 @@ const EMPTY_RECORD: CareRecord = {
   notes: null,
 };
 
-// 내 수급자의 방문 기록 (최근 것부터). 시간은 서비스 시간(계약 시간, D-37)
+// 내 수급자의 방문 기록 (최근 것부터). 시간은 서비스 시간(실제 시각, 없으면 계약 시간, D-37)
 export async function myHistory(clientId: string): Promise<HistoryVisit[]> {
   const caregiver = await requireCaregiver();
   const visits = await prisma.visit.findMany({
@@ -359,11 +363,11 @@ export async function myHistory(clientId: string): Promise<HistoryVisit[]> {
 type HistoryRow = { id: string; startedAt: Date | null; createdAt: Date; status: HistoryVisit["status"]; client: { scheduleLabel: string | null }; report: { careRecord: string | null; shareToken: string; signatures: string | null } | null };
 function toHistoryVisit(v: HistoryRow): HistoryVisit {
   const day = v.startedAt ?? v.createdAt;
-  const time = serviceTimeOf(v.client.scheduleLabel, day);
   let record = EMPTY_RECORD;
   try {
     if (v.report?.careRecord) record = fixRecordText(JSON.parse(decryptText(v.report.careRecord)) as CareRecord);
   } catch {}
+  const time = serviceTimeOf(v.client.scheduleLabel, day, record);
   return {
     visitId: v.id,
     date: kstYmd(day),

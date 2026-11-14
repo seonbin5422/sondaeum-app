@@ -117,6 +117,31 @@ function NumberRow({ label, unit, value, onChange }: { label: string; unit: stri
   );
 }
 
+// shortcut: 한 번에 인정되는 최대 시간은 센터 안내 글 기준(가사 90분·정서 60분)이라 막지 않고 알리기만 한다, 고시 원문을 확인하면 그 값으로 바꾼다
+const HOUSEHOLD_MAX = 90;
+const EMOTIONAL_MAX = 60;
+function Warn({ children }: { children: ReactNode }) {
+  return <p className="rounded-xl bg-(--danger-soft) px-4 py-3 text-base font-bold text-(--text-danger)">{children}</p>;
+}
+
+// 서비스 시작·끝 시각 입력 (분 단위). 휴대폰은 시각 고르기 창이 뜬다
+function TimeBox({ label, value, onChange }: { label: string; value: string; onChange: (v: string | null) => void }) {
+  const empty = !/^\d{2}:\d{2}$/.test(value);
+  return (
+    <label className={`flex h-[52px] flex-1 items-center gap-2 rounded-xl px-3 focus-within:ring-[3px] focus-within:ring-accent/50 ${empty ? "bg-(--bg-brand)" : "bg-(--bg-secondary)"}`}>
+      <span className="shrink-0 text-base text-muted">{label}</span>
+      <input
+        type="time"
+        step={60}
+        aria-label={`서비스 ${label} 시각`}
+        className="w-full min-w-0 bg-transparent text-lg font-bold outline-none"
+        value={empty ? "" : value}
+        onChange={(e) => onChange(e.target.value || null)}
+      />
+    </label>
+  );
+}
+
 // D-54: AI가 정리한 칸보다 내가 한 말(녹음 글)을 먼저 보여 줘서, 말한 그대로 옮겼는지 대조하며 확인하게 한다
 function SaidCard({ text }: { text: string }) {
   const [all, setAll] = useState(false);
@@ -311,15 +336,38 @@ export function ReviewScreen({
     `대변 실수 ${times(r.bowel.stoolAccidents)} · 소변 실수 ${times(r.bowel.urineAccidents)}` +
     (r.bowel.diaperChanges !== null ? ` · 기저귀 ${r.bowel.diaperChanges}회` : "");
 
+  // 서비스 시간: 기본은 계약 시간, 실제와 다르면 고친다 (D-37 261114.ver)
+  const svc = (() => {
+    const start = r.serviceStart ?? visitTime.start;
+    const end = r.serviceEnd ?? visitTime.end;
+    const min = (t: string) => (/^\d{2}:\d{2}$/.test(t) ? Number(t.slice(0, 2)) * 60 + Number(t.slice(3)) : NaN);
+    const minutes = min(end) - min(start);
+    return { start, end, minutes, ok: minutes > 0, changed: start !== visitTime.start || end !== visitTime.end };
+  })();
+  const itemMinutes = (r.physical.minutes ?? 0) + Object.values(r.cognitive).reduce<number>((a, v) => a + (v ?? 0), 0) + (r.household.minutes ?? 0);
+
   const steps: { title: string; time?: string; summary?: string; hint?: string; missing?: boolean; said?: string; body: ReactNode }[] = [
     {
-      title: "서비스 시간", time: `${visitTime.start}–${visitTime.end}`,
+      title: "서비스 시간", time: `${svc.start}–${svc.end}`, missing: !svc.ok,
       body: (
         <>
-          <p className="text-xl font-bold">
-            {visitTime.start} ~ {visitTime.end} · 총 {visitTime.minutes}분
+          <div className="flex items-center gap-2">
+            <TimeBox label="시작" value={svc.start} onChange={(t) => update({ ...r, serviceStart: t })} />
+            <span className="text-lg text-muted">~</span>
+            <TimeBox label="끝" value={svc.end} onChange={(t) => update({ ...r, serviceEnd: t })} />
+          </div>
+          <p className="text-lg font-bold">{svc.ok ? `총 ${svc.minutes}분` : "시작과 끝 시각을 넣어 주세요."}</p>
+          {/* 방문요양은 30분 단위 구간으로 청구돼서 실제가 계약보다 짧으면 구간이 내려갈 수 있다. 기관마다 처리가 달라 막지 않고 알린다 */}
+          {svc.ok && svc.minutes < 30 ? (
+            <Warn>30분보다 짧으면 청구가 안 될 수 있어요. 기관에 알려 주세요.</Warn>
+          ) : (
+            svc.ok && visitTime.minutes > 0 && svc.minutes < visitTime.minutes && <Warn>계약 시간({visitTime.minutes}분)보다 짧아요. 청구 시간이 달라질 수 있어 기관에 알려 주세요.</Warn>
+          )}
+          {svc.ok && itemMinutes > svc.minutes &&<Warn>항목별 시간을 더하면 {itemMinutes}분이라 서비스 시간({svc.minutes}분)보다 길어요. 시간을 다시 확인해 주세요.</Warn>}
+          <p className="text-base text-muted">
+            {visitTime.date} · 실제로 도와드린 시각을 분 단위로 맞게 적어 주세요. 기록과 실제 시간이 다르면 부당청구로 볼 수 있어요.
+            {svc.changed && ` (계약 시간 ${visitTime.start}~${visitTime.end})`}
           </p>
-          <p className="text-base text-muted">{visitTime.date} · 수급자를 등록할 때 정한 서비스 시간이에요.</p>
         </>
       ),
     },
@@ -359,6 +407,7 @@ export function ReviewScreen({
           ).map(([k, l]) => (
             <NumberRow key={k} label={l} unit="분" value={r.cognitive[k]} onChange={(v) => set("cognitive", { [k]: v })} />
           ))}
+          {(r.cognitive.emotional ?? 0) > EMOTIONAL_MAX && <Warn>의사소통·말벗·격려는 한 번에 {EMOTIONAL_MAX}분까지 인정돼요. 실제 시간이 맞는지 확인해 주세요.</Warn>}
         </>
       ),
     },
@@ -371,6 +420,7 @@ export function ReviewScreen({
             <Toggle label="외출 동행" on={!!r.household.personalActivity} onChange={(v) => set("household", { personalActivity: v })} />
           </div>
           <NumberRow label="제공시간" unit="분" value={r.household.minutes} onChange={(v) => set("household", { minutes: v })} />
+          {(r.household.minutes ?? 0) > HOUSEHOLD_MAX && <Warn>가사·일상생활지원은 한 번에 {HOUSEHOLD_MAX}분까지 인정돼요. 실제 시간이 맞는지 확인해 주세요.</Warn>}
         </>
       ),
     },
@@ -421,13 +471,20 @@ export function ReviewScreen({
               특이사항 없음
             </Button>
           )}
-          {/* "기록 추가하기"는 조치가 빠졌을 때만. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
-          {(r.notesNoAction || speech.recording || adding || heardText) && (
-          <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction ? "bg-(--bg-brand) text-(--text-brand)" : "bg-(--bg-secondary)"}`}>
+          {/* "기록 추가하기"는 조치가 빠졌거나 특이사항이 비었을 때. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
+          {(r.notesNoAction || !r.notes || speech.recording || adding || heardText) && (
+          <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction || !r.notes ? "bg-(--bg-brand) text-(--text-brand)" : "bg-(--bg-secondary)"}`}>
             {r.notesNoAction && (
               <>
                 <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>
                 {r.notesAsk && <p className="text-lg">{r.notesAsk}</p>}
+              </>
+            )}
+            {/* 특이사항은 상태 변화를 알아채고 등급 재판정 때 근거가 돼서 비워 두지 않게 묻는다 (D-60) */}
+            {!r.notes && !r.notesNoAction && (
+              <>
+                <p className="text-base font-bold">오늘 이런 일은 없었나요? 있었으면 말로 남겨 주세요.</p>
+                <p className="text-lg">넘어지거나 넘어질 뻔한 일 · 밤에 깨신 횟수 · 식사량 변화 · 약을 거르거나 안 드신 일 · 혼자 못 하시게 된 일 · 평소와 다른 말이나 행동</p>
               </>
             )}
             {(speech.recording || heardText) && (
@@ -525,7 +582,7 @@ export function ReviewScreen({
               <CareSheet
                 record={r}
                 date={visitTime.date}
-                time={`${visitTime.start}~${visitTime.end}`}
+                time={`${svc.start}~${svc.end}`}
                 clientName={clientName}
                 caregiverName={caregiverName}
               />

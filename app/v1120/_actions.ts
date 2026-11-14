@@ -163,7 +163,8 @@ export async function finishRecording(visitId: string, transcript: string, chang
   if (v.report?.careRecord) {
     const saved = JSON.parse(decryptText(v.report.careRecord)) as CareRecord;
     const keep = keptFields(saved, changed.slice(0, 50).map(String));
-    const kept = { ...overlayFields(BLANK_RECORD, saved, keep), handEdited: keep };
+    // 실제 서비스 시각은 녹음 글과 상관없이 직접 고친 값이라 그대로 둔다
+    const kept = { ...overlayFields(BLANK_RECORD, saved, keep), handEdited: keep, serviceStart: saved.serviceStart ?? null, serviceEnd: saved.serviceEnd ?? null };
     await prisma.report.update({ where: { visitId }, data: { careRecord: encryptText(JSON.stringify(kept)) } });
   }
   await prisma.visit.update({
@@ -286,7 +287,9 @@ export async function saveRecord(visitId: string, record: CareRecord) {
   if (!v.report) throw new Error("정리된 기록이 없어요.");
   // 클라이언트에서 온 칸 이름은 진짜 칸만 받는다
   const handEdited = Array.isArray(record.handEdited) ? record.handEdited.filter((f) => typeof f === "string" && isField(record, f)).slice(0, 50) : [];
-  const clean = { ...record, handEdited };
+  // 실제 서비스 시각은 "HH:MM"만 받는다 (D-37 261114.ver)
+  const hm = (t: unknown) => (typeof t === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : null);
+  const clean = { ...record, handEdited, serviceStart: hm(record.serviceStart), serviceEnd: hm(record.serviceEnd) };
   await prisma.report.update({
     where: { visitId },
     data: { careRecord: encryptText(JSON.stringify(clean)), notes: encryptText(clean.notes ?? ""), wasEdited: true },
@@ -305,10 +308,18 @@ export async function saveSignatures(visitId: string, value: unknown) {
 }
 
 // C-15 "저장하고 공유하기": 보낸 뒤에는 고칠 수 없다
-export async function sendReport(visitId: string) {
+// 요양보호사 서명은 매번 필수 (D-48 261114.ver: 서명 누락은 청구 반려 사유). 서명칸의 늦은 자동 저장과 겹치지 않게 보낼 때 받은 서명을 함께 저장한다
+export async function sendReport(visitId: string, form: FormData) {
   const v = await ownVisitOrThrow(visitId);
   if (!v.report) throw new Error("정리된 기록이 없어요.");
-  await prisma.report.update({ where: { visitId }, data: { sentAt: new Date() } });
+  let sig;
+  try {
+    sig = cleanSignatures(JSON.parse(String(form.get("signatures") ?? "")));
+  } catch {
+    throw new Error("서명을 읽지 못했어요. 다시 서명해 주세요.");
+  }
+  if (!sig.caregiver.length) throw new Error("요양보호사 서명을 해야 보낼 수 있어요.");
+  await prisma.report.update({ where: { visitId }, data: { sentAt: new Date(), signatures: encryptText(JSON.stringify(sig)) } });
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SENT", endedAt: v.endedAt ?? new Date() } });
   await prisma.client.update({ where: { id: v.clientId }, data: { boardExpiresAt: boardOpenUntil() } }); // 보고서 링크를 보냈으니 게시판을 다시 90일 연다 (STB-5)
   redirect(`/v1120/visit/${visitId}/sent`);

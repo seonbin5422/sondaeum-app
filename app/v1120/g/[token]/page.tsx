@@ -14,7 +14,8 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
   });
   const { visit } = r ?? {};
   if (!r?.sentAt || !r.careRecord || !visit || !visit.client.isActive || visit.client.purgeAt) return null;
-  const time = serviceTimeOf(visit.client.scheduleLabel, visit.startedAt ?? visit.createdAt);
+  const record = fixRecordText(JSON.parse(decryptText(r.careRecord)) as CareRecord);
+  const time = serviceTimeOf(visit.client.scheduleLabel, visit.startedAt ?? visit.createdAt, record);
   return {
     guardianName: visit.client.guardianName,
     guardianTitle: contactTitle(visit.client.guardianRelation),
@@ -22,7 +23,7 @@ async function sentReport(token: string): Promise<GuardianReportProps | null> {
     caregiverName: visit.caregiver.name,
     startedAt: time.startedAt,
     endedAt: time.endedAt,
-    record: fixRecordText(JSON.parse(decryptText(r.careRecord)) as CareRecord),
+    record,
   };
 }
 

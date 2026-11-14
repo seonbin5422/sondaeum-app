@@ -30,7 +30,7 @@ delete process.env.GROQ_API_KEY; // AI는 부르지 않는다
 delete process.env.TURSO_DATABASE_URL;
 delete process.env.TURSO_AUTH_TOKEN;
 process.env.DATABASE_URL = `file:${dbFile}`;
-process.env.ENCRYPTION_KEY ??= "0".repeat(64);
+process.env.ENCRYPTION_KEY ??= Buffer.alloc(32, 7).toString("base64"); // 보낼 때 서명을 암호화해 저장하므로 진짜 모양(base64 32바이트)이어야 한다
 
 const migrations = path.join(import.meta.dirname, "..", "prisma", "migrations");
 const db = createClient({ url: `file:${dbFile}` });
@@ -107,11 +107,17 @@ await assert.rejects(actions.saveTranscript(v1.id, "남의 기록"), /찾을 수
 await as(a.id);
 await actions.summarizeVisit(v1.id); // DRAFT_READY면 다시 정리하지 않고 끝난다 (STB-2, AI 키 없이도 통과)
 assert.equal((await prisma.visit.findUnique({ where: { id: v1.id } }))?.status, "DRAFT_READY");
-await actions.sendReport(v1.id).catch((e) => assert.ok(isRedirect(e), String(e))); // 보내면 보낸 화면으로 이동
+const sigForm = (caregiver: number[][][]) => {
+  const f = new FormData();
+  f.set("signatures", JSON.stringify({ recipient: [], caregiver, reason: "" }));
+  return f;
+};
+await assert.rejects(actions.sendReport(v1.id, sigForm([])), /요양보호사 서명/, "서명 없이 보내기 막음 (D-48 261114.ver)");
+await actions.sendReport(v1.id, sigForm([[[10, 10], [50, 40]]])).catch((e) => assert.ok(isRedirect(e), String(e))); // 보내면 보낸 화면으로 이동
 assert.equal((await prisma.visit.findUnique({ where: { id: v1.id } }))?.status, "SENT");
 const expires = (await prisma.client.findUnique({ where: { id: clientC.id } }))?.boardExpiresAt;
 assert.ok(expires && expires.getTime() > Date.now() + 89 * 86_400_000, "보내면 게시판 링크가 90일 열림");
 await assert.rejects(actions.saveTranscript(v1.id, "고친 말"), /이미 보낸 기록은 고칠 수 없어요/, "보낸 뒤 고치기 (STB-1)");
-await assert.rejects(actions.sendReport(v1.id), /이미 보낸 기록은 고칠 수 없어요/, "두 번 보내기");
+await assert.rejects(actions.sendReport(v1.id, sigForm([[[1, 1]]])), /이미 보낸 기록은 고칠 수 없어요/, "두 번 보내기");
 
 console.log("core ok");

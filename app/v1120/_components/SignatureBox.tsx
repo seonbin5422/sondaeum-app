@@ -99,8 +99,10 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
 }
 
 // 급여제공기록지 아래 확인 서명. visitId가 있으면(요양보호사 쪽) 서명할 때마다 암호화해 저장하고, 없으면(보호자 쪽 임시 화면) 화면에만 둔다
-export function SignatureSection({ visitId, initial, caregiverName }: { visitId?: string; initial?: Signatures; caregiverName: string }) {
+// onChange: 보내기 화면(C-15)이 요양보호사 서명이 있는지 알고, 보낼 때 함께 넘기려고 쓴다
+export function SignatureSection({ visitId, initial, caregiverName, onChange }: { visitId?: string; initial?: Signatures; caregiverName: string; onChange?: (s: Signatures) => void }) {
   const [sig, setSig] = useState<Signatures>(initial ?? EMPTY_SIGNATURES);
+  useEffect(() => onChange?.(sig), [sig, onChange]);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const last = useRef(JSON.stringify(initial ?? EMPTY_SIGNATURES)); // 마지막으로 저장한 값. 같으면 다시 저장하지 않는다 (처음 열 때 "저장했어요"가 뜨지 않게)
 

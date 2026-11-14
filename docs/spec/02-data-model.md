@@ -73,7 +73,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `medicationMorning` / `Lunch` / `Evening` / `Bedtime` / `None` | Boolean | 복약 체크박스 |
 | `aiRawJson` | String? | AI 원본 응답(누락 여부 포함), **암호화**. 1120 기록은 항목별 "내가 한 말"(`SaidQuotes`) |
 | `careRecord` | String? | 급여제공기록지 모양 `CareRecord` JSON, **암호화** (DIF-2, D-36). 아래 절 |
-| `signatures` | String? | 급여제공기록지 확인 서명 JSON, **암호화** (LAW-9, D-48). `{ recipient: Stroke[], caregiver: Stroke[], reason }` — `Stroke`는 서명칸 비율 좌표(0~400·0~120) 점 목록, `reason`은 서명 불가 사유(200자). 비면 `null`. 1120 `saveSignatures`가 모양·크기(획 100·점 4000)를 확인하고 저장 |
+| `signatures` | String? | 급여제공기록지 확인 서명 JSON, **암호화** (LAW-9, D-48). `{ recipient: Stroke[], caregiver: Stroke[], reason }` — `Stroke`는 서명칸 비율 좌표(0~400·0~120) 점 목록, `reason`은 서명 불가 사유(200자). 비면 `null`. 보낼 때(`sendReport`) 요양보호사 서명이 없으면 거절하고 받은 서명을 함께 저장한다(D-48 261114.ver). 1120 `saveSignatures`가 모양·크기(획 100·점 4000)를 확인하고 저장 |
 | `wasEdited` | Boolean | 요양보호사가 수정했는지 |
 | `shareToken` | String unique | 보호자 링크 `/g/[token]` |
 | `sentAt`, `viewedAt`, `viewCount` | | 전송·첫 열람 시각, 열람 횟수 |
@@ -136,6 +136,8 @@ type CareRecord = {
   };
 
   // 7. 특이사항: 혈압·복약도 여기에 (D-43)
+  serviceStart?: string | null;      // 실제 서비스 시작 "HH:MM" (D-37 261114.ver). 없으면 계약 시간
+  serviceEnd?: string | null;        // 실제 서비스 끝 "HH:MM"
   notes: string | null;              // 기록지·진료 참고용 요약에 쓰는 기록체("~함"). 관찰 → 도움·조치 → 전달 순서
   guardianNotes?: string | null;     // notes와 같은 문장을 보호자용 '~요'체로. 특이사항을 직접 고치면 null → notes를 보여 줌
   notesNoAction?: boolean;           // AI 판단: 관찰만 있고 요양보호사가 한 도움·조치가 없음 → C-14에서 더 말하도록 안내

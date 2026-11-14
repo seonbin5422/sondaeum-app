@@ -34,6 +34,9 @@ export type CareRecord = {
     urineAccidents: number | null;
     diaperChanges: number | null;
   };
+  // 실제로 서비스를 한 시각 "HH:MM" (D-37 261114.ver). 없으면 계약 시간. 기록 시간과 실제가 다르면 부당청구로 볼 수 있어 고칠 수 있게 한다
+  serviceStart?: string | null;
+  serviceEnd?: string | null;
   notes: string | null; // 기록지·진료 참고용 요약에 쓰는 기록체("~함")
   handEdited?: string[]; // 기록 확인(C-14)에서 직접 고친 칸("physical.mobility"·"notes"). 녹음으로 돌아가 다시 정리해도 이 칸만 지킨다
   guardianNotes?: string | null;

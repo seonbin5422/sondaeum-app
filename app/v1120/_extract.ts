@@ -183,6 +183,9 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
 export function keepFilled(old: CareRecord, next: CareRecord, edited: boolean): CareRecord {
   const merged = structuredClone(next);
   if (old.handEdited?.length) merged.handEdited = old.handEdited;
+  // 기록 확인에서 고친 실제 서비스 시각 (D-37 261114.ver)
+  merged.serviceStart = old.serviceStart ?? null;
+  merged.serviceEnd = old.serviceEnd ?? null;
   for (const g of ["physical", "cognitive", "household", "change", "bowel"] as const) {
     const o = old[g] as Record<string, unknown>;
     const m = merged[g] as Record<string, unknown>;

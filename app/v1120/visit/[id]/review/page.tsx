@@ -15,7 +15,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps<"/v
       initialRecord={v.record}
       said={v.quotes}
       transcript={v.transcript}
-      visitTime={v.time}
+      visitTime={v.contractTime}
       clientName={v.client.name}
       caregiverName={v.caregiverName}
       resumed={(await searchParams).resume === "1"}

@@ -134,7 +134,13 @@ function TimeBox({ label, value, onChange }: { label: string; value: string; onC
         type="time"
         step={60}
         aria-label={`서비스 ${label} 시각`}
-        className="w-full min-w-0 bg-transparent text-lg font-bold outline-none"
+        className="w-full min-w-0 cursor-pointer bg-transparent text-lg font-bold outline-none"
+        // PC 크롬은 칸을 눌러도 고르기 창이 안 뜨고 작은 시계 아이콘을 눌러야 떠서, 칸 어디를 눌러도 띄운다 (사용자 11/14)
+        onClick={(e) => {
+          try {
+            e.currentTarget.showPicker();
+          } catch {}
+        }}
         value={empty ? "" : value}
         onChange={(e) => onChange(e.target.value || null)}
       />

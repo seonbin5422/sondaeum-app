@@ -298,9 +298,11 @@ export async function saveRecord(visitId: string, record: CareRecord) {
 export async function saveSignatures(visitId: string, value: unknown) {
   const v = await ownVisitOrThrow(visitId, { editable: false });
   if (!v.report) throw new Error("정리된 기록이 없어요.");
-  // 기록지 화면에서는 서명 불가 사유만 고친다. 서명은 요양보호사는 보낼 때(sendReport), 보호자는 받은 보고서(signAsGuardian)에서만 (D-48 261114.ver)
+  // 수급자·보호자 칸은 받은 보고서(signAsGuardian)에서만 (D-48 261114.ver). 요양보호사 서명은 보내기 전(C-15)에만 바로 저장해, 화면을 나갔다 와도 남게 한다.
+  // 보낸 뒤에는 요양보호사 서명도 고치지 않고 서명 불가 사유만 고친다
   const saved = savedSignatures(v.report.signatures);
-  const s = { ...saved, reason: cleanSignatures(value).reason };
+  const sent = cleanSignatures(value);
+  const s = { ...saved, reason: sent.reason, caregiver: v.status === "SENT" ? saved.caregiver : sent.caregiver };
   await prisma.report.update({
     where: { visitId },
     data: { signatures: isEmptySignatures(s) ? null : encryptText(JSON.stringify(s)) },

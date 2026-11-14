@@ -1024,5 +1024,29 @@
       ]
     ],
     "example": "죽을 준비해 앉혀서 식사 도움, 3/4 섭취. 화장실 2회 부축."
+  },
+  {
+    "id": "58-change-none-big",
+    "about": "\"크게 달라진 게 없다\"도 전체 변화 없음 (사용자 11/14: 인지 못 함)",
+    "input": "세수랑 식사 도와드렸어요. 지난 번과 크게 달라진 게 없으세요.",
+    "expect": {
+      "change.physical": "same",
+      "change.meal": "same",
+      "change.cognitive": "same",
+      "physical.personalHygiene": true,
+      "physical.mealAssist": true
+    },
+    "example": null
+  },
+  {
+    "id": "59-change-none",
+    "about": "\"달라진 건 없다\" → 세 칸 모두 비슷 (사용자 11/14)",
+    "input": "지난번과 달라진 건 없어요. 점심은 다 드셨어요.",
+    "expect": {
+      "change.physical": "same",
+      "change.meal": "same",
+      "change.cognitive": "same"
+    },
+    "example": null
   }
 ]

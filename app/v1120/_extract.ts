@@ -70,7 +70,7 @@ const RE = {
   outing: /외출|산책|병원\s?동행|장보|은행|같이 나가/,
   better: /좋아졌|나아졌|호전|더 잘/,
   worse: /나빠졌|안 좋아|줄었|악화|못 드셨|힘들어하/,
-  same: /비슷|똑같|그대로|그대롭|변화\s?(가\s?)?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/,
+  same: /비슷|똑같|그대로|그대롭|변화\s?(가|는|도)?\s?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/,
   stool: /대변|대소변|변을|똥|응가/,
   urine: /소변|오줌|오짐|쉬야/,
   diaper: /기저귀/,
@@ -118,7 +118,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const changeOf = (area: RegExp): Change | null => {
     const s = ss.find((x) => area.test(x) && (RE.better.test(x) || RE.worse.test(x) || RE.same.test(x)));
     // 영역 없이 "지난번이랑 달라진 게 없어요"처럼 전체를 말한 문장은 세 칸 모두
-    const general = ss.find((x) => (/상태|컨디션|전반|전부|모두/.test(x) && isChange(x)) || (/변화\s?(가\s?)?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/.test(x) && !AREAS.some((a) => a.test(x))));
+    const general = ss.find((x) => (/상태|컨디션|전반|전부|모두/.test(x) && isChange(x)) || (/변화\s?(가|는|도)?\s?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/.test(x) && !AREAS.some((a) => a.test(x))));
     const pickS = s ?? general;
     if (!pickS) return null;
     return RE.worse.test(pickS) ? "worse" : RE.better.test(pickS) ? "improved" : "same";

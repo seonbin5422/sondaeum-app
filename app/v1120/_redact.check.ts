@@ -104,3 +104,11 @@ assert.equal(extractRecord("공원 산책 30분 다녀왔어요").record.househo
   assert.deepEqual(extractRecord("똥 오줌 실수 없었어요.").record.bowel, { stoolAccidents: 0, urineAccidents: 0, diaperChanges: null });
   console.log("care words ok");
 }
+
+// 변화상태: AI가 비웠으면 낱말 찾기의 "지난번과 달라진 게 없어요"로 채운다 (사용자 11/14)
+const same = "세수 도와드렸어요. 지난 번과 크게 달라진 게 없어요.";
+const sameFilled = fillGaps(checkAiRecord({ quotes: {} }, same), extractRecord(same));
+assert.deepEqual(sameFilled.record.change, { physical: "same", meal: "same", cognitive: "same" });
+assert.ok(sameFilled.quotes.change?.includes("달라진"));
+assert.deepEqual(extractRecord("별다른 변화는 없었어요.").record.change, { physical: "same", meal: "same", cognitive: "same" });
+console.log("change fallback ok");

@@ -230,5 +230,10 @@ export function fillGaps(ai: { record: CareRecord; quotes: SaidQuotes }, old: { 
     }
     if (used && !quotes[q]) quotes[q] = old.quotes[q];
   }
+  // 변화상태: AI가 세 칸을 다 비웠는데 낱말 찾기가 "지난번과 달라진 게 없어요" 같은 말을 찾았으면 그 값을 쓴다 (사용자 11/14: 인지 못 함)
+  if (Object.values(record.change).every((v) => v === null) && Object.values(old.record.change).some((v) => v !== null)) {
+    record.change = { ...old.record.change };
+    quotes.change ??= old.quotes.change;
+  }
   return { record, quotes };
 }

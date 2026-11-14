@@ -6,7 +6,7 @@ import { deleteSession } from "@/lib/session";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { decryptText, encryptText, openPII, sealPII } from "@/lib/crypto";
 import { CARE_GRADES, NO_CONTACT, type CareRecord } from "./_types";
-import { dropSameWithoutPrevious, extractRecord, isField, keepFilled, keptFields, overlayFields } from "./_extract";
+import { extractRecord, isField, keepFilled, keptFields, overlayFields } from "./_extract";
 import { redactForAi, restoreNames, toRoleWords } from "./_redact";
 import { fillGaps, fillRecord } from "./_ai";
 import { takeAiCall } from "@/lib/aiLimit";
@@ -209,11 +209,7 @@ export async function summarizeVisit(visitId: string) {
   if (v.status === "SUMMARIZING" || v.status === "DRAFT_READY") return;
   await prisma.visit.update({ where: { id: visitId }, data: { status: "SUMMARIZING" } });
   try {
-    const [raw, previous] = await Promise.all([
-      fillVisitRecord(v.transcript ? decryptText(v.transcript) : "", v.clientId, v.caregiverId),
-      prisma.visit.count({ where: { clientId: v.clientId, status: "SENT", id: { not: visitId } } }),
-    ]);
-    const filled = { ...raw, record: dropSameWithoutPrevious(raw.record, previous > 0) };
+    const filled = await fillVisitRecord(v.transcript ? decryptText(v.transcript) : "", v.clientId, v.caregiverId);
     // "더 말하기"로 다시 정리할 때는 이미 있던 값(직접 고친 값 포함)을 지키고 빈 칸만 새로 채운다
     const record = v.report?.careRecord ? keepFilled(JSON.parse(decryptText(v.report.careRecord)), filled.record, v.report.wasEdited) : filled.record;
     const quotes = filled.quotes;

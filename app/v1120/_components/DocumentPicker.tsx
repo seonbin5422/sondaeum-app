@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Icon } from "./ui";
+import { DateWheel } from "./WheelPicker";
 
 // C-19 서류 만들기 (와이어 308:57 → 308:2 → 307:2, D-29 초안). 서류 종류를 고르면 기간이 나타나고, 둘 다 고르면 버튼이 켜진다.
 // 보호자 G-03도 같은 화면을 쓴다 (D-26).
@@ -59,10 +60,10 @@ export function DocumentPicker({ basePath, sentDates, today: TODAY }: { basePath
 
   // 크기·배치는 배포된 1120 버전 그대로(선택지 버튼과 같은 폭, 버튼과 12px 간격), 모양만 1128(회색 면·테두리 없음)
   const dateInput = (value: string, onChange: (v: string) => void, prefix: string) => (
-    <label className="flex h-14 flex-1 items-center gap-2 rounded-[15px] bg-white px-3 text-base focus-within:ring-[3px] focus-within:ring-accent/50">
+    <div className="flex h-14 flex-1 items-center gap-2 rounded-[15px] bg-white px-3 text-base">
       <span className="text-muted">{prefix}</span>
-      <input type="date" className="w-full bg-transparent text-lg focus:outline-none" value={value} max={TODAY} onChange={(e) => onChange(e.target.value)} />
-    </label>
+      <DateWheel label={prefix === "날짜" ? "날짜" : `${prefix} 날짜`} value={value} max={TODAY} onChange={onChange} className="h-full flex-1" />
+    </div>
   );
 
   return (

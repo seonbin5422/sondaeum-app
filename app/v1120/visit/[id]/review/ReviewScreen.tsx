@@ -10,6 +10,7 @@ import { addToNotes, saveRecord } from "../../../_actions";
 import { useSpeech } from "../../../_components/useSpeech";
 import { changedFields, type SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
+import { TimeWheel } from "../../../_components/WheelPicker";
 import type { CareRecord, Change } from "../../../_types";
 
 // C-14 기록 확인 (와이어 263:171). 말하지 않은 칸은 비워 두고 "확인 필요", 그 자리에서 바로 채운다.
@@ -126,29 +127,11 @@ function Warn({ children }: { children: ReactNode }) {
 
 // 서비스 시작·끝 시각 입력 (분 단위)
 function TimeBox({ label, value, onChange }: { label: string; value: string; onChange: (v: string | null) => void }) {
-  // 시·분 선택 상자 두 개: 시각 입력칸(type=time)은 맥 사파리에 고르기 창이 없어 눌러도 아무것도 안 뜬다 (사용자 11/14). 선택 상자는 PC·휴대폰 모두 목록이 뜬다
-  const ok = /^\d{2}:\d{2}$/.test(value);
-  const [h, m] = ok ? value.split(":") : ["", ""];
-  const pick = (nh: string, nm: string) => onChange(nh && nm ? `${nh}:${nm}` : null);
-  const box = "h-[52px] min-w-16 cursor-pointer appearance-none rounded-xl px-3 text-center text-lg font-bold outline-none focus:ring-[3px] focus:ring-accent/50";
-  const bg = ok ? "bg-(--bg-secondary)" : "bg-(--bg-brand)";
+  // 휠 피커 (사용자 11/14). 시각 입력칸(type=time)은 맥 사파리에 고르기 창이 없다
   return (
     <div className="flex items-center gap-2 text-lg">
       <span className="w-10 shrink-0 font-medium">{label}</span>
-      <select aria-label={`서비스 ${label} 시`} className={`${box} ${bg}`} value={h} onChange={(e) => pick(e.target.value, m || "00")}>
-        {!ok && <option value="">--</option>}
-        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((v) => (
-          <option key={v} value={v}>{v}</option>
-        ))}
-      </select>
-      <span>시</span>
-      <select aria-label={`서비스 ${label} 분`} className={`${box} ${bg}`} value={m} onChange={(e) => pick(h || "00", e.target.value)}>
-        {!ok && <option value="">--</option>}
-        {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((v) => (
-          <option key={v} value={v}>{v}</option>
-        ))}
-      </select>
-      <span>분</span>
+      <TimeWheel label={`서비스 ${label} 시각`} value={value} onChange={onChange} className="flex-1" />
     </div>
   );
 }

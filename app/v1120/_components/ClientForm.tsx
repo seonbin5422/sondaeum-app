@@ -5,6 +5,7 @@ import { CARE_GRADES, FAMILY_RELATIONS, NO_CONTACT, STAFF_RELATIONS, type Client
 import { saveClient } from "../_actions";
 import { Button, Field, selectChipClass } from "./ui";
 import { CheckedField } from "./CheckedField";
+import { TimeWheel } from "./WheelPicker";
 import { checkField } from "../_validate";
 
 // C-07 등록 · C-08 수정 공용 폼 (Figma 558:1696). 저장은 서버 액션 saveClient.
@@ -114,8 +115,15 @@ export function ClientForm({ initial, submitLabel }: { initial?: ClientProfile; 
           }}
         />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="시작 시간" name="start" type="time" required defaultValue={initial?.scheduleLabel.match(/(\d\d:\d\d)–/)?.[1] ?? "09:00"} />
-          <Field label="끝 시간" name="end" type="time" required defaultValue={initial?.scheduleLabel.match(/–(\d\d:\d\d)/)?.[1] ?? "11:00"} />
+          {/* 휠 피커 (사용자 11/14): 시각 입력칸은 맥 사파리에 고르기 창이 없다 */}
+          <div className="flex flex-col gap-2">
+            <span className="text-lg font-bold">시작 시간</span>
+            <TimeWheel label="시작 시간" name="start" value={initial?.scheduleLabel.match(/(\d\d:\d\d)–/)?.[1] ?? "09:00"} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-lg font-bold">끝 시간</span>
+            <TimeWheel label="끝 시간" name="end" value={initial?.scheduleLabel.match(/–(\d\d:\d\d)/)?.[1] ?? "11:00"} />
+          </div>
         </div>
       </Group>
 

@@ -109,7 +109,7 @@ export function CareSheet({
       {signature && (
         <section className="flex flex-col gap-2 break-inside-avoid">
           <h3 className="text-lg font-bold">확인 서명</h3>
-          <SignatureSection visitId={visitId} initial={signatures} caregiverName={caregiverName} />
+          <SignatureSection visitId={visitId} initial={signatures} caregiverName={caregiverName} readOnly />
         </section>
       )}
     </Card>

@@ -124,10 +124,11 @@ const { decryptText } = await import("./crypto");
 const both = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));
 assert.equal(both.recipient.length, 1, "보호자 서명 저장");
 assert.equal(both.caregiver.length, 1, "요양보호사 서명 유지");
-// 요양보호사는 수급자·보호자 칸에 대신 서명하지 못한다: 보낸 값이 무시되고 보호자 서명이 남는다
+// 기록지 화면(saveSignatures)은 서명 불가 사유만 바꾼다: 수급자·보호자 칸(대리 서명)과 요양보호사 칸 모두 그대로
 await actions.saveSignatures(v1.id, { recipient: [[[100, 100], [200, 50]], [[1, 1]]], caregiver: [[[3, 3]]], reason: "" });
 const after = JSON.parse(decryptText((await prisma.report.findUnique({ where: { visitId: v1.id } }))!.signatures!));
 assert.deepEqual(after.recipient, both.recipient, "요양보호사가 보호자 칸을 못 바꿈");
+assert.deepEqual(after.caregiver, both.caregiver, "기록지 화면에서는 요양보호사 서명도 못 바꿈(보낼 때만)");
 const expires = (await prisma.client.findUnique({ where: { id: clientC.id } }))?.boardExpiresAt;
 assert.ok(expires && expires.getTime() > Date.now() + 89 * 86_400_000, "보내면 게시판 링크가 90일 열림");
 await assert.rejects(actions.saveTranscript(v1.id, "고친 말"), /이미 보낸 기록은 고칠 수 없어요/, "보낸 뒤 고치기 (STB-1)");

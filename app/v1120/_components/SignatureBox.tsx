@@ -124,7 +124,8 @@ function SignatureView({ label, value, empty }: { label: string; value: Stroke[]
 // 급여제공기록지 아래 확인 서명. visitId가 있으면(요양보호사 쪽) 서명할 때마다 암호화해 저장하고, 없으면(보호자 쪽 임시 화면) 화면에만 둔다
 // onChange: 보내기 화면(C-15)이 요양보호사 서명이 있는지 알고, 보낼 때 함께 넘기려고 쓴다
 // caregiverOnly: 보내기 화면(C-15)은 요양보호사 서명만. 보호자는 받은 보고서에서 따로 서명한다 (D-48 261114.ver)
-export function SignatureSection({ visitId, initial, caregiverName, onChange, caregiverOnly = false }: { visitId?: string; initial?: Signatures; caregiverName: string; onChange?: (s: Signatures) => void; caregiverOnly?: boolean }) {
+// readOnly: 최종 기록지 확인(급여제공기록지)에서는 두 서명을 보기만 한다. 요양보호사는 보낼 때(C-15), 보호자는 받은 보고서(G-01)에서 서명한다 (D-48 261114.ver)
+export function SignatureSection({ visitId, initial, caregiverName, onChange, caregiverOnly = false, readOnly = false }: { visitId?: string; initial?: Signatures; caregiverName: string; onChange?: (s: Signatures) => void; caregiverOnly?: boolean; readOnly?: boolean }) {
   const [sig, setSig] = useState<Signatures>(initial ?? EMPTY_SIGNATURES);
   useEffect(() => onChange?.(sig), [sig, onChange]);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
@@ -152,12 +153,16 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange, ca
       <div className={caregiverOnly ? "flex flex-col" : "grid grid-cols-2 gap-3"}>
         {/* 요양보호사 쪽(visitId 있음)은 수급자·보호자 칸을 보기만 한다: 대리 서명 막기, 보호자는 받은 보고서에서 서명 (D-48 261114.ver) */}
         {!caregiverOnly &&
-          (visitId ? (
+          (visitId || readOnly ? (
             <SignatureView label="수급자 또는 보호자" value={sig.recipient} empty="보호자가 받은 보고서에서 서명해요" />
           ) : (
             <SignatureBox label="수급자 또는 보호자" value={sig.recipient} onChange={(recipient) => setSig((s) => ({ ...s, recipient }))} />
           ))}
-        <SignatureBox label={`요양보호사 ${caregiverName}`} value={sig.caregiver} onChange={(caregiver) => setSig((s) => ({ ...s, caregiver }))} />
+        {readOnly ? (
+          <SignatureView label={`요양보호사 ${caregiverName}`} value={sig.caregiver} empty="보낼 때 서명해요" />
+        ) : (
+          <SignatureBox label={`요양보호사 ${caregiverName}`} value={sig.caregiver} onChange={(caregiver) => setSig((s) => ({ ...s, caregiver }))} />
+        )}
       </div>
       {!caregiverOnly && (
       <label className="flex flex-col gap-2 text-lg font-bold">
@@ -177,7 +182,7 @@ export function SignatureSection({ visitId, initial, caregiverName, onChange, ca
           key={status}
           className={`min-h-6 text-base print:hidden ${status === "failed" ? "text-(--text-danger)" : status === "saved" ? "done-pulse font-bold text-(--text-success)" : "text-muted"}`}
         >
-          {status === "saving" ? "서명 저장 중…" : status === "saved" ? "서명을 저장했어요" : status === "failed" ? "서명을 저장하지 못했어요. 다시 써 주세요." : ""}
+          {status === "saving" ? "저장 중…" : status === "saved" ? (readOnly ? "사유를 저장했어요" : "서명을 저장했어요") : status === "failed" ? (readOnly ? "저장하지 못했어요. 다시 적어 주세요." : "서명을 저장하지 못했어요. 다시 써 주세요.") : ""}
         </p>
       )}
     </>

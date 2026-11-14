@@ -72,7 +72,7 @@ export function DocumentPicker({ basePath, sentDates, today: TODAY }: { basePath
       <section className="enter flex flex-col gap-3 py-5">
         <h2 className="text-xl font-bold">어떤 서류가 필요하세요?</h2>
         <div className="flex flex-col gap-3">
-          <Option on={doc === "summary"} title="진료 참고용 요약" sub="병원 진료나 등급 재판정 때 보여 드려요" onClick={() => setDoc("summary")} />
+          <Option on={doc === "summary"} title="건강 기록 요약" sub="병원 진료나 등급 재판정 때 보여 드려요" onClick={() => setDoc("summary")} />
           <Option on={doc === "care-sheet"} title="급여제공기록지" sub="기관 서식 순서대로 정리해요" onClick={() => setDoc("care-sheet")} />
           <Option on={doc === "status-change"} title="상태변화기록지" sub="평소와 달라진 날만 모아요" onClick={() => setDoc("status-change")} />
         </div>

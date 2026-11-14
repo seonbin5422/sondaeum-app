@@ -103,7 +103,7 @@ export function PostCard({ post, names, href, me }: { post: BoardPost; names: Na
   const last = post.comments.at(-1);
   const unread = post.comments.filter((c) => c.from !== me && !c.readAt).length;
   const preview = post.notes ?? post.physicalNote;
-  const kind = post.kind === "summary" ? "진료 참고용 요약" : "방문 보고서";
+  const kind = post.kind === "summary" ? "건강 기록 요약" : "방문 보고서";
   return (
     <PressLink href={href} pendingText={false} className="flex flex-col gap-3 rounded-2xl bg-white p-5 active:bg-(--bg-brand)">
       <Author name={caregiverTitle(names.caregiver)} sub={`${when(post.at)} · ${kind}`} />
@@ -126,7 +126,7 @@ export function PostCard({ post, names, href, me }: { post: BoardPost; names: Na
   );
 }
 
-// 게시글 상세의 요약 카드 (Figma 558:2225). 흰 화면 위 회색 카드, 안의 요약 칸·버튼은 흰 면. 전체(fullHref)는 보고서면 G-01, 서류면 진료 참고용 요약 화면
+// 게시글 상세의 요약 카드 (Figma 558:2225). 흰 화면 위 회색 카드, 안의 요약 칸·버튼은 흰 면. 전체(fullHref)는 보고서면 G-01, 서류면 건강 기록 요약 화면
 export function PostSummary({ post, names, fullHref }: { post: BoardPost; names: Names; fullHref: string }) {
   const doc = post.kind === "summary";
   return (

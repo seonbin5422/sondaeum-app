@@ -398,7 +398,7 @@ export async function myUnreadTotal(): Promise<number> {
   return [...(await myUnreadByClient()).values()].reduce((a, b) => a + b, 0);
 }
 
-// C-20 진료 참고용 요약 "게시판에 올리기": 같은 기간을 이미 올렸으면 다시 만들지 않는다
+// C-20 건강 기록 요약 "게시판에 올리기": 같은 기간을 이미 올렸으면 다시 만들지 않는다
 export async function shareSummary(clientId: string, from: string, to: string) {
   const c = await ownClientOrThrow(clientId);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) throw new Error("기간이 올바르지 않아요.");

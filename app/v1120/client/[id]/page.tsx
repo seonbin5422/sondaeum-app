@@ -84,7 +84,7 @@ export default async function ClientPage({ params }: PageProps<"/v1120/client/[i
             href={`/v1120/client/${c.id}/documents`}
             icon={<MaskIcon src="/v1120/client-doc.svg" />}
             title="서류 만들기"
-            desc={<><span className="whitespace-nowrap">진료 참고용 요약 ·</span> <span className="whitespace-nowrap">급여제공기록지</span></>}
+            desc={<><span className="whitespace-nowrap">건강 기록 요약 ·</span> <span className="whitespace-nowrap">급여제공기록지 ·</span> <span className="whitespace-nowrap">상태변화기록지</span></>}
           />
           {!noContact && (
             <>

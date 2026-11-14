@@ -37,7 +37,7 @@ export type CareRecord = {
   // 실제로 서비스를 한 시각 "HH:MM" (D-37 261114.ver). 없으면 계약 시간. 기록 시간과 실제가 다르면 부당청구로 볼 수 있어 고칠 수 있게 한다
   serviceStart?: string | null;
   serviceEnd?: string | null;
-  notes: string | null; // 기록지·진료 참고용 요약에 쓰는 기록체("~함")
+  notes: string | null; // 기록지·건강 기록 요약에 쓰는 기록체("~함")
   handEdited?: string[]; // 기록 확인(C-14)에서 직접 고친 칸("physical.mobility"·"notes"). 녹음으로 돌아가 다시 정리해도 이 칸만 지킨다
   guardianNotes?: string | null;
   notesAsk?: string | null; // notesNoAction일 때 무엇을 더 말해야 하는지 묻는 한 문장 (예: 무릎 통증에 어떻게 도와드렸나요?)
@@ -128,7 +128,7 @@ export type BoardPost = {
   shareToken: string; // 보고서 링크 /g/[shareToken]이자 댓글을 달 게시글 키
   title: string;
   at: string; // 보낸 시각 ISO
-  kind: "report" | "summary"; // 보낸 방문 보고서 / 게시판에 올린 진료 참고용 요약
+  kind: "report" | "summary"; // 보낸 방문 보고서 / 게시판에 올린 건강 기록 요약
   period: { from: string; to: string } | null; // 서류의 기간 (YYYY-MM-DD)
   notes: string | null; // 보호자에게 보인 특이사항(guardianNotes, 없으면 notes). 카드 미리보기·상세 요약
   physicalNote: string | null; // 신체활동으로 한 일

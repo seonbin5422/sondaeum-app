@@ -179,13 +179,13 @@ export async function myUnreadByClient(): Promise<Map<string, number>> {
   return counts;
 }
 
-// 게시판에 올린 서류(진료 참고용 요약)도 글 하나. 내용은 기간만 두고 볼 때 다시 만든다
+// 게시판에 올린 서류(건강 기록 요약)도 글 하나. 내용은 기간만 두고 볼 때 다시 만든다
 const docSelect = { shareToken: true, from: true, to: true, createdAt: true, comments: { orderBy: { createdAt: "asc" as const } } };
 const dot = (ymd: string) => `${+ymd.slice(5, 7)}/${+ymd.slice(8)}`;
 function docsToPosts(docs: { shareToken: string; from: string; to: string; createdAt: Date; comments: CommentRow[] }[]): BoardPost[] {
   return docs.map((d) => ({
     shareToken: d.shareToken,
-    title: `진료 참고용 요약 (${dot(d.from)}~${dot(d.to)})`,
+    title: `건강 기록 요약 (${dot(d.from)}~${dot(d.to)})`,
     at: d.createdAt.toISOString(),
     kind: "summary" as const,
     period: { from: d.from, to: d.to },
@@ -231,7 +231,7 @@ export async function myBoardSummary(): Promise<Map<string, { title: string; com
   for (const d of docs) {
     const cur = latest.get(d.clientId);
     if (cur && cur.at >= d.createdAt) continue;
-    latest.set(d.clientId, { at: d.createdAt, title: `진료 참고용 요약 (${dot(d.from)}~${dot(d.to)})`, comments: d._count.comments });
+    latest.set(d.clientId, { at: d.createdAt, title: `건강 기록 요약 (${dot(d.from)}~${dot(d.to)})`, comments: d._count.comments });
   }
   return latest;
 }

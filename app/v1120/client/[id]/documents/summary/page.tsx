@@ -4,7 +4,7 @@ import { kstYmd, kstYmdDaysAgo, myClient, myHistory, requireCaregiver } from "..
 import { shareSummary } from "../../../../_actions";
 import { NO_CONTACT } from "../../../../_types";
 
-// C-20 서류 · 진료 참고용 요약
+// C-20 서류 · 건강 기록 요약
 export default async function Page({ params, searchParams }: PageProps<"/v1120/client/[id]/documents/summary">) {
   const { id } = await params;
   const { from, to, board } = await searchParams;

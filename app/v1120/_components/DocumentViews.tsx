@@ -81,7 +81,7 @@ type ViewProps = {
   to: string;
   backHref: string;
   role: "caregiver" | "guardian";
-  share?: () => Promise<void>; // 게시판에 올리기 (요양보호사의 진료 참고용 요약만)
+  share?: () => Promise<void>; // 게시판에 올리기 (요양보호사의 건강 기록 요약만)
 };
 
 // 기간 요약: 기록에 있는 사실만 센다 (LAW-1: 진단·해석 없이)
@@ -101,7 +101,7 @@ function periodSummary(visits: HistoryVisit[]) {
   ].join(" ");
 }
 
-// C-20 진료 참고용 요약 (와이어 305:38)
+// C-20 건강 기록 요약 (와이어 305:38)
 export function SummaryView({ client: c, history, caregiverName, today, from, to, backHref, share }: ViewProps) {
   const visits = visitsIn(history, from, to);
   const recent = visits.slice(-5);
@@ -121,10 +121,10 @@ export function SummaryView({ client: c, history, caregiverName, today, from, to
   const notes = visits.filter((v) => v.record.notes).reverse();
 
   return (
-    <Shell backHref={backHref} title="진료 참고용 요약" share={share}>
+    <Shell backHref={backHref} title="건강 기록 요약" share={share}>
       <Card className={`gap-4 leading-[1.4] ${paper}`}>
         <header className="flex flex-col gap-1">
-          <h1 className="text-[22px] font-bold tracking-[-0.02em]">진료 참고용 기록 요약</h1>
+          <h1 className="text-[22px] font-bold tracking-[-0.02em]">건강 기록 요약</h1>
           <p className="text-base font-medium text-muted">
             {[`${c.name} 수급자`, c.age && `${c.age}세`, c.gender, `장기요양 ${c.careGrade ?? "등급 미입력"}`].filter(Boolean).join(" · ")}
           </p>

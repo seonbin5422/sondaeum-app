@@ -4,7 +4,7 @@ import { guardianBoard, guardianHistory, kstYmd, toProfile } from "../../../_dat
 import { SummaryView } from "../../../_components/DocumentViews";
 import { BoardExpired } from "../../../_components/Board";
 
-// G-02 게시판에 올라온 진료 참고용 요약 (보호자, 로그인 없이 그 서류 링크로). 요양보호사 C-20과 같은 화면, 올리기 버튼만 없다
+// G-02 게시판에 올라온 건강 기록 요약 (보호자, 로그인 없이 그 서류 링크로). 요양보호사 C-20과 같은 화면, 올리기 버튼만 없다
 export default async function GuardianDocumentPage({ params }: PageProps<"/v1120/g/[token]/document">) {
   const { token } = await params;
   const b = await guardianBoard(token);

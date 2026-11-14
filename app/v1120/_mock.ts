@@ -99,7 +99,7 @@ export function findClient(id: string) {
   return clients.find((c) => c.id === id) ?? null;
 }
 
-// 홍길순 수급자 지난 한 달 방문 (9/9 ~ 10/9, 월·수·금). 진료 참고용 요약·이력 화면이 쓴다.
+// 홍길순 수급자 지난 한 달 방문 (9/9 ~ 10/9, 월·수·금). 건강 기록 요약·이력 화면이 쓴다.
 function makeHistory(): HistoryVisit[] {
   const out: HistoryVisit[] = [];
   const special: Record<string, Partial<CareRecord>> = {
@@ -154,7 +154,7 @@ export const boardByClient: Record<string, BoardPost[]> = {
       period: null,
       comments: [
         { id: "m2", from: "guardian", at: "2026-10-05T19:20:00+09:00", text: "무릎이 아프시다고 해서 걱정이네요. 병원에 가 봐야 할까요?", readAt: null },
-        { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 진료 참고용 요약을 만들어 드릴게요.", readAt: null },
+        { id: "m3", from: "caregiver", at: "2026-10-06T09:10:00+09:00", text: "걸으실 때 조금 불편해하셨어요. 진료 받아 보시면 좋겠어요. 건강 기록 요약을 만들어 드릴게요.", readAt: null },
       ],
     },
   ],

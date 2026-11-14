@@ -1,8 +1,9 @@
+import assert from "node:assert/strict";
 import Groq from "groq-sdk";
 import { cleanEnv } from "@/lib/env";
 import type { CareRecord, Change } from "./_types";
 import { minutesIn, type SaidQuotes } from "./_extract";
-import { glossary } from "./_glossary";
+import { copiedDialect, glossary } from "./_glossary";
 
 // C-13 정리: 개인정보를 지운 녹음 글(_redact.ts)로 AI가 급여제공기록지(D-24) 칸을 채운다 (LAW-1·2).
 // AI가 실패하면 _actions.ts가 _extract.ts(낱말 찾기) 결과를 쓴다.
@@ -25,15 +26,15 @@ const SYSTEM_PROMPT = `당신은 요양보호사가 방문 중 말로 남긴 기
   - 사투리·낮춤말: 묵었다→먹었다, 쪼매·쪼까→조금, 일나다→일어나다, 이짝→이쪽, 왼짝→왼쪽, 오짐·쉬→소변, 응가·똥→대변, 지렸다→소변 실수(bowel에도 셈), 모가지→목, 가슴팍→가슴, 지팽이→지팡이, 벤또→도시락, 약봉다리→약봉투, 영감→배우자, 엄니→어머니, (제주) 이디→여기·무사→왜, ~혀·~드래요·~갔어는 말끝만 바꿉니다.
   - 아기말·속된 말은 notes·guardianNotes에 그대로 쓰지 않고 기록지 말로 바꿉니다: 똥→대변, 오줌·쉬야→소변, '똥 오줌 실수 없었어요'→bowel 0·0, notes는 '대소변 실수 없음.'(guardianNotes는 '대소변 실수는 없으셨어요'), 토했다·게웠다→구토, 침을 질질→침 흘림, 짓물렀다→짓무름, 빨개졌다→발적, 똥꼬→항문, (몸의) 아래·거기→회음부, 찌찌→가슴.
   - 흉내말→증상: 캑캑→사레 걸림, 울렁울렁→메스꺼움, 배가 땡땡→배가 빵빵함, 핑 돌아→어지러움, 오슬오슬→추워하심, 뜨끈뜨끈→열감, 찌릿찌릿·화끈→따가움, 그르렁→가래 끓는 소리, 덜덜→떨림, 말똥말똥→잠 못 주무심, 꼬박꼬박 졸다→낮에 조심.
-  - 높임말·완곡 표현은 뜻대로: 진지 잡수시다·자시다·드시다→섭취, 약주→음주(약 아님), 주무시다→수면, 편찮으시다→몸이 불편하다고 하심, 볼일 보시다→화장실 이용(대변·소변을 말했을 때만 나눔), '실례하셨다'는 옷·이불이 젖었다는 말이 있을 때만 대소변 실수. '돌아가셨다'는 '댁으로 돌아가셨다'(귀가)일 수 있어 사망은 분명히 말했을 때만 씁니다. '심심하다'가 음식이면 싱겁다. 노망·망령·치매기 같은 말은 쓰지 않고 말한 행동만 씁니다. 말 나눔·말동무·옛날 얘기 들어 드림은 말벗(emotional).
+  - 높임말·완곡 표현은 뜻대로: 진지 잡수시다·자시다·드시다→섭취, 약주→음주·술(약 아님, '약주'라고 쓰지 않음), 주무시다→수면, 편찮으시다→몸이 불편하다고 하심, 볼일 보시다→화장실 이용(대변·소변을 말했을 때만 나눔), '실례하셨다'는 옷·이불이 젖었다는 말이 있을 때만 대소변 실수. '돌아가셨다'는 '댁으로 돌아가셨다'(귀가)일 수 있어 사망은 분명히 말했을 때만 씁니다. '심심하다'가 음식이면 싱겁다. 노망·망령·치매기 같은 말은 쓰지 않고 말한 행동만 씁니다. 말 나눔·말동무·옛날 얘기 들어 드림은 말벗(emotional).
   - 어림수는 숫자로(서너 번→3~4회, 반 공기→1/2 공기). '쪼까 아프다'처럼 줄여 말한 것은 '약간'으로 두고 부풀리지 않습니다. '아파 죽겄어'는 '많이 아프다고 하심'.
   - '그거'·'거시기'·'하얀 거'는 앞뒤 말로 무엇인지 분명할 때만 바꾸고, 아니면 들은 그대로 씁니다(예: '하얀 약'을 혈압약이라고 짐작하지 않음).
   - 어르신이 하신 말은 '~라고 하심'으로 내용 그대로 옮기고 망상·환시·지남력 저하·섬망 같은 판단 낱말로 바꾸지 않습니다(예: '여편네가 내 돈 훔쳐갔다 카이' → '장롱에 둔 돈을 누가 가져갔다고 하심'). 욕설은 옮기지 않고 행동만 씁니다(예: '손대지 마라 이놈아 내가 씻는다꼬' → '목욕 도움을 거부하며 혼자 씻겠다고 하심').
   - 관찰에 병명·'~의심'·'~위험'·'~필요'를 붙이지 않습니다(예: '똥이 시커멓게 짜장맨키로' → '검은색 변 보심', '출혈 의심·보고 필요'를 붙이면 틀림. '화장실 갈라꼬 일나다가 핑 돌아가' → '화장실 가려고 일어나실 때 어지럽다고 하심', '낙상 위험'을 붙이면 틀림).
   - 한 문장에 여러 사실이 섞이면 칸마다 나눠 넣습니다(예: '밥도 반 공기 묵고 똥은 못 누고 밤새 기침하고' → 식사 1/2 공기, 대변 못 보심, 밤새 기침).
 12. notes에는 입력의 사투리·아기말 낱말을 글자 그대로 옮기지 않습니다. 위 목록에 없는 말도 앞뒤 말로 뜻을 알면 표준어로 바꿉니다(몸 부위·증상·사람·때·물건). 뜻을 모르겠으면 다른 증상으로 짐작하지 말고 그 말을 '~라고 하심'으로 옮깁니다.
-13. notes는 줄이거나 묶지 않습니다. 말한 사실마다 때(어제·아침·며칠째)·부위·증상의 결(쑤심·저림·쓰림·부음·메스꺼움)·사람(따님·아들)·양(조금)을 살립니다(예: '그저께 미끄러지셨다고 팔에 멍' → '팔에 멍 있음. 그저께 미끄러지셨다고 하심.', '낙상 확인'으로 묶으면 틀림. '손이 저리다' → '손 저림 호소함', '통증'으로 바꾸면 틀림). bowel·physical 칸에 넣은 일도 구토·통증 같은 관찰이면 notes에서 빼지 않습니다. 잠·술·가족이 다녀감·음식 맛 같은 일상 사실도 말했으면 notes에 쓰고, 말한 사실이 하나라도 있으면 notes를 null로 두지 않습니다.
-14. 장기요양 급여 항목이 아닌 일(어르신과 상관없는 다른 가족의 식사·빨래·심부름, 집안 수리 등)은 physical·cognitive·household 칸을 체크하거나 시간을 넣지 않습니다. 말했으면 notes에 한 일 그대로 씁니다. 급여 항목인 일은 '도와드림'으로 뭉뚱그리지 말고 한 일·양·횟수를 그대로 씁니다(예: '죽 준비하고 앉혀서 식사 도움, 3/4 드심', '화장실 2회 부축').
+13. notes는 줄이거나 묶지 않습니다. 말한 사실마다 때(어제·아침·며칠째)·부위·증상의 결(쑤심·저림·쓰림·부음·메스꺼움)·사람(딸·아들, 가족 호칭은 높이지 않음)·양(조금)을 살립니다(예: '그저께 미끄러지셨다고 팔에 멍' → '팔에 멍 있음. 그저께 미끄러지셨다고 하심.', '낙상 확인'으로 묶으면 틀림. '손이 저리다' → '손 저림 호소함', '통증'으로 바꾸면 틀림). bowel·physical 칸에 넣은 일도 구토·통증 같은 관찰이면 notes에서 빼지 않습니다. 잠·술·가족이 다녀감·음식 맛 같은 일상 사실도 말했으면 notes에 쓰고, 말한 사실이 하나라도 있으면 notes를 null로 두지 않습니다.
+14. 장기요양 급여 항목이 아닌 일(어르신과 상관없는 다른 가족의 식사·빨래·심부름, 집안 수리 등)은 physical·cognitive·household 칸을 체크하거나 시간을 넣지 않습니다. notes에도 쓰지 않습니다(급여제공기록지 작성 안내: 급여 항목에 없는 서비스는 기록하지 않음). 급여 항목인 일은 '도와드림'으로 뭉뚱그리지 말고 한 일·양·횟수를 그대로 씁니다(예: '죽 준비하고 앉혀서 식사 도움, 3/4 드심', '화장실 2회 부축').
 
 칸 설명:
 - physical(신체활동지원, 별지 제12호서식 뒤쪽 세부내용 기준): personalHygiene=세면·구강청결(양치·틀니 손질)·머리 감기·몸단장(머리 손질·손발톱 깎기·면도)·옷 갈아입기, bathing=몸 씻기(목욕·샤워, 입욕 준비·욕실 이동 포함), mealAssist=식사 도움(식사 차리기·떠먹여 드리기 같은 식사 보조·구토물 정리), repositioning=체위변경·일어나 앉기 도움, mobility=이동 도움(침대↔휠체어 옮겨 타기·집 안 보행 도움·보장구), toileting=화장실 이용하기(화장실 이동·이동변기·배뇨·배변 도움·기저귀 교환·용변 뒤 처리). 산책·장보기·병원·은행 동행은 부축했어도 mobility가 아니라 household.personalActivity입니다. 신체기능의 유지·증진(관절운동·서기·걷기 연습 보조·기구 운동·복약 도움)은 서식에 체크 칸이 없으니 걷기 연습·보장구는 mobility, 나머지는 체크하지 않고 시간만 minutes에 더하며 한 일은 notes에 씁니다(예: '아침 약 복약 도움함.'). 신체활동을 하나라도 말했으면 한 것은 true, 말하지 않은 것은 false. 하나도 말하지 않았으면 모두 null. minutes=신체활동에 걸린 시간(분). 활동마다 시간을 말했으면 모두 더합니다.
@@ -194,16 +195,48 @@ export function uncovered(input: string, quotes: SaidQuotes): string[] {
     });
 }
 
+// 녹음 글의 분수를 'M/N'로 모은다. '4분의 3'을 AI가 '4/3'으로 뒤집어 옮긴다(11/15 평가 57)
+// shortcut: 숫자로 받아쓴 분수만 본다('사분의 삼'처럼 한글 수는 못 잡음), 받아쓰기가 한글 수를 내면 더한다
+const FRACTION = /(\d+)\s*분의\s*(\d+)|(\d+)\s*\/\s*(\d+)/g;
+const fractionsIn = (t: string) => [...t.matchAll(FRACTION)].map((m) => (m[1] ? `${m[2]}/${m[1]}` : `${m[3]}/${m[4]}`));
+function fixFractions(input: string, t: string | null) {
+  if (!t) return t;
+  for (const f of fractionsIn(input)) {
+    const [a, b] = f.split("/");
+    if (a !== b && !fractionsIn(input).includes(`${b}/${a}`)) t = t.replace(new RegExp(`(?<!\\d)${b}/${a}(?!\\d)`, "g"), f);
+  }
+  return t;
+}
+const withFractions = (input: string, r: { record: CareRecord; quotes: SaidQuotes }) => ({
+  ...r,
+  record: { ...r.record, notes: fixFractions(input, r.record.notes), guardianNotes: fixFractions(input, r.record.guardianNotes ?? null) },
+});
+assert.equal(fixFractions("죽을 4분의 3 드셨어요", "죽 4/3 섭취."), "죽 3/4 섭취.");
+assert.equal(fixFractions("밥 1/2 드셨어요", "밥 1/2 섭취. 14/30분"), "밥 1/2 섭취. 14/30분");
+
+// 다시 물을 까닭: 어느 칸에도 안 들어간 문장, notes에 그대로 옮긴 사투리, notes에 빠진 분수
+function issues(input: string, r: { record: CareRecord; quotes: SaidQuotes }) {
+  const notes = r.record.notes ?? "";
+  const missed = uncovered(input, r.quotes);
+  const copied = copiedDialect(input, notes);
+  const fractions = fractionsIn(input).filter((f) => !fractionsIn(notes).includes(f));
+  const lines = [
+    missed.length ? `앞서 정리했을 때 아래 문장에서 말한 사실이 어느 칸에도 들어가지 않았어요. 말한 사실은 하나도 빼지 말고(일상 사실도 notes에) 처음부터 다시 정리하세요.\n${missed.map((m) => `- ${m}`).join("\n")}` : "",
+    copied.length ? `notes에 사투리를 그대로 옮겼어요(${copied.join(", ")}). 참고 사전의 표준어 뜻으로 바꿔 쓰세요.` : "",
+    fractions.length ? `녹음 글에서 말한 양(${fractions.join(", ")})이 notes에 없어요. 'N분의 M'은 'M/N'으로 그대로 쓰세요.` : "",
+  ].filter(Boolean);
+  return { count: missed.length + copied.length + fractions.length, note: lines.length ? `\n\n[다시 정리] ${lines.join("\n")}` : "" };
+}
+
 export async function fillRecord(redacted: string) {
   const raw = await askAi(redacted);
-  const first = checkAiRecord(raw, redacted);
-  const missed = uncovered(redacted, first.quotes);
-  if (!notesLost(raw, first) && !missed.length) return first;
+  const first = withFractions(redacted, checkAiRecord(raw, redacted));
+  const found = issues(redacted, first);
+  if (!notesLost(raw, first) && !found.count) return first;
   // 한 번만 다시 묻는다. 다시 묻는 것도 실패하면(무료 한도 등) 첫 결과를 쓴다. SEC-3 호출 수는 한 번으로 센다
-  const note = missed.length ? `\n\n[다시 정리] 앞서 정리했을 때 아래 문장에서 말한 사실이 어느 칸에도 들어가지 않았어요. 말한 사실은 하나도 빼지 말고(일상 사실도 notes에) 처음부터 다시 정리하세요.\n${missed.map((m) => `- ${m}`).join("\n")}` : "";
   try {
-    const second = checkAiRecord(await askAi(redacted, note), redacted);
-    if (!missed.length || uncovered(redacted, second.quotes).length < missed.length) return second;
+    const second = withFractions(redacted, checkAiRecord(await askAi(redacted, found.note), redacted));
+    if (!found.count || issues(redacted, second).count < found.count) return second;
     return first;
   } catch {
     return first;

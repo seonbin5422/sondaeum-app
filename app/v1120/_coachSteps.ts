@@ -33,7 +33,7 @@ export const COACH = {
   ],
   reviewResumed: [
     { target: "said", title: "내가 한 말", body: "녹음한 글 그대로예요. AI가 정리한 내용과 맞는지 비교해 보세요." },
-    { target: "talk-more", title: "빠진 내용 더 말하기", body: "빠진 내용이 있거나 글자가 틀렸으면 이 버튼을 누르세요. 녹음 화면에서 더 말하거나 \"글로 쓰기\"로 고칠 수 있어요." },
+    { target: "talk-more", title: "이어서 말하기", body: "빠진 내용이 있거나 글자가 틀렸으면 \"이어서 말하기\"를 누르세요. 녹음 화면에서 더 말하거나 \"글로 쓰기\"로 고칠 수 있어요." },
     ...REVIEW_REST,
   ],
   clients: [

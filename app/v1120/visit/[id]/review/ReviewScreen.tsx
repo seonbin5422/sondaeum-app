@@ -594,7 +594,7 @@ export function ReviewScreen({
       </div>
       {resumed && (
         <Button data-coach="talk-more" variant="secondary" className="bg-white! active:bg-(--line)!" onClick={talkMore}>
-          🎤 빠진 내용 더 말하기
+          이어서 말하기
         </Button>
       )}
 

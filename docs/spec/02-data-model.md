@@ -138,7 +138,7 @@ type CareRecord = {
   // 7. 특이사항: 혈압·복약도 여기에 (D-43)
   serviceStart?: string | null;      // 실제 서비스 시작 "HH:MM" (D-37 261114.ver). 없으면 계약 시간
   serviceEnd?: string | null;        // 실제 서비스 끝 "HH:MM"
-  notes: string | null;              // 기록지·진료 참고용 요약에 쓰는 기록체("~함"). 관찰 → 도움·조치 → 전달 순서
+  notes: string | null;              // 기록지·건강 기록 요약에 쓰는 기록체("~함"). 관찰 → 도움·조치 → 전달 순서
   guardianNotes?: string | null;     // notes와 같은 문장을 보호자용 '~요'체로. 특이사항을 직접 고치면 null → notes를 보여 줌
   notesNoAction?: boolean;           // AI 판단: 관찰만 있고 요양보호사가 한 도움·조치가 없음 → C-14에서 더 말하도록 안내
   notesAsk?: string | null;          // notesNoAction일 때 무엇을 더 말할지 묻는 한 문장 (예: "무릎이 아프다고 하셨을 때 어떻게 도와드렸나요? (예: 쉬시게 함, 찜질, 보호자에게 알림)")
@@ -182,11 +182,11 @@ type GuardianReportProps = {
 - `Report.careRecord` 한 칸에 통째로 암호화할지, 항목별로 나눌지 (개발 2)
 - C-14의 "내가 한 말" 근거를 `aiRawJson`에 항목별로 둘지 (개발 1, C-14 설계 때)
 
-## 진료용 기간 요약 (DIF-4, D-29 확정 10/13)
+## 건강 기록 요약 (기간 요약) (DIF-4, D-29 확정 10/13, D-63 이름 바꿈)
 
-보험금 청구는 공단 등급 서류·의사 진단서 같은 공적 서류로 하므로, 앱 보고서는 그 근거가 될 수 없다. 대신 병원 진료 때 보호자가 의료진에게 보여 줄 **한 장짜리 기간 요약**으로 만든다. 미국 요양시설의 INTERACT "Stop and Watch"(돌봄 인력이 평소와 달라진 점만 체크해 간호사·의사에게 넘기는 도구)와 같은 역할이다. 양식은 저작권이 있어 구조만 참고한다.
+보험금 청구는 공단 등급 서류·의사 진단서 같은 공적 서류로 하므로, 앱 보고서는 그 근거가 될 수 없다. 대신 병원 진료 때 보호자가 의료진에게 보여 줄 **한 장짜리 기간 요약**으로 만든다. 장기요양 등급 재판정(갱신·변경 신청) 때도 같은 서류를 쓰고, 재판정용 요약을 따로 만들지 않는다 (D-63). 미국 요양시설의 INTERACT "Stop and Watch"(돌봄 인력이 평소와 달라진 점만 체크해 간호사·의사에게 넘기는 도구)와 같은 역할이다. 양식은 저작권이 있어 구조만 참고한다.
 
-입구는 C-19 **서류 만들기** 하나다. 먼저 서류 종류(진료 참고용 요약 · 급여제공기록지)를 고르면 그 아래에 기간(하루 · 최근 1주 · 최근 1개월 · 직접 고르기, 두 서류 같음)이 나타나고, 둘 다 고르면 "서류 만들기" 버튼이 켜진다. 급여제공기록지용 기간 선택 화면을 따로 만들지 않기 위해서다. 이 절은 진료 참고용 요약의 값만 정한다.
+입구는 C-19 **서류 만들기** 하나다. 먼저 서류 종류(건강 기록 요약 · 급여제공기록지 · 상태변화기록지(D-61))를 고르면 그 아래에 기간(하루 · 최근 1주 · 최근 1개월 · 직접 고르기, 세 서류 같음)이 나타나고, 둘 다 고르면 "서류 만들기" 버튼이 켜진다. 급여제공기록지용 기간 선택 화면을 따로 만들지 않기 위해서다. 이 절은 건강 기록 요약의 값만 정한다. 상태변화기록지는 새 값 없이 같은 `CareRecord`에서 변화상태가 호전·악화인 칸, 배변 실수, 특이사항("특이사항 없음." 뺌)이 있는 방문만 날짜순으로 모은다(`statusChangeOf`).
 
 새로 입력하는 값은 없다. 기간 안의 `CareRecord`를 모아 보여 준다. Stop and Watch의 "달라진 점"은 급여제공기록지의 변화상태(신체·식사·인지 호전/유지/악화)와 배변 변화가 이미 맡고 있고, 변화상태는 요양보호사가 직접 골라 "관찰이지 진단이 아니다"라는 원칙과도 맞는다.
 
@@ -249,7 +249,7 @@ model Comment {
 ```
 
 - 댓글은 보낸 보고서(`reportId`) 또는 게시판에 올린 서류(`documentId`) 중 하나에 단다 (11/1 저녁, 마이그레이션 `20261101180000_shared_documents`).
-- `SharedDocument`(clientId, caregiverId, kind="summary", from·to YYYY-MM-DD, shareToken): 진료 참고용 요약(C-20)의 "게시판에 올리기". 내용은 저장하지 않고 볼 때 그 기간 기록으로 다시 만든다. 같은 수급자·기간은 한 번만. 보호자는 `/v1120/g/[shareToken]/post`·`/document`로 본다.
+- `SharedDocument`(clientId, caregiverId, kind="summary", from·to YYYY-MM-DD, shareToken): 건강 기록 요약(C-20)의 "게시판에 올리기". 내용은 저장하지 않고 볼 때 그 기간 기록으로 다시 만든다. 같은 수급자·기간은 한 번만. 보호자는 `/v1120/g/[shareToken]/post`·`/document`로 본다.
 - `Comment.readAt`(11/2, 마이그레이션 `20261102000000_comment_read_at`): 상대가 그 글(게시글 상세)을 연 시각. 요양보호사가 열면 보호자 댓글, 보호자가 열면 요양보호사 댓글이 읽음이 된다(`markReadAsCaregiver`·`markReadAsGuardian`). 안 읽은 수는 `myUnreadByClient`(게시판 탭·홈 카드·수급자 탭)·`myUnreadTotal`(하단 메뉴)·글 카드가 센다.
 - `Client.boardToken`(11/1, 마이그레이션 `20261101210000_client_board_token`): 보호자 게시판 초대 링크 `/v1120/g/[boardToken]/board`. 초대 화면(C-23)을 처음 열 때 `myBoardToken`이 만든다. 보고서를 보내기 전에도 들어올 수 있다. `guardianBoard`는 보고서·서류·초대 토큰을 모두 받는다.
 - 수급자를 완전히 지우거나(`purgeExpiredClients`) 체험 계정을 지울 때 보고서·서류보다 먼저 지운다. FK도 `ON DELETE CASCADE`.
@@ -311,7 +311,7 @@ NOT_STARTED → RECORDING → RECORDED → SUMMARIZING → DRAFT_READY → SENT
 | SEC-2 | `Client.caregiverId`를 필수로 바꾸기 (기존 데이터는 시드 요양보호사로 채움). 칸은 D-35에서 선택 칸으로 추가됨 |
 | DIF-3 | 서류 초안 모델 (서식 12호 항목, [../prd/03-legal.md](../prd/03-legal.md)) |
 | DIF-5 | `Guardian`·`ChatRoom`·`Message`. 위 "대화방" 절 (D-45 초안) |
-| DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "진료용 기간 요약" 절 (D-29) |
+| DIF-4 | 새 모델 없음. 기간 내 `Visit`·`Report`를 모아 화면에서 생성 (생성 기록이 필요하면 `ExportLog`). 화면 값은 위 "건강 기록 요약 (기간 요약)" 절 (D-29) |
 | STB-5 | `Client.boardExpiresAt` (11/6 반영, D-53: 링크를 보낸 날부터 90일. 보고서별 기한이 아니라 수급자 게시판 단위) |
 | LAW-3 | 동의 기록: `Caregiver.consentedAt`·`consentItems`로 넣음 (10/13, D-40) |
 

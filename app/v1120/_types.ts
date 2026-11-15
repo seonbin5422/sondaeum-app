@@ -41,6 +41,7 @@ export type CareRecord = {
   handEdited?: string[]; // 기록 확인(C-14)에서 직접 고친 칸("physical.mobility"·"notes"). 녹음으로 돌아가 다시 정리해도 이 칸만 지킨다
   guardianNotes?: string | null;
   notesAsk?: string | null; // notesNoAction일 때 무엇을 더 말해야 하는지 묻는 한 문장 (예: 무릎 통증에 어떻게 도와드렸나요?)
+  notesUnsaid?: string[] | null; // 특이사항에 있지만 녹음 글에 없는 낱말(AI가 지어냈을 수 있음, _ai.ts unsaid) → 기록 확인에서 확인하게 한다. 직접 고치면 비운다
   notesNoAction?: boolean; // AI 판단: 특이사항에 관찰만 있고 요양보호사가 한 도움·조치가 없음 → 기록 확인에서 더 말하도록 안내 // 같은 내용을 보호자 보고서용 '~요'체로. 없거나 특이사항을 직접 고치면 notes를 보여 준다
 };
 

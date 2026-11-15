@@ -223,6 +223,7 @@ function setField(r: CareRecord, f: string, from: CareRecord | null) {
     r.guardianNotes = from ? from.guardianNotes ?? null : null;
     r.notesNoAction = from ? from.notesNoAction ?? false : false;
     r.notesAsk = from ? from.notesAsk ?? null : null;
+    r.notesUnsaid = from ? from.notesUnsaid ?? null : null;
     return;
   }
   const [g, k] = f.split(".") as [Group, string];

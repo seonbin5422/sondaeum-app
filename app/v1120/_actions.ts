@@ -265,8 +265,8 @@ export async function addToNotes(visitId: string, spoken: string): Promise<CareR
   const filled = await fillVisitRecord(joined, v.clientId, v.caregiverId);
   const record: CareRecord =
     "byAi" in filled && filled.record.notes
-      ? { ...old, notes: filled.record.notes, guardianNotes: filled.record.guardianNotes, notesNoAction: filled.record.notesNoAction, notesAsk: filled.record.notesAsk }
-      : { ...old, notes: joined, guardianNotes: null, notesNoAction: false, notesAsk: null }; // AI가 없거나 실패하면 한 말을 그대로 붙인다
+      ? { ...old, notes: filled.record.notes, guardianNotes: filled.record.guardianNotes, notesNoAction: filled.record.notesNoAction, notesAsk: filled.record.notesAsk, notesUnsaid: filled.record.notesUnsaid ?? null }
+      : { ...old, notes: joined, guardianNotes: null, notesNoAction: false, notesAsk: null, notesUnsaid: null }; // AI가 없거나 실패하면 한 말을 그대로 붙인다
   const transcript = `${v.transcript ? decryptText(v.transcript) : ""} ${text}`.trim();
   await prisma.$transaction([
     prisma.visit.update({ where: { id: visitId }, data: { transcript: encryptText(transcript) } }),

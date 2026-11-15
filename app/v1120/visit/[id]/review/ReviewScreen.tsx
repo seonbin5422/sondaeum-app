@@ -458,12 +458,19 @@ export function ReviewScreen({
             value={r.notes ?? ""}
             placeholder="혈압, 복약, 아픈 곳처럼 보호자가 알아야 할 것"
             // 직접 고치면 보호자용 글은 옛 내용이 되므로 지우고, 보호자 보고서도 고친 글을 보여 준다
-            onChange={(e) => update({ ...r, notes: e.target.value || null, guardianNotes: null })}
+            onChange={(e) => update({ ...r, notes: e.target.value || null, guardianNotes: null, notesUnsaid: null })}
           />
           {!r.notes && (
-            <Button variant="secondary" onClick={() => update({ ...r, notes: "특이사항 없음.", guardianNotes: "특별한 일은 없었어요.", notesNoAction: false, notesAsk: null })}>
+            <Button variant="secondary" onClick={() => update({ ...r, notes: "특이사항 없음.", guardianNotes: "특별한 일은 없었어요.", notesNoAction: false, notesAsk: null, notesUnsaid: null })}>
               특이사항 없음
             </Button>
+          )}
+          {/* AI가 녹음에 없는 말을 지어냈을 수 있다 (_ai.ts unsaid). 지우지 않고 확인을 부탁한다. 고치면 사라지고, 맞으면 그대로 둬도 된다 */}
+          {r.notes && !!r.notesUnsaid?.length && (
+            <div className="flex flex-col gap-1 rounded-xl bg-(--bg-brand) p-3 text-(--text-brand)">
+              <p className="text-base font-bold">녹음에 없던 말이 있어요. 맞는지 확인해 주세요.</p>
+              <p className="text-lg">{r.notesUnsaid.join(", ")}</p>
+            </div>
           )}
           {/* "기록 추가하기"는 조치가 빠졌거나 특이사항이 비었을 때. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
           {(r.notesNoAction || !r.notes || speech.recording || adding || heardText) && (

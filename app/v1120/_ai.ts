@@ -4,6 +4,7 @@ import { cleanEnv } from "@/lib/env";
 import type { CareRecord, Change } from "./_types";
 import { minutesIn, type SaidQuotes } from "./_extract";
 import { copiedDialect, glossary } from "./_glossary";
+import carePhrases from "../../scripts/ai-eval/care-phrases.json";
 
 // C-13 정리: 개인정보를 지운 녹음 글(_redact.ts)로 AI가 급여제공기록지(D-24) 칸을 채운다 (LAW-1·2).
 // AI가 실패하면 _actions.ts가 _extract.ts(낱말 찾기) 결과를 쓴다.
@@ -195,6 +196,31 @@ export function uncovered(input: string, quotes: SaidQuotes): string[] {
     });
 }
 
+// 특이사항에 녹음 글에 없는 낱말 = AI가 지어낸 말일 수 있다 (11/15 평가: '냉찜질 제공'·'진통제 투여'·'외국 음식'·'허리 통증', 사투리 그대로 '시리시리').
+// 근거 문장 대조(checkAiRecord)는 칸 단위라, 특이사항 근거가 하나만 맞아도 다른 문장이 함께 통과해서 낱말로 한 번 더 본다. AI를 더 부르지 않는다.
+// 기록지 말투로 바뀐 낱말(섭취·부종·좌측)은 기록지 표현 목록(care-phrases.json)과 아래 목록으로 넘긴다. 조사를 떼고, 끝이 서술어 꼴인 말(~함·~고)은 보지 않는다.
+// shortcut: 형태소 분석 없이 두 글자 조각만 맞춘다. 평가 사례 109개 결과에서 9개를 잡았고 모두 실제 문제였지만, 목록은 같은 평가로 맞춘 것이라 새 말에는 잘못 잡을 수 있다 → 지우지 않고 "확인 필요"로만 보인다
+const NOTE_WORDS = ["부종", "소량", "추위", "복통", "복부", "음료", "증상", "일부", "자녀", "하루", "가려움", "구역질", "아픔", "느낌", "왼쪽", "오른쪽", "통증", "좌측", "우측", "양측", "약간", "복용", "섭취", "제공", "호소", "확인", "관찰", "실시", "도움", "드림", "보호자", "전달", "안내", "권유", "요청", "시행", "보임", "하심", "있음", "없음", "함께", "어르신", "수급자", "요양보호사", "특이사항", "식사", "기록", "보고", "연락", "전화", "말씀", "직접", "다시", "계속", "평소", "오늘", "오전", "오후", "당일", "이후", "이전", "정도", "부분", "상태", "하여", "하고", "하며", "후에", "위해", "대해", "통해", "관련", "다음", "대변", "소변", "대소변", "항문"];
+const NOTE_VOCAB = squash(NOTE_WORDS.join("") + (carePhrases as { record: string; example_out: string }[]).map((p) => p.record + p.example_out).join(""));
+const JOSA = /(에게서|에게|께서|으로|에서|부터|까지|처럼|보다|이랑|하고|을|를|이|가|은|는|에|로|과|와|도|만|의)$/;
+const PREDICATE = /(함|음|심|림|임|됨|짐|김|고|며|서|게|지|여|어|아|요|다|던|된|한|할|될|했|해|하|러|려|면|니|자|도록|듯|중|기|드려|드림|셔|시)$/;
+export function unsaid(input: string, notes: string | null): string[] {
+  if (!notes) return [];
+  const said = squash(input + glossary(input));
+  const out = new Set<string>();
+  for (const tok of notes.split(/[\s.,·()/:'"~!?]+/)) {
+    const w = (tok.match(/^[가-힣]+/)?.[0] ?? "").replace(JOSA, "");
+    if (w.length < 2 || PREDICATE.test(w)) continue;
+    let known = false;
+    for (let i = 0; i + 2 <= w.length && !known; i++) known = said.includes(w.slice(i, i + 2)) || NOTE_VOCAB.includes(w.slice(i, i + 2));
+    if (!known) out.add(w);
+  }
+  return [...out];
+}
+assert.deepEqual(unsaid("발목이 부었길래 다리 좀 올려 드렸어요", "발목 부음 확인. 냉찜질 제공 및 다리 올림."), ["냉찜질"]);
+assert.deepEqual(unsaid("무릎이 아프다고 하셨어요", "무릎 통증 호소함."), []);
+assert.deepEqual(unsaid("점심은 멀국만 쪼깐 마세시고", "점심에 외국 음식만 조금 드심."), ["외국"]);
+
 // 녹음 글의 분수를 'M/N'로 모은다. '4분의 3'을 AI가 '4/3'으로 뒤집어 옮긴다(11/15 평가 57)
 // shortcut: 숫자로 받아쓴 분수만 본다('사분의 삼'처럼 한글 수는 못 잡음), 받아쓰기가 한글 수를 내면 더한다
 const FRACTION = /(\d+)\s*분의\s*(\d+)|(\d+)\s*\/\s*(\d+)/g;
@@ -214,21 +240,33 @@ const withFractions = (input: string, r: { record: CareRecord; quotes: SaidQuote
 assert.equal(fixFractions("죽을 4분의 3 드셨어요", "죽 4/3 섭취."), "죽 3/4 섭취.");
 assert.equal(fixFractions("밥 1/2 드셨어요", "밥 1/2 섭취. 14/30분"), "밥 1/2 섭취. 14/30분");
 
-// 다시 물을 까닭: 어느 칸에도 안 들어간 문장, notes에 그대로 옮긴 사투리, notes에 빠진 분수
+// 다시 물을 까닭: 어느 칸에도 안 들어간 문장, notes에 그대로 옮긴 사투리, notes에 빠진 분수, notes에 녹음 글에 없는 낱말
 function issues(input: string, r: { record: CareRecord; quotes: SaidQuotes }) {
   const notes = r.record.notes ?? "";
   const missed = uncovered(input, r.quotes);
   const copied = copiedDialect(input, notes);
   const fractions = fractionsIn(input).filter((f) => !fractionsIn(notes).includes(f));
+  const made = unsaid(input, notes).filter((w) => !copied.some((c) => c.startsWith(w.slice(0, 2))));
   const lines = [
     missed.length ? `앞서 정리했을 때 아래 문장에서 말한 사실이 어느 칸에도 들어가지 않았어요. 말한 사실은 하나도 빼지 말고(일상 사실도 notes에) 처음부터 다시 정리하세요.\n${missed.map((m) => `- ${m}`).join("\n")}` : "",
     copied.length ? `notes에 사투리를 그대로 옮겼어요(${copied.join(", ")}). 참고 사전의 표준어 뜻으로 바꿔 쓰세요.` : "",
+    made.length ? `notes에 녹음 글에 없는 말(${made.join(", ")})이 있어요. 녹음 글에서 말한 사실만 쓰고, 말하지 않은 도움·약·몸 부위는 지어내지 마세요.` : "",
     fractions.length ? `녹음 글에서 말한 양(${fractions.join(", ")})이 notes에 없어요. 'N분의 M'은 'M/N'으로 그대로 쓰세요.` : "",
   ].filter(Boolean);
-  return { count: missed.length + copied.length + fractions.length, note: lines.length ? `\n\n[다시 정리] ${lines.join("\n")}` : "" };
+  return { count: missed.length + copied.length + fractions.length + made.length, note: lines.length ? `\n\n[다시 정리] ${lines.join("\n")}` : "" };
 }
 
+// 다시 물은 뒤에도 남은 녹음 글에 없는 낱말은 기록 확인(C-14)에서 "확인 필요"로 보인다
+const flagUnsaid = (input: string, r: { record: CareRecord; quotes: SaidQuotes }) => {
+  const words = unsaid(input, r.record.notes);
+  return { ...r, record: { ...r.record, notesUnsaid: words.length ? words : null } };
+};
+
 export async function fillRecord(redacted: string) {
+  return flagUnsaid(redacted, await fillRecordOnce(redacted));
+}
+
+async function fillRecordOnce(redacted: string) {
   const raw = await askAi(redacted);
   const first = withFractions(redacted, checkAiRecord(raw, redacted));
   const found = issues(redacted, first);

@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import type { CareRecord } from "../../app/v1120/_types";
+import { unsaid } from "../../app/v1120/_ai";
 
 type Alt = string | string[]; // 배열이면 그중 하나만 있으면 됨
 type Case = {
@@ -52,6 +53,8 @@ export function score(c: Case, r: CareRecord) {
   }
   for (const w of [...NOTES_BANNED, ...(c.notesMustNot ?? [])]) if (has(notes, w)) problems.push(`특이사항에 들어가면 안 됨: ${w}`);
   if (/요\s*(\.|$)/m.test(notes)) problems.push("특이사항이 '~요'로 끝남");
+  // 11/15: 채점이 '냉찜질 제공'처럼 지어낸 말을 못 잡았다 → 앱과 같은 검사(unsaid)로 본다
+  for (const w of unsaid(c.input, notes)) problems.push(`특이사항에 녹음에 없는 말: ${w}`);
   for (const a of c.guardianMust ?? []) if (guardian && !has(guardian, a)) problems.push(`보호자 글에 빠짐: ${show(a)}`);
   for (const w of GUARDIAN_BANNED) if (has(guardian, w)) problems.push(`보호자 글에서 요양보호사를 높임: ${w}`);
   // 11/13 2차 평가에서 나온 주어 오류: 어르신이 한 일(먹기·자기·복용)을 요양보호사가 한 것처럼 씀

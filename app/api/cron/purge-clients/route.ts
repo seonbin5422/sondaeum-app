@@ -1,7 +1,7 @@
 import { cleanEnv } from "@/lib/env";
 import { purgeExpiredClients } from "@/lib/purgeExpiredClients";
 
-// STB-6: 삭제 예약 14일이 지난 수급자를 하루 한 번 지운다 (vercel.json crons, 매일 03:00 KST).
+// STB-6: 완전히 지우기 예약이 지났거나 일반 삭제 뒤 14일이 지난 수급자를 하루 한 번 지운다 (vercel.json crons, 매일 03:00 KST).
 // 화면은 purgeAt이 있는 수급자를 이미 숨기므로 지우는 시점이 하루 늦어도 보이지 않는다.
 // /api/는 proxy가 로그인 검사를 하지 않아서, Vercel Cron이 붙여 보내는 CRON_SECRET으로만 연다.
 export async function GET(request: Request) {

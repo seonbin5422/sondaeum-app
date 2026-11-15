@@ -14,7 +14,7 @@ export async function POST(
 
   await prisma.client.update({
     where: { id },
-    data: { isActive: true },
+    data: { isActive: true, deletedAt: null },
   });
 
   return NextResponse.redirect(absoluteUrl("/clients/manage", req), 303);

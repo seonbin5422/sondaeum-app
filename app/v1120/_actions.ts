@@ -88,17 +88,16 @@ export async function saveClient(form: FormData) {
   redirect(noContact ? `/v1120/client/${created.id}` : `/v1120/client/${created.id}/invite?new=1`);
 }
 
-// C-10 삭제: 목록에서 숨기고 "삭제한 수급자"에서 되살릴 수 있다
-// shortcut: 화면 안내("14일이 지나면 완전히 지워져요")와 달리 자동으로 지우지 않음, 삭제 시각 칸을 추가할 때 맞춘다
+// C-10 삭제: 목록에서 숨기고 "삭제한 수급자"에서 되살릴 수 있다. 14일 지나면 Cron이 지운다 (deletedAt)
 export async function deleteClient(id: string) {
   await ownClientOrThrow(id);
-  await prisma.client.update({ where: { id }, data: { isActive: false } });
+  await prisma.client.update({ where: { id }, data: { isActive: false, deletedAt: new Date() } });
   redirect(`/v1120/clients?done=deleted&id=${id}`);
 }
 
 export async function restoreClient(id: string) {
   await ownClientOrThrow(id);
-  await prisma.client.update({ where: { id }, data: { isActive: true } });
+  await prisma.client.update({ where: { id }, data: { isActive: true, deletedAt: null } });
   redirect(`/v1120/clients?done=restored&id=${id}`);
 }
 

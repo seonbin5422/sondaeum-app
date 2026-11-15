@@ -44,6 +44,7 @@ Caregiver 1 ── N Visit N ── 1 Client
 | `scheduleLabel` | String? | 돌봄 계약시간, 예: `수,금,토 17:00-23:00` (`lib/schedule.ts`가 해석) | 아니오 |
 | `isActive` | Boolean | `false` = 삭제됨(복원 가능) | |
 | `purgeAt` | DateTime? | 영구 삭제 예정 시각 (요청 후 14일) | |
+| `deletedAt` | DateTime? | 일반 삭제한 시각 (되살리면 비움). 14일 지나면 Cron이 지움 (11/15) | |
 
 ### AiUsage (AI 호출 기록, SEC-3)
 

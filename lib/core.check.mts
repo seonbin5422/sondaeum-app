@@ -1,6 +1,6 @@
 // STB-7 핵심 로직 테스트: npx tsx --tsconfig tsconfig.json lib/core.check.mts
 // 팀 DB를 건드리지 않게 임시 SQLite 파일에 마이그레이션을 깔고, 요양보호사 둘·옛 수급자 하나로 확인한다.
-// 권한(남의 수급자·방문·보고서), 보호자 링크(보낸 기록만·기한·삭제 예약), 일정 매칭, 상태 전이(보낸 뒤 못 고침·중복 정리 막기), 만료 삭제.
+// 권한(남의 수급자·방문·보고서), 보호자 링크(보낸 기록만·기한·삭제 예약), 일정 매칭, 상태 전이(보낸 뒤 못 고침·중복 정리 막기), 만료 삭제(완전히 지우기·일반 삭제 14일).
 import assert from "node:assert/strict";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import Module from "node:module";
@@ -81,6 +81,21 @@ await prisma.client.update({ where: { id: clientA.id }, data: { purgeAt: new Dat
 assert.equal(await purgeExpiredClients(), 1);
 assert.equal(await prisma.report.count({ where: { visitId: visitA.id } }), 0);
 assert.equal(await prisma.client.count({ where: { id: legacy.id } }), 1, "기한 없는 수급자는 남는다");
+// 일반 삭제: 삭제한 지 14일이 지나야 지우고, 그 전이나 되살린 수급자는 남긴다
+const day = 86_400_000;
+const del15 = await prisma.client.create({ data: { name: "삭제15일", guardianName: "가", caregiverId: a.id, isActive: false, deletedAt: new Date(Date.now() - 15 * day) } });
+const del13 = await prisma.client.create({ data: { name: "삭제13일", guardianName: "나", caregiverId: a.id, isActive: false, deletedAt: new Date(Date.now() - 13 * day) } });
+const back = await prisma.client.create({ data: { name: "되살림", guardianName: "다", caregiverId: a.id, isActive: true, deletedAt: new Date(Date.now() - 15 * day) } });
+assert.equal(await purgeExpiredClients(), 1);
+assert.equal(await prisma.client.count({ where: { id: del15.id } }), 0, "삭제 15일 지난 수급자는 지운다");
+assert.equal(await prisma.client.count({ where: { id: { in: [del13.id, back.id] } } }), 2, "14일 전·되살린 수급자는 남는다");
+// 마이그레이션의 채우기 문장으로 넣은 삭제일도 Prisma가 날짜로 읽고 비교한다
+const old = await prisma.client.create({ data: { name: "예전삭제", guardianName: "라", isActive: false } });
+await db.execute(readFileSync(path.join(migrations, "20261115120000_client_deleted_at", "migration.sql"), "utf8").split("\n").find((l) => l.startsWith("UPDATE"))!);
+const filled = (await prisma.client.findUnique({ where: { id: old.id } }))!.deletedAt!;
+assert.ok(Math.abs(filled.getTime() - Date.now()) < 60_000, "채운 삭제일은 지금");
+await prisma.client.update({ where: { id: old.id }, data: { deletedAt: new Date(Date.now() - 15 * day) } });
+assert.equal(await purgeExpiredClients(), 1);
 
 // 일정 매칭: "월,수,금 09:00-11:00" 꼴만 요일로 읽고, 일정이 없으면 어느 날이든 보인다
 const { parseScheduleDays, matchesScheduleDay, isVisibleOn, getScheduleEndMinutes } = await import("./schedule");

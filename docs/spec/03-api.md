@@ -27,7 +27,7 @@ API는 모두 `app/api/` 아래 Route Handler다. **지금은 요양보호사 AP
 | POST | `/api/clients` | 수급자 등록 | ❌ |
 | POST | `/api/clients/[id]/update` | 수급자 정보 수정 | ❌ |
 | PATCH | `/api/clients/[id]/notes` | 지속 메모(특이사항) 저장 | ❌ |
-| POST | `/api/clients/[id]/delete` | 삭제 (`isActive=false`, 복원 가능) | ❌ |
+| POST | `/api/clients/[id]/delete` | 삭제 (`isActive=false`·`deletedAt`, 14일 안에 복원 가능) | ❌ |
 | POST | `/api/clients/[id]/restore` | 복원 | ❌ |
 | POST | `/api/clients/[id]/permanent-delete` | 14일 뒤 영구 삭제 예약 (`purgeAt`) | ❌ |
 

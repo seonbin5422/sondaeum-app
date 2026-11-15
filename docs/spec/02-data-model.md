@@ -142,6 +142,7 @@ type CareRecord = {
   notes: string | null;              // 기록지·건강 기록 요약에 쓰는 기록체("~함"). 관찰 → 도움·조치 → 전달 순서
   guardianNotes?: string | null;     // notes와 같은 문장을 보호자용 '~요'체로. 특이사항을 직접 고치면 null → notes를 보여 줌
   notesNoAction?: boolean;           // AI 판단: 관찰만 있고 요양보호사가 한 도움·조치가 없음 → C-14에서 더 말하도록 안내
+  notesUnsaid?: string[] | null;     // 특이사항 낱말 중 녹음 글에 없는 것(AI가 지어냈을 수 있음, _ai.ts unsaid, 11/15) → C-14 "녹음에 없던 말이 있어요". 특이사항을 직접 고치면 null
   notesAsk?: string | null;          // notesNoAction일 때 무엇을 더 말할지 묻는 한 문장 (예: "무릎이 아프다고 하셨을 때 어떻게 도와드렸나요? (예: 쉬시게 함, 찜질, 보호자에게 알림)")
 };
 ```

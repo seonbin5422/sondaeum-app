@@ -39,6 +39,20 @@ POST summarize ─→ decrypt → classifyCareNote() → Groq gpt-oss-120b (구�
 - 브라우저 읽기(speechSynthesis)는 아이폰 Safari·크롬에서 "다 읽음"까지 가는데 소리가 나지 않아 쓰지 않는다(11/1 실기기).
 - 빈 칸 판단은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다. 놓친 조치 질문은 C-14의 AI 질문(notesAsk)이 다시 잡는다.
 
+## 1120 AI 정리 결과 검사 (`app/v1120/_ai.ts`)
+
+AI(Groq `openai/gpt-oss-120b`)가 채운 칸을 코드로 한 번 더 거른다. 검사에 AI를 더 부르지 않는다 (유료 검증 모델을 쓰지 않음, D-68).
+
+| 검사 | 걸리면 |
+| --- | --- |
+| 근거 문장(`quotes`)이 녹음 글에 있는지 — **칸 단위** (`checkAiRecord`) | 그 칸을 비움 → C-14 "확인 필요" |
+| 녹음 글 문장이 어느 칸 근거에도 없음 (`uncovered`) | 한 번 다시 정리 |
+| 특이사항에 사투리를 그대로 옮김 (`copiedDialect`) | 한 번 다시 정리 |
+| 말한 분수가 특이사항에 없음·뒤집힘 (`fractionsIn`·`fixFractions`) | 코드가 고치거나 다시 정리 |
+| 특이사항 낱말이 녹음 글·사투리 사전·기록지 표현 목록에 없음 (`unsaid`, 11/15) | 한 번 다시 정리, 그래도 남으면 `notesUnsaid` → C-14 "녹음에 없던 말이 있어요" (지우지 않음) |
+
+다시 정리는 한 번뿐이고, 걸린 것이 줄어든 쪽을 쓴다(`fillRecord`). 평가 채점(`scripts/ai-eval/run.mts`)도 `unsaid`로 "녹음에 없는 말"을 문제로 센다.
+
 ## 요약 출력 (`lib/careNoteAi.ts`)
 
 | 필드 | 뜻 |

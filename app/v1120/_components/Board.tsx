@@ -299,6 +299,18 @@ export function CommentThread({
 }
 
 // STB-5 (가): 보호자 링크 기한(90일)이 지났을 때 게시판·글·서류 자리에 보여 준다
+// 맞지 않는 링크·지운 수급자 링크. 예전에는 예시 보고서를 보여 줘서 남의 어르신 보고서처럼 보였다 (11/15)
+export function LinkGone() {
+  return (
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 p-6 text-center leading-[1.4]">
+      <h1 className="text-2xl font-bold">볼 수 없는 링크예요</h1>
+      <p className="text-lg text-muted">
+        링크 주소가 잘못됐거나 어르신 기록이 지워졌어요. <span className="whitespace-nowrap">요양보호사에게 새 링크를 받아 주세요.</span>
+      </p>
+    </main>
+  );
+}
+
 export function BoardExpired() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-3 p-6 text-center leading-[1.4]">

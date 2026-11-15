@@ -125,6 +125,11 @@ function makeHistory(): HistoryVisit[] {
 
 export const historyByClient: Record<string, HistoryVisit[]> = { "c-hong": makeHistory() };
 
+// 보호자 보고서(/v1120/g/[token])를 예시로 여는 임시 토큰: 이력 화면(C-22)과 보호자 앱 예시 게시판(/v1120/c/…/chat)의 글
+export function isSampleReportToken(token: string) {
+  return Object.values(historyByClient).flat().some((v) => v.visitId === token) || Object.values(boardByClient).flat().some((p) => p.shareToken === token);
+}
+
 export function historyOf(clientId: string) {
   return historyByClient[clientId] ?? [];
 }

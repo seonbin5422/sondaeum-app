@@ -71,6 +71,19 @@ await prisma.client.update({ where: { id: clientA.id }, data: { boardExpiresAt: 
 assert.equal(await guardianBoard(sent.shareToken), "expired", "기한 지난 링크");
 await prisma.client.update({ where: { id: clientA.id }, data: { boardExpiresAt: new Date(Date.now() + 86_400_000) } });
 assert.notEqual(await guardianBoard(sent.shareToken), "expired");
+// 링크 모두 닫기: 옛 보고서 링크는 안 열리고, 보고서·댓글은 남고, 새 링크로는 열린다. 기한을 다시 늘려도 옛 링크는 그대로 닫혀 있다
+const { closeGuardianLinks } = await import("./closeGuardianLinks");
+await prisma.comment.create({ data: { reportId: sent.id, author: "guardian", body: "x" } });
+const oldToken = sent.shareToken;
+await closeGuardianLinks(clientA.id);
+await prisma.client.update({ where: { id: clientA.id }, data: { boardExpiresAt: new Date(Date.now() + 86_400_000) } });
+assert.equal(await guardianBoard(oldToken), null, "닫은 옛 보고서 링크");
+const fresh = (await prisma.report.findUnique({ where: { id: sent.id } }))!;
+assert.notEqual(fresh.shareToken, oldToken);
+assert.ok((await guardianBoard(fresh.shareToken)) !== null, "새 보고서 링크는 열림");
+assert.equal(await prisma.comment.count({ where: { reportId: sent.id } }), 1, "댓글은 남음");
+assert.equal((await prisma.client.findUnique({ where: { id: clientA.id } }))!.boardToken, null, "초대 링크는 지워짐");
+sent.shareToken = fresh.shareToken;
 // 삭제(삭제 예약) 수급자는 링크가 있어도 안 보인다
 await prisma.client.update({ where: { id: clientA.id }, data: { purgeAt: new Date(Date.now() + 86_400_000) } });
 assert.equal(await guardianBoard(sent.shareToken), null, "삭제 예약된 수급자");

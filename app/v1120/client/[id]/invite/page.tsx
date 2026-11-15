@@ -7,7 +7,7 @@ import { InviteScreen } from "./InviteScreen";
 // 보고서를 보내기 전에도 수급자별 게시판 링크(/v1120/g/[boardToken]/board)로 초대할 수 있다 (D-34 (b)안, 11/1).
 export default async function InvitePage({ params, searchParams }: PageProps<"/v1120/client/[id]/invite">) {
   const { id } = await params;
-  const { new: justRegistered } = await searchParams;
+  const { new: justRegistered, closed } = await searchParams;
   const caregiver = await requireCaregiver();
   const c = await myClient(id);
   if (!c) notFound();
@@ -15,6 +15,8 @@ export default async function InvitePage({ params, searchParams }: PageProps<"/v
   return (
     <InviteScreen
       justRegistered={justRegistered === "1"}
+      clientId={c.id}
+      closed={closed === "1"}
       clientName={c.name}
       guardianName={c.guardianName}
       guardianTitle={contactTitle(c.guardianRelation)}

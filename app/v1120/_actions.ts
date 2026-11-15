@@ -15,6 +15,7 @@ import { takeAiCall } from "@/lib/aiLimit";
 import { boardOpenUntil, kstTodayRange, requireCaregiver } from "./_data";
 import { cleanSignatures, isEmptySignatures } from "./_signatures";
 import { assertFields } from "./_validate";
+import { closeGuardianLinks } from "@/lib/closeGuardianLinks";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
 
@@ -31,6 +32,13 @@ async function ownClientOrThrow(id: string) {
   const c = await prisma.client.findFirst({ where: { id, caregiverId: caregiver.id } });
   if (!c) throw new Error("수급자를 찾을 수 없어요.");
   return c;
+}
+
+// C-23 보호자 링크 모두 닫기: 잘못 보냈거나 보호자가 바뀌었을 때. 옛 링크는 "볼 수 없는 링크"가 되고, 초대 화면에서 새 링크를 보낸다
+export async function closeLinks(clientId: string) {
+  await ownClientOrThrow(clientId);
+  await closeGuardianLinks(clientId);
+  redirect(`/v1120/client/${clientId}/invite?closed=1`);
 }
 
 // C-07 등록 · C-08 수정 (ClientForm)

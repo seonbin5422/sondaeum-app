@@ -5,9 +5,12 @@ import { Icon, LinkButton, Screen, TopBar } from "../../../_components/ui";
 import { buttonBase, buzz, Spinner, variantClasses } from "../../../_components/Pressable";
 import { preloadKakao, shareKakaoCard } from "../../../_components/kakaoShare";
 import { maskName } from "../../../_types";
+import { closeLinks } from "../../../_actions";
 
 export function InviteScreen({
   justRegistered = false,
+  clientId,
+  closed = false,
   clientName,
   guardianName,
   guardianTitle,
@@ -17,6 +20,8 @@ export function InviteScreen({
   doneHref,
 }: {
   justRegistered?: boolean;
+  clientId: string;
+  closed?: boolean; // 방금 옛 링크를 모두 닫고 돌아옴
   clientName: string;
   guardianName: string;
   guardianTitle: string; // contactTitle: 보호자·사회복지사·담당자·후견인
@@ -39,6 +44,8 @@ export function InviteScreen({
   const message = `[손다음] 안녕하세요, ${guardianName} ${guardianTitle}님. ${clientName} 어르신을 돌보는 ${caregiverName} 요양보호사예요. 방문 보고서는 이 게시판에서 보실 수 있어요. 따로 가입하지 않아도 돼요.`;
 
   const [busy, setBusy] = useState(false);
+  // 링크 모두 닫기는 되돌릴 수 없어서 한 번 더 묻는다
+  const [closing, setClosing] = useState<"ask" | "busy" | null>(null);
   // 같은 결과를 다시 눌러도 확인 표시가 다시 튀도록 누를 때마다 바꾼다
   const [tick, setTick] = useState(0);
   function done(v: NonNullable<typeof sent>) {
@@ -87,6 +94,13 @@ export function InviteScreen({
         <p className="enter-down flex items-center gap-2 rounded-2xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--text-success)">
           <Icon name="check_circle" />
           {clientName} 정보를 등록했어요
+        </p>
+      )}
+
+      {closed && (
+        <p role="status" className="enter-down flex gap-2 rounded-2xl bg-(--success-soft) px-4 py-3 text-lg font-bold text-(--text-success)">
+          <Icon name="check_circle" className="mt-0.5" />
+          <span>예전에 보낸 링크를 모두 닫았어요. 아래 새 링크로 다시 초대해 주세요.</span>
         </p>
       )}
 
@@ -177,6 +191,40 @@ export function InviteScreen({
           )}
         </button>
       </div>
+
+      {/* 잘못 보냈거나 보호자가 바뀌었을 때 (11/15). 처음 등록한 직후에는 보낸 링크가 없어 감춘다 */}
+      {!justRegistered && (
+        <section className="flex flex-col gap-2 pt-6">
+          {closing ? (
+            <div className="flex flex-col gap-3 rounded-2xl bg-(--bg-secondary) p-4">
+              <p className="text-lg leading-[1.4]">
+                지금까지 보낸 보고서·게시판 링크가 모두 열리지 않게 돼요. {guardianTitle}님께는 새 링크를 다시 보내야 해요. 기록과 댓글은 그대로 남아요.
+              </p>
+              <button
+                type="button"
+                disabled={closing === "busy"}
+                aria-busy={closing === "busy" || undefined}
+                onPointerDown={buzz}
+                onClick={async () => {
+                  setClosing("busy");
+                  await closeLinks(clientId);
+                }}
+                className={`${buttonBase} ${variantClasses.danger}`}
+              >
+                {closing === "busy" ? <Spinner /> : null}
+                {closing === "busy" ? "닫는 중이에요" : "링크 모두 닫기"}
+              </button>
+              <button type="button" onClick={() => setClosing(null)} className={subBtn}>
+                그만두기
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setClosing("ask")} className="min-h-12 text-base font-medium text-muted underline underline-offset-4">
+              보낸 링크 모두 닫기
+            </button>
+          )}
+        </section>
+      )}
       </div>
     </Screen>
   );

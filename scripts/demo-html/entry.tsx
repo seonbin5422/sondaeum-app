@@ -104,4 +104,12 @@ window.fetch = async (input, init) => {
   return realFetch(input, init);
 };
 
+// 열 때마다(새로고침 포함) 처음 들어온 것처럼: 기록·코치마크 본 기록·보낸 시각을 지우고 녹음 화면부터 (사용자 11/17).
+// 화면 사이 이동은 주소 # 뒤만 바뀌어 페이지를 다시 열지 않으므로 지워지지 않는다
+try {
+  localStorage.clear();
+  sessionStorage.clear();
+} catch {}
+history.replaceState(null, "", location.pathname);
+
 createRoot(document.getElementById("root")!).render(<App />);

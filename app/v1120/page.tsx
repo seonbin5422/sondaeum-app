@@ -167,7 +167,8 @@ function NextVisit({ visit }: { visit: HomeVisit }) {
 
 // 홈/할 일 버튼 (Figma 485:381): 방문 상태를 버튼 하나로 (기록 전=귤색, 기록 중·확인 필요=연한 귤색, 보냄=연한 파랑)
 function actionOf(v: HomeVisit) {
-  if (v.status === "NOT_STARTED") return { label: "기록하기", tone: "accent" as const };
+  // 녹음 화면에 들어갔다 아무 말 없이 나온 방문(RECORDING, 녹음 글 없음)도 "기록하기" (사용자 11/17: 이어서 할 게 없는데 "이어서")
+  if (v.status === "NOT_STARTED" || (v.status === "RECORDING" && !v.interrupted)) return { label: "기록하기", tone: "accent" as const };
   if (v.status === "RECORDING") return { label: "이어서 기록하기", tone: "soft" as const };
   if (v.status === "SENT") return { label: "보냄 완료", tone: "sent" as const };
   return { label: "확인하고 보내기", tone: "soft" as const };

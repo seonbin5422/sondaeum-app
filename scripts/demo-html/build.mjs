@@ -62,6 +62,15 @@ const js = await build({
           const list = pages.map((f, i) => `{ path: ${JSON.stringify(("/v1120/" + path.dirname(f)).replace(/\/\.$/, ""))}, page: P${i} }`);
           return { contents: `${lines.join("\n")}\nexport const routes = [${list.join(",")}];`, loader: "js", resolveDir: root };
         });
+        // 시연 HTML에는 코치마크·둘러보기 권유를 띄우지 않는다(사용자 11/17: 발표 시간). 배포 앱은 그대로
+        b.onLoad({ filter: /_components\/Coach\.tsx$/ }, (a) => {
+          const src = readFileSync(a.path, "utf8");
+          for (const f of ["export function Coach(", "export function TourOffer("]) if (!src.includes(f)) throw new Error(`Coach.tsx에 ${f}가 없어요: build.mjs를 고쳐 주세요`);
+          return {
+            loader: "tsx",
+            contents: src.replace("export function Coach(", "export const Coach = (_: { id: string; steps: CoachStep[] }) => null;\nfunction CoachOff(").replace("export function TourOffer(", "export const TourOffer = () => null;\nfunction TourOfferOff("),
+          };
+        });
         // 아이콘은 CSS mask로 주소를 넣어서(붙는 순간 바꾸기가 안 됨) 그림 표에서 바로 꺼낸다
         b.onLoad({ filter: /_components\/Icon\.tsx$/ }, (a) => ({
           loader: "tsx",

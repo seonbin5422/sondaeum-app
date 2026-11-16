@@ -9,6 +9,9 @@ import { routes } from "demo:routes";
 import V1120Layout from "@/app/v1120/layout";
 import { POST as demoLogin } from "@/app/api/auth/demo/route";
 import { POST as onboard } from "@/app/api/caregivers/onboard/route";
+import { getSessionCaregiverId } from "./shims/session";
+import { prisma } from "./shims/prisma";
+import { CONSENT_ITEMS } from "@/app/v1120/_consent";
 
 type PageFn = (props: { params: Promise<Record<string, string>>; searchParams: Promise<Record<string, string>> }) => ReactNode | Promise<ReactNode>;
 
@@ -179,6 +182,18 @@ window.fetch = async (input, init) => {
   return realFetch(input, init);
 };
 
+// 로그인·온보딩 없이 바로 홈: 열 때 체험 계정(배포 앱 "먼저 둘러보기"와 같은 코드)을 만들고 가입 동의까지 마친 상태로 (사용자 11/17: 발표 시간).
+// 로그아웃하면 로그인 화면이 나오고, 거기서 다시 둘러보기로 들어갈 수 있다
+async function autoLogin() {
+  if (await getSessionCaregiverId()) return;
+  const req = { formData: async () => new FormData(), headers: new Headers({ host: "demo" }), nextUrl: new URL("demo://demo/"), url: "demo://demo/" };
+  await demoLogin(req as never);
+  const id = await getSessionCaregiverId();
+  if (!id) return;
+  await prisma.caregiver.update({ where: { id }, data: { consentedAt: new Date(), consentItems: CONSENT_ITEMS.map((i) => i.key).join(",") } });
+  if (!location.hash) history.replaceState(null, "", "#/v1120");
+}
+
 // 화면 이동 신호(RedirectSignal)는 오류가 아니라 콘솔에 남기지 않는다
 const quiet = (err: unknown) => void (err instanceof RedirectSignal || console.error(err));
-createRoot(document.getElementById("root")!, { onCaughtError: quiet, onRecoverableError: quiet }).render(<App />);
+void autoLogin().finally(() => createRoot(document.getElementById("root")!, { onCaughtError: quiet, onRecoverableError: quiet }).render(<App />));

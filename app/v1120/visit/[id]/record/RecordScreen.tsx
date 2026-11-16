@@ -304,7 +304,7 @@ export function RecordScreen({
           {questions[qi].said && <p className="text-base">말씀하신 내용: {questions[qi].said}</p>}
           <p className="text-[26px] font-bold leading-[1.4] tracking-[-0.02em]">{questions[qi].say}</p>
           <p className="text-lg">
-            질문을 소리로 들려 드려요.
+            빠진 항목을 채워 주세요.
             <br />
             녹음 버튼을 눌러 답해 주세요.
           </p>

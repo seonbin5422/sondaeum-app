@@ -1,0 +1,174 @@
+@import "tailwindcss" source(none);
+@source "../../app/v1120";
+@source "./entry.tsx";
+:root {
+  --background: #ffffff;
+  --foreground: #222222;
+  --card: #ffffff;
+  --accent: #ffb133;
+  --accent-dark: #e69a1f;
+  --accent-soft: #fff4e3;
+  --accent-soft-foreground: #8a5c12;
+  --accent-foreground: #212427;
+  --record: #ff5533;
+  --muted: #727272;
+  --border: #c4c4c4;
+  --chip-schedule: #9cdbd1;
+  --radius-card: 15px;
+  --shadow-card: 0px 4px 15px 0px rgba(0, 0, 0, 0.12);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-foreground: var(--accent-soft-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-record: var(--record);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-chip-schedule: var(--chip-schedule);
+  --radius-card: var(--radius-card);
+  --shadow-card: var(--shadow-card);
+  --font-sans: var(--font-pretendard);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), "Apple SD Gothic Neo", Arial, sans-serif;
+}
+/* 1120.ver 토큰. app/v1120 안에서만 쓴다. 값은 Figma "손다음" 변수(10/18) 기준 */
+.v1120 {
+  --muted: #5c5c5c;
+  --border: #8c8c8c;
+  --line: #e3e3e3;
+  --neutral-soft: #f4f4f4;
+  --danger: #e20000;
+  --danger-soft: #ffe8e8;
+  --success: #016bff;
+  --success-soft: #e4efff;
+  /* 연한 바탕(*-soft) 위 글자. status 색은 -soft 위 대비가 4.5:1 미만이라 따로 둔다 */
+  --text-success: #0559d2;
+  --text-danger: #ba0c09;
+  /* 주 버튼 글자는 본문 글자와 같게 (Figma text/primary) */
+  --accent-foreground: #222222;
+  --memo: #fff6c7;
+
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* 1128 테마: 회색 바탕(background/secondary) 위 흰 카드, 테두리 없음 */
+.v1120 {
+  --bg-secondary: #f4f4f4;
+  --bg-brand: #fff4e3;
+  --text-brand: #8a5c12;
+  --brand-secondary: #e69a1f;
+  --schedule: #9cdbd1;
+
+  /* 줄바꿈: 낱말 중간에서 끊지 않고(keep-all), 줄 길이를 고르게 해서 뜻 덩어리가 한 줄에 남게 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+.v1120 :is(h1, h2, h3, button, a) {
+  text-wrap: balance;
+}
+
+/* 마이크로 인터랙션: 누르는 순간 반응이 보이게 (고령 사용자가 "눌렸나?" 다시 누르지 않게) */
+.v1120 .press {
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1), background-color 120ms, opacity 120ms;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.v1120 .press:active {
+  transform: scale(0.96);
+}
+.v1120 .spin {
+  animation: v1120-spin 0.8s linear infinite;
+}
+@keyframes v1120-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 끝난 뒤 transform을 남기지 않도록 backwards: 남으면 안쪽 fixed 시트가 화면이 아니라 그 카드 기준으로 붙는다 */
+/* 화면 들어올 때: 위에서부터 차례로 떠오름 (Figma C-03 모션: 위로 32px, 0.05초 간격) */
+.v1120 .enter {
+  animation: v1120-enter 400ms cubic-bezier(0.05, 0.7, 0.1, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+.v1120 .enter-down {
+  animation: v1120-enter-down 400ms cubic-bezier(0.05, 0.7, 0.1, 1) backwards;
+}
+.v1120 .pop {
+  animation: v1120-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 450ms backwards;
+}
+@keyframes v1120-enter {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+}
+@keyframes v1120-enter-down {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+@keyframes v1120-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+/* 저장·완료처럼 결과를 알릴 때 잠깐 커졌다 돌아옴 */
+.v1120 .done-pulse {
+  animation: v1120-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+/* 하단 메뉴 탭 화면은 바로 보이게 (Screen tab, 팀 피드백 11/6: 등장 모션 때문에 메뉴 전환이 느려 보임). 세부 화면은 그대로 */
+.v1120 .still .enter,
+.v1120 .still .enter-down,
+.v1120 .still .pop {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v1120 .enter,
+  .v1120 .enter-down,
+  .v1120 .pop,
+  .v1120 .done-pulse {
+    animation: none;
+  }
+  .v1120 .press:active {
+    transform: none;
+  }
+}
+
+/* 상단 바를 하단 메뉴처럼 화면 가로 끝까지 깐다 (내용 칸 max-w-md 밖으로). 가로 스크롤은 Screen의 overflow-x-clip이 막는다 */
+.v1120 .full-bleed {
+  margin-inline: calc(50% - 50vw);
+}
+
+/* iOS 26 Safari는 theme-color 대신 body 바탕색으로 시간·배터리 줄을 칠한다 (사용자 11/7 아이폰 확인).
+   그래서 body를 화면 바탕과 같게: 기본 회색, 흰 화면은 흰색, 홈은 귤색 머리에 맞춰 귤색 */
+/* 화면 바탕색. 상단 바·아래 버튼 칸·시간 줄이 이 값을 따른다. 흰 화면은 .v1120-white (Screen white, 서류·로그인·온보딩) */
+.v1120 {
+  --screen-bg: #f4f4f4;
+}
+.v1120 .v1120-white {
+  --screen-bg: #ffffff;
+}
+body:has(.v1120) {
+  background: #f4f4f4;
+}
+body:has(.v1120-white) {
+  background: #ffffff;
+}
+body:has(.v1120-home-top) {
+  background: #ffb133;
+}

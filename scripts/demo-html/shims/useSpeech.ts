@@ -1,6 +1,8 @@
 "use client";
-// 시연 HTML용 useSpeech: file://에서는 크롬 받아쓰기(Web Speech) 마이크 권한이 켜지지 않는다(11/17 사용자 확인).
+// 시연 HTML용 useSpeech: file://에서 브라우저 받아쓰기(Web Speech)는 쓸 수 없다. 사파리는 권한이 안 켜지고,
+// 크롬은 시작만 되고 글을 하나도 돌려주지 않는다(11/17 사용자 화면, PR #54를 되돌림).
 // 그래서 녹음(MediaRecorder)을 말이 멈출 때마다 끊어 Groq Whisper로 보낸다 → 한 마디씩 바로 글이 붙는다(배포 앱처럼 말하는 중에 확인).
+// 한계: Whisper는 속삭임을 거의 못 알아듣고 빈 글을 준다(11/17 사용자). 시연은 보통 목소리로.
 // 화면이 쓰는 모양(supported·recording·interim·error·start·stop)은 원래와 같다.
 // shortcut: 소리 크기로만 말·쉼을 가른다(RMS 문턱 고정), 시끄러운 곳에서는 MAX_MS마다 끊긴다. 현장 소음이 크면 문턱을 올린다
 import { useEffect, useRef, useState } from "react";

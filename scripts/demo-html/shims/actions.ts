@@ -1,9 +1,9 @@
 // 시연 HTML용 _actions: DB 대신 이 브라우저 탭(sessionStorage)에 기록 하나를 둔다. AI 정리 순서는 서버(_actions.ts fillVisitRecord)와 같다.
-import type { CareRecord, Signatures } from "@v/_types";
-import { extractRecord, keepFilled, keptFields, overlayFields, type SaidQuotes } from "@v/_extract";
-import { redactForAi, restoreNames, toRoleWords } from "@v/_redact";
-import { fillGaps, fillRecord } from "@v/_ai";
-import { cleanSignatures, EMPTY_SIGNATURES } from "@v/_signatures";
+import type { CareRecord, Signatures } from "@/app/v1120/_types";
+import { extractRecord, keepFilled, keptFields, overlayFields, type SaidQuotes } from "@/app/v1120/_extract";
+import { redactForAi, restoreNames, toRoleWords } from "@/app/v1120/_redact";
+import { fillGaps, fillRecord } from "@/app/v1120/_ai";
+import { cleanSignatures, EMPTY_SIGNATURES } from "@/app/v1120/_signatures";
 import { go } from "./next-navigation";
 
 export const DEMO = { client: "김순자", guardian: "이영희", guardianRelation: "딸", caregiver: "박민지", phones: ["010-1234-5678", "010-8765-4321"] };
@@ -78,21 +78,6 @@ export async function summarizeVisit(_id: string) {
 export async function fillManually(_id: string) {
   if (!getVisit().record) put({ record: structuredClone(BLANK_RECORD), quotes: {} as SaidQuotes });
   put({ status: "DRAFT_READY" });
-}
-export async function addToNotes(_id: string, spoken: string): Promise<CareRecord> {
-  const v = getVisit();
-  const old = v.record;
-  if (!old) throw new Error("정리된 기록이 없어요.");
-  const text = spoken.trim();
-  if (!text) throw new Error("말한 내용이 없어요.");
-  const joined = `${old.notes ?? ""} ${text}`.trim();
-  const filled = await fillVisitRecord(joined);
-  const record: CareRecord =
-    "byAi" in filled && filled.record.notes
-      ? { ...old, notes: filled.record.notes, guardianNotes: filled.record.guardianNotes, notesNoAction: filled.record.notesNoAction, notesAsk: filled.record.notesAsk, notesUnsaid: filled.record.notesUnsaid ?? null }
-      : { ...old, notes: joined, guardianNotes: null, notesNoAction: false, notesAsk: null, notesUnsaid: null };
-  put({ record, transcript: `${v.transcript} ${text}`.trim(), edited: true });
-  return record;
 }
 export async function saveRecord(_id: string, record: CareRecord) {
   put({ record, edited: true });

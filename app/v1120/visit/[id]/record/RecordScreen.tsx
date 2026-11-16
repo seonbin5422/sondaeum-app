@@ -221,6 +221,18 @@ export function RecordScreen({
     else finish();
   }
 
+  async function saveForLater() {
+    clearTimeout(typingTimer.current);
+    setFinishing(true);
+    try {
+      await saveTranscript(visitId, transcript);
+      router.push("/v1120");
+    } catch {
+      setSaveError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+      setFinishing(false);
+    }
+  }
+
   async function finish() {
     if (speech.recording) speech.stop();
     // 글로 쓴 뒤 0.8초 안에 누르면 늦게 저장된 글이 상태를 다시 "녹음 중"으로 돌린다. finishRecording이 같은 글을 저장한다
@@ -275,9 +287,15 @@ export function RecordScreen({
               </Button>
             </>
           ) : (
-            <Button onClick={onDone} disabled={finishing}>
-              {finishing ? <><Spinner />잠시만요</> : "다 말했어요"}
-            </Button>
+            <>
+              <Button onClick={onDone} disabled={finishing}>
+                {finishing ? <><Spinner />잠시만요</> : "다 말했어요"}
+              </Button>
+              {/* D-69: 중간에 끊을 땐 저장만 하고 홈으로. AI 정리는 "다 말했어요" 때만 해서 방문 1건의 AI 호출을 줄인다 */}
+              <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={saveForLater} disabled={finishing}>
+                임시저장하고 나가기
+              </Button>
+            </>
           )}
           </div>
           )}

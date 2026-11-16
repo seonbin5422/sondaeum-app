@@ -3,11 +3,9 @@
 import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Icon, LinkButton, Screen, TopBar, selectChipClass } from "../../../_components/ui";
-import { Spinner } from "../../../_components/Pressable";
 import { Coach } from "../../../_components/Coach";
 import { COACH } from "../../../_coachSteps";
-import { addToNotes, saveRecord } from "../../../_actions";
-import { useSpeech } from "../../../_components/useSpeech";
+import { saveRecord } from "../../../_actions";
 import { changedFields, type SaidQuotes } from "../../../_extract";
 import { CareSheet } from "../../../_components/CareSheet";
 import { StatusChangeEntry, statusChangeOf } from "../../../_components/DocumentViews";
@@ -223,34 +221,6 @@ export function ReviewScreen({
   const [saveError, setSaveError] = useState("");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // 특이사항 칸에서 바로 "기록 추가하기"(말로 더함): 다 말하면 AI가 특이사항을 다시 정리해 그 자리에서 바뀐다
-  const heard = useRef("");
-  const [heardText, setHeardText] = useState("");
-  const [adding, setAdding] = useState(false);
-  const speech = useSpeech((t) => {
-    heard.current = `${heard.current} ${t}`.trim();
-    setHeardText(heard.current);
-  });
-  async function finishTalk() {
-    speech.stop();
-    setAdding(true);
-    // shortcut: 끝낸 직후 마지막 문장이 늦게 확정될 수 있어 1초 기다린다, useSpeech가 끝남을 알려 주게 되면 그걸로 바꾼다
-    await new Promise((ok) => setTimeout(ok, 1000));
-    const text = heard.current;
-    if (text) {
-      clearTimeout(saveTimer.current);
-      try {
-        await saveRecord(id, r); // 방금 고친 값이 먼저 저장돼야 서버가 덮어쓰지 않는다
-        setR(await addToNotes(id, text));
-        heard.current = "";
-        setHeardText("");
-        setSaveError("");
-      } catch {
-        setSaveError("특이사항에 넣지 못했어요. 인터넷 연결을 확인하고 다시 말해 주세요.");
-      }
-    }
-    setAdding(false);
-  }
   // LAW-7: 학대가 의심되는 말은 보고서에 자동으로 싣지 않고 요양보호사에게 신고 안내
   const flagged = /때리|때렸|맞았|멍이|욕을|가두|굶겨/.test(transcript);
 
@@ -472,45 +442,22 @@ export function ReviewScreen({
               <p className="text-lg">{r.notesUnsaid.join(", ")}</p>
             </div>
           )}
-          {/* "기록 추가하기"는 조치가 빠졌거나 특이사항이 비었을 때. 말하는 중·넣는 중·실패해 들은 말이 남았을 때는 끝날 때까지 둔다 */}
-          {(r.notesNoAction || !r.notes || speech.recording || adding || heardText) && (
-          <div className={`flex flex-col gap-2 rounded-xl p-3 ${r.notesNoAction || !r.notes ? "bg-(--bg-brand) text-(--text-brand)" : "bg-(--bg-secondary)"}`}>
-            {r.notesNoAction && (
-              <>
-                <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 말로 더 남겨 주세요.</p>
-                {r.notesAsk && <p className="text-lg">{r.notesAsk}</p>}
-              </>
-            )}
-            {/* 특이사항은 상태 변화를 알아채고 등급 재판정 때 근거가 돼서 비워 두지 않게 묻는다 (D-60) */}
-            {!r.notes && !r.notesNoAction && (
-              <>
-                <p className="text-base font-bold">오늘 이런 일은 없었나요? 있었으면 말로 남겨 주세요.</p>
-                <p className="text-lg">넘어지거나 넘어질 뻔한 일 · 밤에 깨신 횟수 · 식사량 변화 · 약을 거르거나 안 드신 일 · 혼자 못 하시게 된 일 · 평소와 다른 말이나 행동</p>
-              </>
-            )}
-            {(speech.recording || heardText) && (
-              <p className="text-lg">
-                {heardText} <span className="text-muted">{speech.interim}</span>
-                {speech.recording && <span className="text-base text-muted"> 듣는 중…</span>}
-              </p>
-            )}
-            {adding ? (
-              <p className="flex items-center gap-2 text-base font-bold" aria-live="polite">
-                <Spinner />
-                특이사항에 넣는 중이에요
-              </p>
-            ) : (
-              <Button
-                variant={speech.recording ? "danger" : "secondary"}
-                className={speech.recording ? "" : "bg-white! active:bg-(--line)!"}
-                onClick={speech.recording ? finishTalk : speech.start}
-                disabled={speech.supported === false}
-              >
-                {speech.recording ? "● 다 말했어요" : "기록 추가하기"}
-              </Button>
-            )}
-            {speech.error && <p className="text-base font-bold text-(--text-danger)">{speech.error}</p>}
-          </div>
+          {/* 조치가 빠졌거나 특이사항이 비었으면 위 칸에 바로 적게 알린다. 더 말하고 싶으면 뒤로 가서 이어서 녹음 (D-70) */}
+          {(r.notesNoAction || !r.notes) && (
+            <div className="flex flex-col gap-2 rounded-xl bg-(--bg-brand) p-3 text-(--text-brand)">
+              {r.notesNoAction ? (
+                <>
+                  <p className="text-base font-bold">어떻게 도와드렸는지가 빠졌어요. 기록해 주세요.</p>
+                  {r.notesAsk && <p className="text-lg">{r.notesAsk}</p>}
+                </>
+              ) : (
+                // 특이사항은 상태 변화를 알아채고 등급 재판정 때 근거가 돼서 비워 두지 않게 묻는다 (D-60)
+                <>
+                  <p className="text-base font-bold">오늘 이런 일은 없었나요? 있었다면 기록해 주세요.</p>
+                  <p className="text-lg">넘어지거나 넘어질 뻔한 일 · 밤에 깨신 횟수 · 식사량 변화 · 약을 거르거나 안 드신 일 · 혼자 못 하시게 된 일 · 평소와 다른 말이나 행동</p>
+                </>
+              )}
+            </div>
           )}
           {r.notes && r.notes !== "특이사항 없음." && !REPORTED.test(r.notes) && (
             <div className="flex flex-col gap-2">
@@ -535,14 +482,20 @@ export function ReviewScreen({
   return (
     <Screen
       bottom={
-        <Button
-          onClick={toConfirm}
-          disabled={confirmed < steps.length}
-          disabledReason="위 항목을 다 확인하면 눌러져요"
-        >
-          {/* 11/13 2차 평가: 칸 안의 '확인했어요, 다음'과 이름이 같아 헷갈려서, 가는 곳(C-15 보낼 내용 보기)으로 */}
-          보낼 내용 보기
-        </Button>
+        // 녹음 화면(C-12)과 같은 모양: 주 버튼 아래 "임시저장하고 나가기" (D-69, 사용자 11/17)
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={toConfirm}
+            disabled={confirmed < steps.length}
+            disabledReason="위 항목을 다 확인하면 눌러져요"
+          >
+            {/* 11/13 2차 평가: 칸 안의 '확인했어요, 다음'과 이름이 같아 헷갈려서, 가는 곳(C-15 보낼 내용 보기)으로 */}
+            보낼 내용 보기
+          </Button>
+          <LinkButton href="/v1120" variant="secondary" className="bg-white! active:bg-(--line)!">
+            임시저장하고 나가기
+          </LinkButton>
+        </div>
       }
     >
       {/* 방금 녹음하고 왔으면 뒤로가 곧 "더 말하기"라 버튼을 따로 두지 않는다 */}
@@ -645,9 +598,6 @@ export function ReviewScreen({
       </div>
       )}
 
-      <LinkButton href="/v1120" variant="secondary" className="bg-white! active:bg-(--line)!">
-        나중에 하기 (홈으로)
-      </LinkButton>
       {tab === "check" && <Coach id="review" steps={resumed ? COACH.reviewResumed : COACH.review} />}
     </Screen>
   );

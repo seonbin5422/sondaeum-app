@@ -29,7 +29,7 @@ const js = await build({
   jsx: "automatic",
   target: "chrome110",
   define: { "process.env.GROQ_API_KEY": JSON.stringify(key), "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_KAKAO_JS_KEY": '""' },
-  alias: { "@v": path.join(root, "app/v1120"), "@": root, "groq-sdk": shim("groq-sdk.ts"), "next/navigation": shim("next-navigation.ts"), "next/link": shim("next-link.tsx"), "node:assert/strict": shim("assert.ts"), "server-only": shim("env.ts") },
+  alias: { "@": root, "groq-sdk": shim("groq-sdk.ts"), "next/navigation": shim("next-navigation.ts"), "next/link": shim("next-link.tsx"), "node:assert/strict": shim("assert.ts"), "server-only": shim("env.ts") },
   plugins: [
     {
       name: "demo-shims",
@@ -37,13 +37,6 @@ const js = await build({
         b.onResolve({ filter: /\/_actions$/ }, () => ({ path: shim("actions.ts") }));
         b.onResolve({ filter: /^@\/lib\/env$/ }, () => ({ path: shim("env.ts") }));
         b.onResolve({ filter: /\/useSpeech$/ }, () => ({ path: shim("useSpeech.ts") }));
-        // 기록 추가하기: 1초 대신 받아쓰기가 끝날 때까지 기다린다
-        b.onLoad({ filter: /review\/ReviewScreen\.tsx$/ }, (a) => {
-          const src = readFileSync(a.path, "utf8");
-          const from = "await new Promise((ok) => setTimeout(ok, 1000));";
-          if (!src.includes(from)) throw new Error("ReviewScreen 기다림 코드가 바뀌었어요: build.mjs를 고쳐 주세요");
-          return { loader: "tsx", contents: src.replace(from, "await (globalThis.__speechDone ?? new Promise((ok) => setTimeout(ok, 1000)));") };
-        });
         // 아이콘은 이름으로 주소를 만든다 → 파일 안에 넣은 아이콘 표(ICONS)에서 꺼낸다
         b.onLoad({ filter: /_components\/Icon\.tsx$/ }, (a) => ({
           loader: "tsx",

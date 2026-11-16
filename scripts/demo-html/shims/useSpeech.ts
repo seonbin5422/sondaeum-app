@@ -1,12 +1,10 @@
 "use client";
-// 시연 HTML용 useSpeech: 배포 앱과 같은 브라우저 받아쓰기(Web Speech)를 먼저 쓴다. 크롬은 file://에서도 된다.
-// 사파리처럼 file://에서 막히면(권한·지원 안 됨) Groq Whisper로 넘어간다: 녹음을 말이 멈출 때마다 끊어 보낸다.
-// Whisper는 속삭임을 못 알아들어 빈 글을 준다(11/17 사용자: 배포는 되는데 HTML은 안 됨) → Whisper는 대신 쓰는 길로만.
+// 시연 HTML용 useSpeech: file://에서는 크롬 받아쓰기(Web Speech) 마이크 권한이 켜지지 않는다(11/17 사용자 확인).
+// 그래서 녹음(MediaRecorder)을 말이 멈출 때마다 끊어 Groq Whisper로 보낸다 → 한 마디씩 바로 글이 붙는다(배포 앱처럼 말하는 중에 확인).
 // 화면이 쓰는 모양(supported·recording·interim·error·start·stop)은 원래와 같다.
 // shortcut: 소리 크기로만 말·쉼을 가른다(RMS 문턱 고정), 시끄러운 곳에서는 MAX_MS마다 끊긴다. 현장 소음이 크면 문턱을 올린다
 import { useEffect, useRef, useState } from "react";
 import { whisper } from "./whisper";
-import { useSpeech as useWebSpeech } from "@/app/v1120/_components/useSpeech";
 
 const SPEECH_RMS = 0.015; // 이보다 크면 말하는 중
 const PAUSE_MS = 700; // 말한 뒤 이만큼 조용하면 한 마디로 끊는다
@@ -16,7 +14,7 @@ const extOf = (mime: string) => (mime.includes("mp4") ? "mp4" : mime.includes("o
 
 type Session = { stream: MediaStream; ctx: AudioContext; timer: ReturnType<typeof setInterval>; rec: MediaRecorder | null; live: boolean };
 
-function useWhisper(onFinal: (text: string) => void) {
+export function useSpeech(onFinal: (text: string) => void) {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [recording, setRecording] = useState(false);
   const [interim, setInterim] = useState("");
@@ -132,23 +130,4 @@ function useWhisper(onFinal: (text: string) => void) {
   }
 
   return { supported, recording, interim, error, start, stop };
-}
-
-export function useSpeech(onFinal: (text: string) => void) {
-  const web = useWebSpeech(onFinal);
-  const wh = useWhisper(onFinal);
-  const [mode, setMode] = useState<"web" | "whisper" | null>(null);
-  // 지원 여부는 브라우저에서만 안다(처음 그릴 때는 null)
-  useEffect(() => {
-    if (mode === null && web.supported !== null) setMode(web.supported ? "web" : "whisper");
-  }, [mode, web.supported]);
-  // 브라우저 받아쓰기가 권한·서비스 문제로 막히면 Whisper로 바꿔 바로 이어서 듣는다 (말이 멈춘 탓인 no-speech 등은 원래 훅이 다시 켠다)
-  useEffect(() => {
-    if (mode === "web" && web.error && /권한|not-allowed|service-not-allowed|network|audio-capture/.test(web.error) && wh.supported) {
-      setMode("whisper");
-      wh.start();
-    }
-  }, [mode, web.error, wh]);
-  if (mode === "whisper") return wh;
-  return { ...web, supported: web.supported || wh.supported };
 }

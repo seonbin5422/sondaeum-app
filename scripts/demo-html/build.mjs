@@ -38,8 +38,7 @@ const js = await build({
       setup(b) {
         b.onResolve({ filter: /\/_actions$/ }, () => ({ path: shim("actions.ts") }));
         b.onResolve({ filter: /^@\/lib\/env$/ }, () => ({ path: shim("env.ts") }));
-        // 화면은 시연용 useSpeech를 쓴다. 시연용 useSpeech가 부르는 원래 훅(브라우저 받아쓰기)은 그대로 둔다
-        b.onResolve({ filter: /\/useSpeech$/ }, (a) => (a.importer.endsWith(path.join("shims", "useSpeech.ts")) ? undefined : { path: shim("useSpeech.ts") }));
+        b.onResolve({ filter: /\/useSpeech$/ }, () => ({ path: shim("useSpeech.ts") }));
         // 빠진 항목 질문 소리(1~6.mp3)는 번호로 주소를 만든다 → 파일 안에 넣은 소리 표(ASK)에서 꺼낸다
         b.onLoad({ filter: /record\/RecordScreen\.tsx$/ }, (a) => {
           const src = readFileSync(a.path, "utf8");

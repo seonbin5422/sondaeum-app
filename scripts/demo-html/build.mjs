@@ -18,6 +18,8 @@ const MIME = { svg: "image/svg+xml", png: "image/png", webp: "image/webp", mp3: 
 const dataUri = (f) => `data:${MIME[f.split(".").pop()]};base64,${readFileSync(f).toString("base64")}`;
 const iconDir = path.join(root, "public/v1120/icons");
 const icons = Object.fromEntries(readdirSync(iconDir).filter((f) => f.endsWith(".svg")).map((f) => [f.slice(0, -4), dataUri(path.join(iconDir, f))]));
+const askDir = path.join(root, "public/v1120/ask");
+const ask = Object.fromEntries(readdirSync(askDir).filter((f) => f.endsWith(".mp3")).map((f) => [f.slice(0, -4), dataUri(path.join(askDir, f))]));
 const inlineAssets = (t) => t.replace(/\/(?:v1120|brand)\/[\w./-]+\.(?:svg|png|webp|mp3)/g, (m) => (existsSync(path.join(root, "public", m)) ? dataUri(path.join(root, "public", m)) : m));
 
 const js = await build({
@@ -29,7 +31,7 @@ const js = await build({
   jsx: "automatic",
   target: "chrome110",
   define: { "process.env.GROQ_API_KEY": JSON.stringify(key), "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_KAKAO_JS_KEY": '""' },
-  alias: { "@v": path.join(root, "app/v1120"), "@": root, "groq-sdk": shim("groq-sdk.ts"), "next/navigation": shim("next-navigation.ts"), "next/link": shim("next-link.tsx"), "node:assert/strict": shim("assert.ts"), "server-only": shim("env.ts") },
+  alias: { "@": root, "groq-sdk": shim("groq-sdk.ts"), "next/navigation": shim("next-navigation.ts"), "next/link": shim("next-link.tsx"), "node:assert/strict": shim("assert.ts"), "server-only": shim("env.ts") },
   plugins: [
     {
       name: "demo-shims",
@@ -37,12 +39,12 @@ const js = await build({
         b.onResolve({ filter: /\/_actions$/ }, () => ({ path: shim("actions.ts") }));
         b.onResolve({ filter: /^@\/lib\/env$/ }, () => ({ path: shim("env.ts") }));
         b.onResolve({ filter: /\/useSpeech$/ }, () => ({ path: shim("useSpeech.ts") }));
-        // 기록 추가하기: 1초 대신 받아쓰기가 끝날 때까지 기다린다
-        b.onLoad({ filter: /review\/ReviewScreen\.tsx$/ }, (a) => {
+        // 빠진 항목 질문 소리(1~6.mp3)는 번호로 주소를 만든다 → 파일 안에 넣은 소리 표(ASK)에서 꺼낸다
+        b.onLoad({ filter: /record\/RecordScreen\.tsx$/ }, (a) => {
           const src = readFileSync(a.path, "utf8");
-          const from = "await new Promise((ok) => setTimeout(ok, 1000));";
-          if (!src.includes(from)) throw new Error("ReviewScreen 기다림 코드가 바뀌었어요: build.mjs를 고쳐 주세요");
-          return { loader: "tsx", contents: src.replace(from, "await (globalThis.__speechDone ?? new Promise((ok) => setTimeout(ok, 1000)));") };
+          const from = "audio: `/v1120/ask/${i + 1}.mp3`";
+          if (!src.includes(from)) throw new Error("RecordScreen 질문 소리 코드가 바뀌었어요: build.mjs를 고쳐 주세요");
+          return { loader: "tsx", contents: `const ASK = ${JSON.stringify(ask)};\n` + src.replace(from, "audio: ASK[i + 1]") };
         });
         // 아이콘은 이름으로 주소를 만든다 → 파일 안에 넣은 아이콘 표(ICONS)에서 꺼낸다
         b.onLoad({ filter: /_components\/Icon\.tsx$/ }, (a) => ({
@@ -74,7 +76,8 @@ const html = `<!doctype html>
 <script>${inlineAssets(js.outputFiles[0].text).replace(/<\/script/gi, "<\\/script")}</script>
 </body>
 </html>`;
-mkdirSync(path.join(root, "demo"), { recursive: true });
-const out = path.join(root, "demo/sondaeum-demo.html");
+// DEMO_OUT: 시험용으로 다른 곳에 만들 때 (키가 든 demo/ 파일을 덮지 않게)
+const out = process.env.DEMO_OUT ? path.resolve(process.env.DEMO_OUT) : path.join(root, "demo/sondaeum-demo.html");
+mkdirSync(path.dirname(out), { recursive: true });
 writeFileSync(out, html);
 console.log(`${out} ${(html.length / 1e6).toFixed(1)}MB, Groq 키 ${key ? "넣음" : "없음(낱말 찾기로 정리)"}`);

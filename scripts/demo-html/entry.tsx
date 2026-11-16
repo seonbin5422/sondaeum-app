@@ -3,13 +3,13 @@ import { createRoot } from "react-dom/client";
 import { useSyncExternalStore } from "react";
 import { currentPath, go } from "./shims/next-navigation";
 import { DEMO, getVisit, resetVisit } from "./shims/actions";
-import { RecordScreen } from "@v/visit/[id]/record/RecordScreen";
-import ProcessingPage from "@v/visit/[id]/processing/page";
-import { ReviewScreen } from "@v/visit/[id]/review/ReviewScreen";
-import { ConfirmScreen } from "@v/visit/[id]/confirm/ConfirmScreen";
-import { SentScreen } from "@v/visit/[id]/sent/SentScreen";
-import { GuardianReport } from "@v/g/[token]/GuardianReport";
-import { fixRecordText } from "@v/_ai";
+import { RecordScreen } from "@/app/v1120/visit/[id]/record/RecordScreen";
+import ProcessingPage from "@/app/v1120/visit/[id]/processing/page";
+import { ReviewScreen } from "@/app/v1120/visit/[id]/review/ReviewScreen";
+import { ConfirmScreen } from "@/app/v1120/visit/[id]/confirm/ConfirmScreen";
+import { SentScreen } from "@/app/v1120/visit/[id]/sent/SentScreen";
+import { GuardianReport } from "@/app/v1120/g/[token]/GuardianReport";
+import { fixRecordText } from "@/app/v1120/_ai";
 import { WEEKDAY_LABELS } from "@/lib/schedule";
 import { whisper } from "./shims/whisper";
 
@@ -50,6 +50,7 @@ function Page({ path }: { path: string }) {
         token={ID}
         order="base"
         sent={{ guardianName: DEMO.guardian, guardianTitle: "보호자", clientName: DEMO.client, caregiverName: DEMO.caregiver, startedAt: time.startedAt, endedAt: time.endedAt, record, recipientSigned: v.signatures.recipient.length > 0 }}
+        asCaregiver // 보낸 화면에서 연 요양보호사 기기: 배포 앱처럼 서명칸은 보기만 (대리 서명 막기, 사용자 11/14)
       />
     );
   }

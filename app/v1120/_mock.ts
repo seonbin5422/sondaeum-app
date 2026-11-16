@@ -4,8 +4,8 @@ import type { BoardPost, CareRecord, ClientProfile, GuardianReportProps, History
 export const caregiverName = "박현우";
 
 export const todayVisits: TodayVisit[] = [
-  { visitId: "v-hong", clientId: "c-hong", clientName: "홍길순", scheduleLabel: "월·수·금 09:00–11:00", status: "RECORDING", interrupted: true },
-  { visitId: "v-kim", clientId: "c-kim", clientName: "김영자", scheduleLabel: "화·목 13:00–15:00", status: "NOT_STARTED", interrupted: false },
+  { visitId: "v-hong", clientId: "c-hong", clientName: "홍길순", scheduleLabel: "월·수·금·토 09:00–11:00", status: "RECORDING", interrupted: true },
+  { visitId: "v-kim", clientId: "c-kim", clientName: "김영자", scheduleLabel: "화·목·토 13:00–15:00", status: "NOT_STARTED", interrupted: false },
   { visitId: "v-lee", clientId: "c-lee", clientName: "이복순", scheduleLabel: "매일 16:00–17:00", status: "SENT", interrupted: false },
 ];
 
@@ -72,16 +72,17 @@ export function visitInfo(visitId: string) {
 export const caregiverLicense = "2019-1234567";
 
 export const clients: ClientProfile[] = [
+  // 체험 수급자 셋 모두 토요일 방문이 있다: 본선 발표(11/28 토)에 홈에 방문 3건이 보이게 (사용자 11/17)
   {
     id: "c-hong", name: "홍길순", age: 82, gender: "여", allergies: "없음", medicalHistory: "고혈압, 무릎 관절염",
     medicationNotes: "혈압약(아침), 당뇨약(아침·저녁)", personalNotes: "오른쪽 무릎이 자주 아프심. 계단 이동 때 부축",
     guardianName: "김○○", guardianRelation: "딸", guardianPhone: "010-1111-2222", guardianJoined: true, careRegistrationNumber: "L1234567890", careGrade: "3등급", phone: "010-0000-0000",
-    scheduleLabel: "월·수·금 09:00–11:00", scheduleDays: [1, 3, 5], isActive: true,
+    scheduleLabel: "월·수·금·토 09:00–11:00", scheduleDays: [1, 3, 5, 6], isActive: true,
   },
   {
     id: "c-kim", name: "김영자", age: 79, gender: "여", allergies: "페니실린", medicalHistory: "경도 치매",
     medicationNotes: "치매약(저녁)", personalNotes: null, guardianName: "박○○", guardianRelation: "아들", guardianPhone: "010-3333-4444", guardianJoined: false,
-    careRegistrationNumber: "L2345678901", careGrade: "5등급", phone: null, scheduleLabel: "화·목 13:00–15:00", scheduleDays: [2, 4], isActive: true,
+    careRegistrationNumber: "L2345678901", careGrade: "5등급", phone: null, scheduleLabel: "화·목·토 13:00–15:00", scheduleDays: [2, 4, 6], isActive: true,
   },
   {
     id: "c-lee", name: "이복순", age: 88, gender: "여", allergies: null, medicalHistory: "당뇨",

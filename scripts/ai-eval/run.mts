@@ -67,7 +67,7 @@ export function score(c: Case, r: CareRecord) {
 // 채점 자체가 맞는지 먼저 확인
 {
   const blank = { physical: {}, cognitive: {}, household: { minutes: 45 }, change: {}, bowel: {}, physicalNote: null, notes: "기침 2회 보임. 보호자에게 전달함.", guardianNotes: "요양보호사가 확인하셨어요." } as unknown as CareRecord;
-  const s = score({ id: "t", about: "", input: "", example: null, expect: { "household.minutes": 45, "physical.bathing": [null, false] }, notesMust: [["두번", "2회"], "혈압"], notesMustNot: ["우측"] }, blank);
+  const s = score({ id: "t", about: "", input: "기침 2회 보임. 보호자에게 전달함.", example: null, expect: { "household.minutes": 45, "physical.bathing": [null, false] }, notesMust: [["두번", "2회"], "혈압"], notesMustNot: ["우측"] }, blank);
   assert.deepEqual([s.fieldsOk, s.fields, s.mustOk, s.must], [2, 2, 1, 2]);
   assert.deepEqual(s.problems, ["특이사항에 빠짐: 혈압", "보호자 글에서 요양보호사를 높임: 확인하셨어요"]);
 }

@@ -324,7 +324,8 @@ export function RecordScreen({
           <p className="text-lg">
             빠진 항목을 채워 주세요.
             <br />
-            녹음 버튼을 눌러 답해 주세요.
+            {/* 녹음만이 아니라 글로 쓰기·음성 파일 올리기로도 답할 수 있다 (사용자 11/17) */}
+            녹음하거나 글로 써서 답해 주세요.
           </p>
           <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={() => speak(questions[qi].audio, setTtsStatus)}>
             질문 다시 듣기

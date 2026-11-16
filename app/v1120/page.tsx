@@ -1,5 +1,4 @@
 import Image from "next/image";
-import type { Viewport } from "next";
 import type { CSSProperties } from "react";
 import { requireCaregiver, serviceTimeOf } from "./_data";
 import { caregiverTitle } from "./_types";
@@ -15,9 +14,6 @@ import { kstNowHm, notifications, todayVisitList, visitHref, type HomeVisit } fr
 const order = (i: number) => ({ "--i": i }) as CSSProperties;
 
 // C-03 홈 (Figma 558:930): 귤색 머리(로고·알림·인사·마무리 못 한 기록) · 이번 방문 · 바로가기 · 오늘 방문
-// 시간·배터리 줄까지 귤색 머리가 이어지게 (사용자 11/7). 안드로이드·iOS 18 이하는 theme-color, iOS 26 Safari는 맨 위 바탕색(tokens.css :has)을 본다
-export const viewport: Viewport = { themeColor: "#ffb133" };
-
 export default async function HomePage() {
   const caregiver = await requireCaregiver();
   const { clients, list } = await todayVisitList();
@@ -33,7 +29,7 @@ export default async function HomePage() {
 
   return (
     <Screen nav tab>
-      <header className="v1120-home-top enter-down relative -mx-5 -mt-5 flex flex-col gap-4 overflow-hidden rounded-b-3xl bg-accent px-6 pb-7 pt-6">
+      <header className="enter-down relative -mx-5 -mt-5 flex flex-col gap-4 overflow-hidden rounded-b-3xl bg-accent px-6 pb-7 pt-6">
         {/* 배경 그림은 머리 위 끝에서 잘리지 않게 12px 내려 둔다 (사용자 11/7: 시간 줄까지 귤색이라 잘린 동그라미가 보임) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/v1120/home/home-deco.svg" alt="" aria-hidden width={267} height={297} className="pointer-events-none absolute top-3 left-1/2 mix-blend-soft-light" />

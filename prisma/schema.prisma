@@ -63,6 +63,9 @@ model Client {
   boardToken             String?  @unique
   // 보호자 링크가 열려 있는 마지막 날 (STB-5 (가), D-53). 초대 링크를 만들거나 보고서·서류를 보내면 그날부터 90일. 비어 있으면 아직 안 정함(열림)
   boardExpiresAt         DateTime?
+  // 보호자 링크 확인(전화번호 끝 4자리) 틀린 횟수. 5번 틀리면 30분 잠근다 (lib/guardianGate.ts)
+  guardianCheckFails     Int              @default(0)
+  guardianLockedUntil    DateTime?
 }
 
 model Visit {

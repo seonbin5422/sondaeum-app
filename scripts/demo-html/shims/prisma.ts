@@ -28,7 +28,7 @@ const MODELS: Record<string, { fields: Record<string, unknown>; rels: Record<str
     fields: {
       id: uid, name: "", age: null, gender: null, allergies: null, medicalHistory: null, medicationNotes: null, personalNotes: null,
       guardianName: "", guardianRelation: "기타", guardianPhone: null, careRegistrationNumber: null, careGrade: null, phone: null,
-      scheduleLabel: null, isActive: true, purgeAt: null, deletedAt: null, caregiverId: null, boardToken: null, boardExpiresAt: null,
+      scheduleLabel: null, isActive: true, purgeAt: null, deletedAt: null, caregiverId: null, boardToken: null, boardExpiresAt: null, guardianCheckFails: 0, guardianLockedUntil: null,
     },
     rels: {
       caregiver: { model: "caregiver", many: false, from: "caregiverId", to: "id" },

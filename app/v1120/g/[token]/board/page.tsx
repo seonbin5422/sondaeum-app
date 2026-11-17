@@ -1,3 +1,5 @@
+import { guardianPassed } from "@/lib/guardianGate";
+import { GuardianCheck } from "../../../_components/GuardianCheck";
 import { guardianBoard } from "../../../_data";
 import { BoardExpired, LinkGone, LiveRefresh, PostList } from "../../../_components/Board";
 import { EmptyState, Screen, TopBar, TOP_BACK } from "../../../_components/ui";
@@ -12,6 +14,7 @@ export default async function GuardianBoardPage({ params }: PageProps<"/v1120/g/
   const b = await guardianBoard(token);
   if (b === "expired") return <BoardExpired />;
   if (!b) return <LinkGone />;
+  if (!(await guardianPassed(token))) return <GuardianCheck token={token} />;
   const title = contactTitle(b.guardianRelation);
   const names = { caregiver: b.caregiverName, guardian: `${b.guardianName} ${title}` };
   // 요양보호사 게시판(C-18)과 같은 1128 모양: 회색 바탕·상단 바·흰 글 카드·정렬 (사용자 11/14 "UI가 다름")

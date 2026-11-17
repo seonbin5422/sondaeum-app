@@ -17,3 +17,16 @@ export async function deleteSession() {
     localStorage.removeItem(KEY);
   } catch {}
 }
+// 보호자 링크 확인을 통과한 수급자 (이 브라우저에만)
+export async function markGuardianVerified(clientId: string) {
+  try {
+    localStorage.setItem(`${KEY}:g_${clientId}`, "1");
+  } catch {}
+}
+export async function isGuardianVerified(clientId: string): Promise<boolean> {
+  try {
+    return localStorage.getItem(`${KEY}:g_${clientId}`) === "1";
+  } catch {
+    return false;
+  }
+}

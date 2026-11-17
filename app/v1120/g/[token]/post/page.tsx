@@ -1,3 +1,5 @@
+import { guardianPassed } from "@/lib/guardianGate";
+import { GuardianCheck } from "../../../_components/GuardianCheck";
 import { notFound } from "next/navigation";
 import { guardianBoard } from "../../../_data";
 import { commentAsGuardian, markReadAsGuardian } from "../../../_actions";
@@ -13,6 +15,7 @@ export default async function GuardianPostPage({ params }: PageProps<"/v1120/g/[
   if (b === "expired") return <BoardExpired />;
   const post = b?.posts.find((p) => p.shareToken === token);
   if (!b || !post) notFound();
+  if (!(await guardianPassed(token))) return <GuardianCheck token={token} />;
   const names = { caregiver: b.caregiverName, guardian: `${b.guardianName} ${contactTitle(b.guardianRelation)}` };
   return (
     // 요양보호사 게시글 상세(C-18)와 같은 모양: 흰 바탕·상단 바 제목

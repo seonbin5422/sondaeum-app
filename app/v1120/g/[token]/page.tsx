@@ -1,3 +1,5 @@
+import { guardianPassed } from "@/lib/guardianGate";
+import { GuardianCheck } from "../../_components/GuardianCheck";
 import { prisma } from "@/lib/prisma";
 import { decryptText, openPII } from "@/lib/crypto";
 import { boardOpen, serviceTimeOf } from "../../_data";
@@ -54,5 +56,6 @@ export default async function GuardianReportPage({ params, searchParams }: PageP
   const sent = await sentReport(token, me);
   if (sent === "expired") return <BoardExpired />;
   if (!sent && !isSampleReportToken(token)) return <LinkGone />;
+  if (!(await guardianPassed(token))) return <GuardianCheck token={token} />;
   return <GuardianReport token={token} order={order === "improved" ? "improved" : "base"} sent={sent} fromBoard={from === "board"} asCaregiver={asCaregiver} />;
 }

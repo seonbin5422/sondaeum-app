@@ -254,6 +254,7 @@ model Comment {
 - `SharedDocument`(clientId, caregiverId, kind="summary", from·to YYYY-MM-DD, shareToken): 건강 기록 요약(C-20)의 "게시판에 올리기". 내용은 저장하지 않고 볼 때 그 기간 기록으로 다시 만든다. 같은 수급자·기간은 한 번만. 보호자는 `/v1120/g/[shareToken]/post`·`/document`로 본다.
 - `Comment.readAt`(11/2, 마이그레이션 `20261102000000_comment_read_at`): 상대가 그 글(게시글 상세)을 연 시각. 요양보호사가 열면 보호자 댓글, 보호자가 열면 요양보호사 댓글이 읽음이 된다(`markReadAsCaregiver`·`markReadAsGuardian`). 안 읽은 수는 `myUnreadByClient`(게시판 탭·홈 카드·수급자 탭)·`myUnreadTotal`(하단 메뉴)·글 카드가 센다.
 - `Client.boardToken`(11/1, 마이그레이션 `20261101210000_client_board_token`): 보호자 게시판 초대 링크 `/v1120/g/[boardToken]/board`. 초대 화면(C-23)을 처음 열 때 `myBoardToken`이 만든다. 보고서를 보내기 전에도 들어올 수 있다. `guardianBoard`는 보고서·서류·초대 토큰을 모두 받는다.
+- `Client.guardianCheckFails`·`guardianLockedUntil`(11/17, 마이그레이션 `20261117120000_guardian_phone_check`, D-72): 보호자 링크 확인(보호자 전화번호 끝 4자리)을 틀린 횟수와 잠금 시각. 5번 틀리면 30분 잠근다. 맞히면 `g_<clientId>` 쿠키(서명, 30일)로 그 기기를 기억한다(`lib/guardianGate.ts`). 보호자 전화번호가 없거나 보낸 요양보호사 본인이면 묻지 않는다.
 - 수급자를 완전히 지우거나(`purgeExpiredClients`) 체험 계정을 지울 때 보고서·서류보다 먼저 지운다. FK도 `ON DELETE CASCADE`.
 - 마이그레이션: `prisma/migrations/20261101120000_board_comments`.
 

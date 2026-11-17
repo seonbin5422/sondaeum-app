@@ -16,6 +16,7 @@ import { boardOpenUntil, kstTodayRange, requireCaregiver } from "./_data";
 import { cleanSignatures, isEmptySignatures } from "./_signatures";
 import { assertFields } from "./_validate";
 import { closeGuardianLinks } from "@/lib/closeGuardianLinks";
+import { checkGuardianDigits, requireGuardianPassed } from "@/lib/guardianGate";
 
 // 1120.ver 화면의 저장 동작. 모든 동작은 로그인한 요양보호사의 수급자에만 쓴다 (SEC-2).
 
@@ -308,6 +309,7 @@ export async function signAsGuardian(shareToken: string, strokes: unknown) {
   // 요양보호사로 로그인된 기기에서는 보호자 서명을 받지 않는다(대리 서명 막기, 사용자 11/14).
   // shortcut: 로그아웃한 다른 브라우저에서 링크를 열면 막지 못한다, 보호자 카카오 로그인(P1)이 생기면 초대받은 보호자만 서명하게 바꾼다
   if (await getSessionCaregiverId()) throw new Error("요양보호사 계정으로는 보호자 서명을 할 수 없어요.");
+  await requireGuardianPassed(shareToken);
   const r = await prisma.report.findFirst({
     where: { shareToken, sentAt: { not: null }, visit: { client: { isActive: true, purgeAt: null } } },
     select: { id: true, signatures: true },
@@ -385,6 +387,7 @@ export async function commentAsCaregiver(shareToken: string, text: string) {
 // G-02 보호자: 로그인 없이 링크로. 보낸 보고서·올린 서류, 지우지 않은 수급자에만
 // shortcut: 링크만 있으면 누구나 보호자로 댓글을 단다, 보호자 로그인(D-44)이 생기면 그걸로 막는다
 export async function commentAsGuardian(shareToken: string, text: string) {
+  await requireGuardianPassed(shareToken);
   const target = await postTarget(shareToken);
   await prisma.comment.create({ data: { ...target, author: "guardian", body: commentBody(text) } });
 }
@@ -396,6 +399,7 @@ export async function markReadAsCaregiver(shareToken: string) {
   await prisma.comment.updateMany({ where: { ...target, author: "guardian", readAt: null }, data: { readAt: new Date() } });
 }
 export async function markReadAsGuardian(shareToken: string) {
+  await requireGuardianPassed(shareToken);
   const target = await postTarget(shareToken);
   await prisma.comment.updateMany({ where: { ...target, author: "caregiver", readAt: null }, data: { readAt: new Date() } });
 }
@@ -425,4 +429,9 @@ export async function updateMe(form: FormData) {
   assertFields([["name", name], ["license", licenseNumber]]);
   await prisma.caregiver.update({ where: { id: caregiver.id }, data: { name, licenseNumber } });
   redirect("/v1120/me");
+}
+
+// 보호자 링크 확인: 보호자 전화번호 끝 4자리 (lib/guardianGate.ts)
+export async function verifyGuardian(shareToken: string, digits: string) {
+  return checkGuardianDigits(shareToken, digits);
 }

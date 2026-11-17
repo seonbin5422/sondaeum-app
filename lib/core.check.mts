@@ -17,7 +17,9 @@ const M = Module as unknown as { _resolveFilename: (req: string, ...rest: unknow
 const resolve = M._resolveFilename;
 // 서버 액션은 로그인 쿠키로 요양보호사를 찾는다. 테스트에서는 next/headers의 쿠키를 가짜로 바꿔 "지금 로그인한 사람"을 정한다
 const fakeHeaders = path.join(tmp, "next-headers.cjs");
-writeFileSync(fakeHeaders, `exports.cookies = async () => ({ get: () => (globalThis.__session ? { value: globalThis.__session } : undefined), set() {}, delete() {} });
+// 로그인 쿠키(session)는 globalThis.__session, 나머지(보호자 확인 g_…)는 globalThis.__cookies에 둔다
+writeFileSync(fakeHeaders, `const jar = (globalThis.__cookies ??= {});
+exports.cookies = async () => ({ get: (n) => { const v = n === "session" ? globalThis.__session : jar[n]; return v ? { value: v } : undefined; }, set(n, v) { jar[n] = v; }, delete(n) { delete jar[n]; } });
 exports.headers = async () => new Headers({ "user-agent": "check-agent", "x-forwarded-for": "203.0.113.7" });`);
 M._resolveFilename = function (req, ...rest) {
   if (req === "server-only") return stub;
@@ -166,5 +168,38 @@ const expires = (await prisma.client.findUnique({ where: { id: clientC.id } }))?
 assert.ok(expires && expires.getTime() > Date.now() + 89 * 86_400_000, "보내면 게시판 링크가 90일 열림");
 await assert.rejects(actions.saveTranscript(v1.id, "고친 말"), /이미 보낸 기록은 고칠 수 없어요/, "보낸 뒤 고치기 (STB-1)");
 await assert.rejects(actions.sendReport(v1.id, sigForm([[[1, 1]]])), /이미 보낸 기록은 고칠 수 없어요/, "두 번 보내기");
+
+// 보호자 링크 확인(전화번호 끝 4자리): 처음 연 기기는 막고, 맞히면 그 수급자만 열리고, 5번 틀리면 잠근다. 보낸 요양보호사 본인은 묻지 않는다
+{
+  const { sealPII } = await import("./crypto");
+  const { guardianPassed, checkGuardianDigits, requireGuardianPassed } = await import("./guardianGate");
+  const { signPayload } = await import("./jwt");
+  const jar = (globalThis as unknown as { __cookies: Record<string, string> }).__cookies;
+  const g = globalThis as unknown as { __session?: string };
+  g.__session = undefined;
+  const cg = await prisma.client.create({ data: { name: "확인어르신", guardianName: "확보호", guardianPhone: sealPII("010-1234-5678"), caregiverId: a.id } });
+  const cv = await prisma.visit.create({ data: { caregiverId: a.id, clientId: cg.id, status: "SENT" } });
+  const cr = await prisma.report.create({ data: { visitId: cv.id, meals: "", medication: "", notes: "", sentAt: new Date() } });
+  assert.equal(await guardianPassed(cr.shareToken), false, "처음 연 기기는 확인 필요");
+  await assert.rejects(requireGuardianPassed(cr.shareToken), "확인 전 댓글·서명 막기");
+  assert.equal((await checkGuardianDigits(cr.shareToken, "12a4")).ok, false, "숫자 4자리만");
+  for (let i = 1; i < 5; i++) assert.equal((await checkGuardianDigits(cr.shareToken, "0000")).ok, false);
+  assert.equal((await checkGuardianDigits(cr.shareToken, "0000")).ok, false, "5번째 틀림");
+  assert.equal((await checkGuardianDigits(cr.shareToken, "5678")).ok, false, "잠긴 동안은 맞아도 안 열림");
+  assert.equal(await guardianPassed(cr.shareToken), false);
+  await prisma.client.update({ where: { id: cg.id }, data: { guardianLockedUntil: new Date(Date.now() - 1000) } });
+  assert.equal((await checkGuardianDigits(cr.shareToken, "5678")).ok, true, "잠금 풀리면 맞힌 번호로 열림");
+  assert.equal(await guardianPassed(cr.shareToken), true, "확인한 기기");
+  assert.equal((await prisma.client.findUnique({ where: { id: cg.id } }))!.guardianCheckFails, 0);
+  jar[`g_${cg.id}`] = await signPayload({ clientId: clientC.id }, "1d");
+  assert.equal(await guardianPassed(cr.shareToken), false, "다른 수급자 확인 쿠키로는 안 열림");
+  delete jar[`g_${cg.id}`];
+  g.__session = await signPayload({ caregiverId: a.id }, "1d");
+  assert.equal(await guardianPassed(cr.shareToken), true, "보낸 요양보호사 본인");
+  g.__session = await signPayload({ caregiverId: b.id }, "1d");
+  assert.equal(await guardianPassed(cr.shareToken), false, "남의 요양보호사는 확인 필요");
+  g.__session = undefined;
+  assert.equal(await guardianPassed(sent.shareToken), true, "보호자 전화번호가 없으면 묻지 않음");
+}
 
 console.log("core ok");

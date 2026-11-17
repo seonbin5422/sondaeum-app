@@ -1,3 +1,5 @@
+import { guardianPassed } from "@/lib/guardianGate";
+import { GuardianCheck } from "../../../_components/GuardianCheck";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { guardianBoard, guardianHistory, kstYmd, toProfile } from "../../../_data";
@@ -11,6 +13,7 @@ export default async function GuardianDocumentPage({ params }: PageProps<"/v1120
   if (b === "expired") return <BoardExpired />;
   const post = b?.posts.find((p) => p.shareToken === token);
   if (!b || !post?.period) notFound();
+  if (!(await guardianPassed(token))) return <GuardianCheck token={token} />;
   const client = await prisma.client.findUnique({ where: { id: b.clientId } });
   if (!client) notFound();
   return (

@@ -7,7 +7,7 @@ import { buzz, Spinner } from "../../../_components/Pressable";
 import { Coach } from "../../../_components/Coach";
 import { COACH } from "../../../_coachSteps";
 import { useSpeech } from "../../../_components/useSpeech";
-import { finishRecording, saveTranscript } from "../../../_actions";
+import { fillManually, finishRecording, saveTranscript } from "../../../_actions";
 import { sampleTranscript } from "../../../_mock";
 import { changedFields, extractRecord, keptFields, overlayFields } from "../../../_extract";
 import type { CareRecord, Change } from "../../../_types";
@@ -233,6 +233,18 @@ export function RecordScreen({
     }
   }
 
+  // 녹음 없이 기록 확인으로: 빈 기록지를 만들고 칸을 손으로 체크한다 (AI 호출 없음)
+  async function checkByHand() {
+    setFinishing(true);
+    try {
+      await fillManually(visitId);
+      router.push(`/v1120/visit/${visitId}/review`);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "열지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+      setFinishing(false);
+    }
+  }
+
   async function finish() {
     if (speech.recording) speech.stop();
     // 글로 쓴 뒤 0.8초 안에 누르면 늦게 저장된 글이 상태를 다시 "녹음 중"으로 돌린다. finishRecording이 같은 글을 저장한다
@@ -413,6 +425,16 @@ export function RecordScreen({
             }}
           />
         </div>
+        {!transcript && !speech.recording && (
+          <button
+            type="button"
+            onClick={checkByHand}
+            disabled={finishing}
+            className="press min-h-12 self-center text-base font-medium text-muted underline underline-offset-4 active:opacity-60 disabled:opacity-40"
+          >
+            {finishing ? "여는 중…" : "녹음 없이 직접 체크하기"}
+          </button>
+        )}
         {(speech.recording || uploadError) && (
           <p className={`text-base ${uploadError ? "text-(--text-danger)" : "text-muted"}`} role={uploadError ? "alert" : undefined}>
             {speech.recording ? "녹음을 끝내면 글로 쓰기·음성 파일 올리기를 쓸 수 있어요." : uploadError}

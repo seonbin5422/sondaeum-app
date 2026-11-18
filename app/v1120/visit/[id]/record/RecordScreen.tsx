@@ -426,14 +426,10 @@ export function RecordScreen({
           />
         </div>
         {!transcript && !speech.recording && (
-          <button
-            type="button"
-            onClick={checkByHand}
-            disabled={finishing}
-            className="press min-h-12 self-center text-base font-medium text-muted underline underline-offset-4 active:opacity-60 disabled:opacity-40"
-          >
-            {finishing ? "여는 중…" : "녹음 없이 직접 체크하기"}
-          </button>
+          // 글씨 링크는 작아서 놓친다는 의견(11/19) → 글로 쓰기와 같은 크기의 버튼
+          <Button variant="secondary" className="bg-white! active:bg-(--line)!" onClick={checkByHand} disabled={finishing}>
+            {finishing ? <><Spinner />여는 중</> : "녹음 없이 직접 체크하기"}
+          </Button>
         )}
         {(speech.recording || uploadError) && (
           <p className={`text-base ${uploadError ? "text-(--text-danger)" : "text-muted"}`} role={uploadError ? "alert" : undefined}>

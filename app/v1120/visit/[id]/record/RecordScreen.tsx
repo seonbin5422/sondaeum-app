@@ -180,6 +180,13 @@ export function RecordScreen({
   // shortcut: 빠진 칸은 낱말 찾기 기준이라 AI라면 찾았을 칸도 물을 수 있다, 질문이 헛돌면 AI 정리 뒤에 묻도록 옮긴다
   const [questions, setQuestions] = useState<{ title: string; say: string; audio: string; said?: string }[] | null>(null);
   const [qi, setQi] = useState(0);
+  // DIF-1-12: 되묻기 답이 "그냥 30분 했습니다"뿐이면 AI가 어느 칸의 시간인지 몰라 빠뜨렸다(2차 UT 11/19) →
+  // 질문마다 녹음 글에 "(몸 돌봄 질문에 대한 답)"을 먼저 붙이고 답은 그 뒤에 이어 붙인다. 답이 없으면 표시를 뗀다
+  const latest = useRef(transcript);
+  useEffect(() => {
+    latest.current = transcript;
+  }, [transcript]);
+  const answerTag = useRef("");
   const [ttsStatus, setTtsStatus] = useState("");
   useEffect(() => hush, []); // 화면을 떠나면 읽던 질문을 멈춘다
   // 질문이 뜨거나 다음 질문으로 넘어가면 질문 카드가 보이게 올린다
@@ -193,10 +200,19 @@ export function RecordScreen({
 
   function askAt(list: { title: string; say: string; audio: string; said?: string }[], i: number) {
     if (speech.recording) speech.stop();
+    let text = latest.current;
+    if (answerTag.current && text.endsWith(answerTag.current)) text = text.slice(0, -answerTag.current.length).trimEnd();
+    answerTag.current = i < list.length ? `\n(${list[i].title} 질문에 대한 답)` : "";
+    text += answerTag.current;
+    if (text !== latest.current) {
+      latest.current = text;
+      setTranscript(text);
+      persist(text);
+    }
     if (i >= list.length) {
       hush();
       setQuestions(null);
-      finish();
+      finish(text);
       return;
     }
     setQuestions(list);
@@ -245,13 +261,13 @@ export function RecordScreen({
     }
   }
 
-  async function finish() {
+  async function finish(text = transcript) {
     if (speech.recording) speech.stop();
     // 글로 쓴 뒤 0.8초 안에 누르면 늦게 저장된 글이 상태를 다시 "녹음 중"으로 돌린다. finishRecording이 같은 글을 저장한다
     clearTimeout(typingTimer.current);
     setFinishing(true);
     try {
-      await finishRecording(visitId, transcript, changed);
+      await finishRecording(visitId, text, changed);
       router.push(`/v1120/visit/${visitId}/processing`);
     } catch {
       setSaveError("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
@@ -439,8 +455,12 @@ export function RecordScreen({
       </div>
       {/* Figma 580:2092: 위와 15px 더 띄우고 제목·칸 사이 14px */}
       <section className="flex flex-col gap-3.5 pt-[15px]">
-        <h2 className="text-lg font-bold">급여제공기록지 순서</h2>
-        {/* 기록 확인(C-14) 칸처럼 칸·체크·글 사이를 띄운다 (11/7) */}
+        <div className="flex flex-col gap-1 leading-[1.4]">
+          <h2 className="text-lg font-bold">급여제공기록지 순서</h2>
+          {/* DIF-1-13: 빈 동그라미가 체크박스로 보여 참가자가 칸을 눌러 체크하려 했다(2차 UT 11/19) → 동그라미를 빼고 저절로 채워진다고 알린다 */}
+          <p className="text-base text-muted">말하면 저절로 채워져요. 누르지 않아도 돼요.</p>
+        </div>
+        {/* 기록 확인(C-14) 칸처럼 칸·글 사이를 띄운다 (11/7) */}
         <ol className="flex flex-col gap-3">
           {sections.map((sec, i) => {
             const done = sec.found.length > 0;
@@ -450,15 +470,15 @@ export function RecordScreen({
                 data-coach={i === 0 ? "sections" : undefined}
                 className={`flex items-center gap-4 rounded-2xl px-5 py-4 transition-colors ${done ? "bg-(--bg-brand) ring-2 ring-inset ring-accent" : "bg-white"}`}
               >
-                {done ? (
-                  <Icon name="check_circle" size={28} className="pop text-(--brand-secondary)" />
-                ) : (
-                  <Icon name="radio_button_unchecked" size={28} className="text-(--line)" />
-                )}
                 <span className="flex min-w-0 flex-1 flex-col gap-1 leading-[1.4]">
-                  <span className="text-lg font-bold">
+                  <span className="flex flex-wrap items-center gap-x-2 text-lg font-bold">
                     {i + 1}. {sec.title}
-                    {done && <span className="sr-only"> (채워짐)</span>}
+                    {done && (
+                      <span className="pop flex items-center gap-0.5 text-base text-(--text-brand)">
+                        <Icon name="check" size={20} />
+                        채워짐
+                      </span>
+                    )}
                   </span>
                   <span className={`text-base ${done ? "" : "text-muted"}`}>{done ? sec.found.join(" · ") : sec.ask}</span>
                 </span>

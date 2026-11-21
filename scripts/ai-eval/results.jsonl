@@ -172,3 +172,6 @@
 {"at":"2026-11-16T18:19:05.451Z","version":"1438bad9","id":"55-honor-bland","caseHash":"96c84c30","run":1,"passed":false,"fieldsOk":0,"fields":0,"mustOk":1,"must":2,"problems":["특이사항에 빠짐: 싱겁|싱거","→ 특이사항: 국에 간장 조금 넣어 드림."]}
 {"at":"2026-11-16T18:22:37.531Z","version":"1438bad9","id":"56-not-covered","caseHash":"2924569f","run":1,"passed":false,"fieldsOk":1,"fields":2,"mustOk":1,"must":1,"problems":["household.mealPrepCleaningLaundry: true (정답 [null,false])","특이사항에 들어가면 안 됨: 빨래","→ 특이사항: 점심 3/4 공기 섭취. 빨래를 함께 돌려 드렸음."]}
 {"at":"2026-11-16T18:23:25.121Z","version":"1438bad9","id":"57-specific","caseHash":"107ae6e8","run":1,"passed":true,"fieldsOk":2,"fields":2,"mustOk":1,"must":1,"problems":[]}
+{"at":"2026-11-21T04:14:17.130Z","version":"f9f17bc8","id":"60-asked-minutes","caseHash":"cc440c10","run":1,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:15:12.853Z","version":"f9f17bc8","id":"60-asked-minutes","caseHash":"cc440c10","run":2,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:16:09.409Z","version":"f9f17bc8","id":"60-asked-minutes","caseHash":"cc440c10","run":3,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}

@@ -175,3 +175,9 @@
 {"at":"2026-11-21T04:14:17.130Z","version":"f9f17bc8","id":"60-asked-minutes","caseHash":"cc440c10","run":1,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
 {"at":"2026-11-21T04:15:12.853Z","version":"f9f17bc8","id":"60-asked-minutes","caseHash":"cc440c10","run":2,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
 {"at":"2026-11-21T04:16:09.409Z","version":"f9f17bc8","id":"60-asked-minutes","caseHash":"cc440c10","run":3,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:34:38.194Z","version":"91e6af85","id":"60-asked-minutes","caseHash":"cc440c10","run":1,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:35:26.961Z","version":"91e6af85","id":"60-asked-minutes","caseHash":"cc440c10","run":2,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:36:23.362Z","version":"91e6af85","id":"60-asked-minutes","caseHash":"cc440c10","run":3,"passed":true,"fieldsOk":3,"fields":3,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:37:11.431Z","version":"91e6af85","id":"61-asked-change","caseHash":"5f34b68f","run":1,"passed":true,"fieldsOk":4,"fields":4,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:38:03.379Z","version":"91e6af85","id":"61-asked-change","caseHash":"5f34b68f","run":2,"passed":true,"fieldsOk":4,"fields":4,"mustOk":0,"must":0,"problems":[]}
+{"at":"2026-11-21T04:38:50.976Z","version":"91e6af85","id":"61-asked-change","caseHash":"5f34b68f","run":3,"passed":true,"fieldsOk":4,"fields":4,"mustOk":0,"must":0,"problems":[]}

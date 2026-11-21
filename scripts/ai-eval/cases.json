@@ -1071,5 +1071,20 @@
       "질문에 대한 답"
     ],
     "example": null
+  },
+  {
+    "id": "61-asked-change",
+    "about": "되묻기 '지난번과 달라진 점'에 \"비슷하셨습니다\"만 답함 → 세 칸 모두 비슷 (11/21 실기기, DIF-1-12)",
+    "input": "세수 도와드리고 점심 차려 드렸어요. 밥 반 공기 드셨어요.\n(몸 돌봄 질문에 대한 답) 30분 했어요\n(지난번과 달라진 점 질문에 대한 답) 비슷하셨습니다",
+    "expect": {
+      "change.physical": "same",
+      "change.meal": "same",
+      "change.cognitive": "same",
+      "physical.minutes": 30
+    },
+    "notesMustNot": [
+      "질문에 대한 답"
+    ],
+    "example": null
   }
 ]

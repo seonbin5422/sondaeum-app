@@ -1057,5 +1057,19 @@
       "change.cognitive": "same"
     },
     "example": null
+  },
+  {
+    "id": "60-asked-minutes",
+    "about": "되묻기에 시간만 답함 → 질문 표시로 그 칸 시간 (2차 UT 11/19, DIF-1-12)",
+    "input": "세수 도와드리고 옷 갈아입혀 드렸어요. 거실 청소하고 설거지했어요. 사진 보면서 이야기 20분 했어요. 오른쪽 무릎이 아프다고 하셔서 파스 붙여 드리고 따님께 전화로 알렸어요.\n(몸 돌봄 질문에 대한 답) 그냥 30분 했습니다\n(집안일·외출 질문에 대한 답) 40분이요",
+    "expect": {
+      "physical.minutes": 30,
+      "household.minutes": 40,
+      "cognitive.emotional": 20
+    },
+    "notesMustNot": [
+      "질문에 대한 답"
+    ],
+    "example": null
   }
 ]

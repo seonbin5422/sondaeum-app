@@ -186,7 +186,7 @@ export function RecordScreen({
   useEffect(() => {
     latest.current = transcript;
   }, [transcript]);
-  const answerTag = useRef("");
+  const [answerTag, setAnswerTag] = useState("");
   const [ttsStatus, setTtsStatus] = useState("");
   useEffect(() => hush, []); // 화면을 떠나면 읽던 질문을 멈춘다
   // 질문이 뜨거나 다음 질문으로 넘어가면 질문 카드가 보이게 올린다
@@ -201,9 +201,10 @@ export function RecordScreen({
   function askAt(list: { title: string; say: string; audio: string; said?: string }[], i: number) {
     if (speech.recording) speech.stop();
     let text = latest.current;
-    if (answerTag.current && text.endsWith(answerTag.current)) text = text.slice(0, -answerTag.current.length).trimEnd();
-    answerTag.current = i < list.length ? `\n(${list[i].title} 질문에 대한 답)` : "";
-    text += answerTag.current;
+    if (answerTag && text.endsWith(answerTag)) text = text.slice(0, -answerTag.length).trimEnd();
+    const tag = i < list.length ? `\n(${list[i].title} 질문에 대한 답)` : "";
+    setAnswerTag(tag);
+    text += tag;
     if (text !== latest.current) {
       latest.current = text;
       setTranscript(text);
@@ -275,6 +276,9 @@ export function RecordScreen({
     }
   }
 
+  // 지금 질문의 표시 뒤에 붙은 말 = 이 질문의 답
+  const tagAt = answerTag ? transcript.lastIndexOf(answerTag) : -1;
+  const answerNow = tagAt >= 0 ? transcript.slice(tagAt + answerTag.length).trim() : "";
   const recordButtonLabel = speech.recording ? "녹음 끝내기" : resumed ? "이어서 녹음" : "녹음 시작";
   const showActions = !speech.recording && !!transcript;
 
@@ -349,6 +353,18 @@ export function RecordScreen({
           {/* 특이사항 되묻기에는 무엇을 두고 묻는지 말한 내용을 함께 보인다 (Figma 예시는 빠진 칸이라 없음) */}
           {questions[qi].said && <p className="text-base">말씀하신 내용: {questions[qi].said}</p>}
           <p className="text-[26px] font-bold leading-[1.4] tracking-[-0.02em]">{questions[qi].say}</p>
+          {/* 질문 카드가 위를 차지하면 녹음 내용 칸이 밀려 녹음되는지 모른다(11/21 실기기) → 이 질문의 답을 카드 안에 바로 보인다 */}
+          {(speech.recording || answerNow) && (
+            <div className="flex flex-col gap-1 rounded-xl bg-white p-4">
+              <p className="flex items-center gap-2 text-base font-bold">
+                {speech.recording && <span aria-hidden className="size-2.5 animate-pulse rounded-full bg-record" />}
+                {speech.recording ? "듣는 중이에요" : "들은 답"}
+              </p>
+              <p className="text-lg">
+                {answerNow} <span className="text-muted">{speech.interim}</span>
+              </p>
+            </div>
+          )}
           <p className="text-lg">
             빠진 항목을 채워 주세요.
             <br />

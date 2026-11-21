@@ -68,8 +68,8 @@ const RE = {
   emotional: /말벗|이야기|얘기|대화|격려|말동무|말 나|사진|노래|회상/,
   household: /청소|빨래|세탁|설거지|식사\s?준비|정리/,
   outing: /외출|산책|병원\s?동행|장보|은행|같이 나가/,
-  better: /좋아졌|나아졌|호전|더 잘/,
-  worse: /나빠졌|안 좋아|줄었|악화|못 드셨|힘들어하/,
+  better: /좋아졌|좋아지셨|나아졌|나아지셨|호전|더 잘/,
+  worse: /나빠졌|나빠지셨|안 좋아|줄었|악화|못 드셨|힘들어하/,
   same: /비슷|똑같|그대로|그대롭|변화\s?(가|는|도)?\s?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/,
   stool: /대변|대소변|변을|똥|응가/,
   urine: /소변|오줌|오짐|쉬야/,
@@ -80,7 +80,17 @@ const RE = {
 // "지난번과 비슷"은 손다음에 보낸 지난 기록이 없어도 말했으면 그대로 둔다. 다른 서비스를 쓰다 옮겨 온 요양보호사는 지난 상태를 안다 (D-64, 11/3 (가) 규칙 뺌)
 
 export function extractRecord(transcript: string): { record: CareRecord; quotes: SaidQuotes } {
-  const ss = sentences(transcript);
+  // 되묻기 표시 "(몸 돌봄 질문에 대한 답)"(RecordScreen이 붙임)은 말한 내용이 아니라 낱말 찾기에서 뺀다("몸"이 변화 영역으로 잡힘).
+  // 대신 답을 그 칸으로 읽는다: 대소변은 "대소변 실수", 지난번과 달라진 점은 표시를 남겨 세 칸 모두, 몸 돌봄·집안일은 시간만 (DIF-1-12)
+  const asked: Record<string, string> = {};
+  const ss = sentences(
+    transcript.replace(/\(([^()\n]*) 질문에 대한 답\)\s*([^\n]*)/g, (tag, title: string, answer: string) => {
+      asked[title] = answer;
+      if (title === "대소변") return `대소변 실수 ${answer}`;
+      return title === "지난번과 달라진 점" ? tag : answer;
+    }),
+  );
+  const askedMinutes = (title: string) => (asked[title] ? minutesIn(asked[title]) : null);
 
   // 신체활동지원: 하나라도 말했으면 말한 것만 ✓, 나머지는 안 함. 아무것도 안 말했으면 모두 null.
   const physMatch = { personalHygiene: RE.hygiene, bathing: RE.bathing, mealAssist: RE.meal, repositioning: RE.reposition, mobility: RE.mobility, toileting: RE.toilet };
@@ -113,7 +123,8 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const changeOf = (area: RegExp): Change | null => {
     const s = ss.find((x) => area.test(x) && (RE.better.test(x) || RE.worse.test(x) || RE.same.test(x)));
     // 영역 없이 "지난번이랑 달라진 게 없어요"처럼 전체를 말한 문장은 세 칸 모두
-    const general = ss.find((x) => (/상태|컨디션|전반|전부|모두/.test(x) && isChange(x)) || (/변화\s?(가|는|도)?\s?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/.test(x) && !AREAS.some((a) => a.test(x))));
+    // 되묻기 답 "(지난번과 달라진 점 질문에 대한 답) 비슷하셨습니다"도 영역 없이 전체를 말한 것 (DIF-1-12, RecordScreen이 붙이는 표시)
+    const general = ss.find((x) => (/상태|컨디션|전반|전부|모두/.test(x) && isChange(x)) || ((/변화\s?(가|는|도)?\s?없|변함없|달라진\s?(게|것|건|거|점)?\s?없|다른\s?(게|건|점)\s?없/.test(x) || (x.startsWith("(지난번과 달라진 점 질문") && isChange(x))) && !AREAS.some((a) => a.test(x))));
     const pickS = s ?? general;
     if (!pickS) return null;
     return RE.worse.test(pickS) ? "worse" : RE.better.test(pickS) ? "improved" : "same";
@@ -135,7 +146,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
   const notesS = pick(ss, RE.notes);
 
   const record: CareRecord = {
-    physical: { ...phys, minutes: physMinutes },
+    physical: { ...phys, minutes: physMinutes ?? askedMinutes("몸 돌봄") },
     physicalNote: join(physSentences),
     cognitive: {
       stimulation: cogMin(RE.stimulation),
@@ -146,7 +157,7 @@ export function extractRecord(transcript: string): { record: CareRecord; quotes:
     household: {
       mealPrepCleaningLaundry: anyHh ? hhSentences.length > 0 : null,
       personalActivity: anyHh ? outing.length > 0 : null,
-      minutes: minutesSum([...new Set([...hhSentences, ...outing])]),
+      minutes: minutesSum([...new Set([...hhSentences, ...outing])]) ?? askedMinutes("집안일·외출"),
     },
     change: {
       physical: changeOf(AREAS[0]),

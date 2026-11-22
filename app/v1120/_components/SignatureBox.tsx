@@ -13,7 +13,10 @@ const toPath = (s: Stroke) => s.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(
 
 function SignatureBox({ label, value, onChange }: { label: string; value: Stroke[]; onChange: (v: Stroke[]) => void }) {
   const [strokes, setStrokes] = useState(value);
-  const [drawing, setDrawing] = useState(false);
+  // 그리는 중인 획은 ref에 모으고 live 선에 바로 그린다: 움직일 때마다 setState하면 획이 늘수록 버벅이고,
+  // 빨리 이어 쓰면 새 획 첫 점이 버려졌다 (11/22 "한붓그리기처럼 써야 한다")
+  const cur = useRef<Stroke | null>(null);
+  const live = useRef<SVGPathElement>(null);
   const svg = useRef<SVGSVGElement>(null);
 
   // iOS Safari는 svg의 touch-action:none을 무시하고 화면을 같이 끌어서, 서명칸 안에서는 터치 스크롤을 직접 막는다 (React onTouchMove는 passive라 못 막음)
@@ -29,9 +32,13 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
     return [((e.clientX - r.left) / r.width) * W, ((e.clientY - r.top) / r.height) * H];
   };
   const end = () => {
-    if (!drawing) return;
-    setDrawing(false);
-    onChange(strokes); // 한 획을 다 그렸을 때만 저장한다
+    const s = cur.current;
+    if (!s) return;
+    cur.current = null;
+    live.current?.setAttribute("d", "");
+    const next = [...strokes, s];
+    setStrokes(next);
+    onChange(next); // 한 획을 다 그렸을 때만 저장한다
   };
 
   return (
@@ -53,14 +60,17 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
           className="absolute inset-0 h-full w-full touch-none"
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
-            setDrawing(true);
-            const p = at(e); // 이벤트는 바로 읽어야 한다 (setState 안에서 읽으면 currentTarget이 비어 있음)
-            setStrokes((s) => [...s, [p]]);
+            cur.current = [at(e)];
+            live.current?.setAttribute("d", toPath(cur.current) + " l0 0"); // 점만 찍어도 보이게
           }}
           onPointerMove={(e) => {
-            if (!drawing) return;
+            const s = cur.current;
+            if (!s) return;
             const p = at(e);
-            setStrokes((s) => [...s.slice(0, -1), [...s[s.length - 1], p]]);
+            const [lx, ly] = s[s.length - 1];
+            if (Math.abs(p[0] - lx) + Math.abs(p[1] - ly) < 1) return; // 거의 안 움직인 점은 버려 점 수 제한(4000)에 덜 닿게
+            s.push(p);
+            live.current?.setAttribute("d", toPath(s));
           }}
           onPointerUp={end}
           onPointerCancel={end}
@@ -81,6 +91,7 @@ function SignatureBox({ label, value, onChange }: { label: string; value: Stroke
               />
             ),
           )}
+          <path ref={live} fill="none" stroke="#222222" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         </svg>
       </div>
       {strokes.length > 0 && (
